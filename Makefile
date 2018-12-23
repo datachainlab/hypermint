@@ -1,15 +1,17 @@
 GO_BIN?=go
 
-HMD?=./build/hmd
-HMCLI?=./build/hmcli
+BUILD_DIR?=./build
+HMD?=$(BUILD_DIR)/hmd
+HMCLI?=$(BUILD_DIR)/hmcli
 HMD_HOME?=${HOME}/.hmd
 HMCLI_HOME?=${HOME}/.hmcli
 
-MNEMONIC?="hine volcano run comic tiger traffic attitude hockey depend cash clever curtain"
+MNEMONIC?="token dash time stand brisk fatal health honey frozen brown flight kitchen"
 HDW_PATH?=m/44'/60'/0'/0
 
 COMMIT_HASH:=$(shell git rev-parse --short HEAD)
-BUILD_FLAGS?=-ldflags "-X github.com/bluele/hypermint/pkg/consts.GitCommit=${COMMIT_HASH}"
+VERSION:=$(shell cat version)
+BUILD_FLAGS?=-ldflags "-X github.com/bluele/hypermint/pkg/consts.GitCommit=${COMMIT_HASH} -X github.com/bluele/hypermint/pkg/consts.Version=${VERSION}"
 
 GO_BUILD_CMD=$(GO_BIN) build $(BUILD_FLAGS)
 GO_TEST_FLAGS?=-v
@@ -43,3 +45,6 @@ init-validator:
 
 test:
 	$(GO_TEST_CMD) ./pkg/...
+
+build-image:
+	docker build . -t bluele/hypermint:${VERSION}
