@@ -40,11 +40,11 @@ func handleContractDeployTx(ctx types.Context, cm *contract.ContractManager, tx 
 }
 
 func handleContractCallTx(ctx types.Context, cm *contract.ContractManager, tx *transaction.ContractCallTx) types.Result {
-	vm, err := cm.GetVM(ctx, tx.Address)
+	env, err := cm.GetEnv(ctx, tx.Address, tx.Args)
 	if err != nil {
 		return transaction.ErrInvalidCall(transaction.DefaultCodespace, err.Error()).Result()
 	}
-	if err := vm.ExecContract(tx.Func); err != nil {
+	if err := env.Exec(tx.Func); err != nil {
 		return transaction.ErrInvalidCall(transaction.DefaultCodespace, err.Error()).Result()
 	}
 	return types.Result{}

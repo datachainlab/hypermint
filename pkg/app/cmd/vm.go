@@ -51,15 +51,15 @@ func vmCmd(ctx *app.Context) *cobra.Command {
 			kvs := cms.GetKVStore(key)
 			value := kvs.Get([]byte("key"))
 			log.Println("value=>", string(value))
-			vmn := contract.NewVMManager()
-			v, err := vmn.GetVM(kvs, &contract.Contract{
-				Owner: common.Address{},
-				Code:  b,
-			})
-			if err != nil {
-				return err
+			env := &contract.Env{
+				Contract: &contract.Contract{
+					Owner: common.Address{},
+					Code:  b,
+				},
+				DB:   kvs,
+				Args: []string{"first"},
 			}
-			if err := v.ExecContract("app_main"); err != nil {
+			if err := env.Exec("app_main"); err != nil {
 				return err
 			}
 			cms.Commit()

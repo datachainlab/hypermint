@@ -28,8 +28,8 @@ func (cm *ContractManager) SaveContract(ctx types.Context, addr common.Address, 
 	return nil
 }
 
-func (cm *ContractManager) GetVM(ctx types.Context, addr common.Address) (*VM, error) {
-	return cm.mapper.GetVM(ctx, addr)
+func (cm *ContractManager) GetEnv(ctx types.Context, addr common.Address, args []string) (*Env, error) {
+	return cm.mapper.GetEnv(ctx, addr, args)
 }
 
 func (cm *ContractManager) DeployContract(ctx types.Context, tx *transaction.ContractDeployTx) (common.Address, error) {

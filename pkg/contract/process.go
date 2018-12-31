@@ -5,24 +5,23 @@ import (
 	"log"
 	"strconv"
 
-	"github.com/bluele/hypermint/pkg/abci/types"
 	"github.com/perlin-network/life/exec"
 )
 
 type Process struct {
 	vm *exec.VirtualMachine
-	db types.KVStore
+	*Env
 }
 
-func NewProcess(vm *exec.VirtualMachine, db types.KVStore) *Process {
+func NewProcess(vm *exec.VirtualMachine, env *Env) *Process {
 	return &Process{
-		vm: vm,
-		db: db,
+		vm:  vm,
+		Env: env,
 	}
 }
 
 func (p *Process) ReadStr(key []byte, valPtr, valLen uint32) int64 {
-	v := p.db.Get(key)
+	v := p.DB.Get(key)
 	if v == nil {
 		return -1
 	}
@@ -39,7 +38,7 @@ func (p *Process) ReadStr(key []byte, valPtr, valLen uint32) int64 {
 func (p *Process) _ReadInt(keyPtr, keyLen, valPtr, valLen uint32) int {
 	key := string(readMem(p.vm.Memory, keyPtr, keyLen))
 
-	v := p.db.Get([]byte(key))
+	v := p.DB.Get([]byte(key))
 	if v == nil {
 		return 0
 	}
@@ -53,7 +52,7 @@ func (p *Process) _ReadInt(keyPtr, keyLen, valPtr, valLen uint32) int {
 
 func (p *Process) WriteStr(key, v []byte) int64 {
 	log.Printf("key=%v value=%v", string(key), string(v))
-	p.db.Set(key, v)
+	p.DB.Set(key, v)
 	return 0
 }
 

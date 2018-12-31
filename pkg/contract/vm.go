@@ -8,18 +8,19 @@ import (
 	"github.com/perlin-network/life/exec"
 )
 
-type VMManager struct{}
+type Env struct {
+	Contract *Contract
 
-func NewVMManager() *VMManager {
-	return &VMManager{}
+	DB   types.KVStore
+	Args []string
 }
 
-func (vm *VMManager) GetVM(db types.KVStore, c *Contract) (*VM, error) {
-	v, err := exec.NewVirtualMachine(c.Code, exec.VMConfig{
+func (env *Env) GetVM() (*VM, error) {
+	v, err := exec.NewVirtualMachine(env.Contract.Code, exec.VMConfig{
 		EnableJIT:          false,
 		DefaultMemoryPages: 128,
 		DefaultTableSize:   65536,
-	}, NewResolver(db), nil)
+	}, NewResolver(env), nil)
 	if err != nil {
 		return nil, err
 	}
@@ -31,7 +32,11 @@ type VM struct {
 }
 
 // TODO calc gas cost
-func (vm *VM) ExecContract(entry string) error {
+func (env *Env) Exec(entry string) error {
+	vm, err := env.GetVM()
+	if err != nil {
+		return err
+	}
 	id, ok := vm.GetFunctionExport(entry)
 	if !ok {
 		return fmt.Errorf("entry point not found")

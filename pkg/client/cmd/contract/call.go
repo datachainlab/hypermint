@@ -50,7 +50,7 @@ var callCmd = &cobra.Command{
 		tx := &transaction.ContractCallTx{
 			Address: caddr,
 			Func:    viper.GetString(flagFunc),
-			Args:    []byte{1},
+			Args:    []string{"first"},
 			CommonTx: transaction.CommonTx{
 				From:  from,
 				Gas:   uint64(viper.GetInt(flagGas)),

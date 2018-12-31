@@ -4,21 +4,20 @@ import (
 	"fmt"
 	"log"
 
-	"github.com/bluele/hypermint/pkg/abci/types"
 	"github.com/perlin-network/life/exec"
 )
 
 type Resolver struct {
-	db types.KVStore
+	env *Env
 }
 
-func NewResolver(db types.KVStore) *Resolver {
-	return &Resolver{db: db}
+func NewResolver(env *Env) *Resolver {
+	return &Resolver{env: env}
 }
 
 func (r *Resolver) getF(cb func(*exec.VirtualMachine, *Process) int64) exec.FunctionImport {
 	return func(vm *exec.VirtualMachine) int64 {
-		ps := NewProcess(vm, r.db)
+		ps := NewProcess(vm, r.env)
 		return cb(vm, ps)
 	}
 }
@@ -29,6 +28,19 @@ func (r *Resolver) ResolveFunc(module, field string) exec.FunctionImport {
 	switch module {
 	case "env":
 		switch field {
+		case "__get_arg_str":
+			return r.getF(func(vm *exec.VirtualMachine, ps *Process) int64 {
+				var key []byte
+				{
+					ptr := int(uint32(vm.GetCurrentFrame().Locals[0]))
+					msgLen := int(uint32(vm.GetCurrentFrame().Locals[1]))
+					key = vm.Memory[ptr : ptr+msgLen]
+				}
+				valPtr := uint32(vm.GetCurrentFrame().Locals[2])
+				msgLen := uint32(vm.GetCurrentFrame().Locals[3])
+
+				return ps.ReadStr(key, valPtr, msgLen)
+			})
 		case "__read_str":
 			return r.getF(func(vm *exec.VirtualMachine, ps *Process) int64 {
 				var key []byte

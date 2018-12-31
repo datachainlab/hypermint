@@ -9,18 +9,16 @@ type ContractMapper interface {
 	Put(ctx types.Context, addr common.Address, c *Contract)
 	Get(ctx types.Context, addr common.Address) (*Contract, error)
 
-	GetVM(ctx types.Context, addr common.Address) (*VM, error)
+	GetEnv(ctx types.Context, addr common.Address, args []string) (*Env, error)
 }
 
 type contractMapper struct {
 	storeKey types.StoreKey
-	vmn      *VMManager
 }
 
 func NewContractMapper(storeKey types.StoreKey) ContractMapper {
 	return &contractMapper{
 		storeKey: storeKey,
-		vmn:      NewVMManager(),
 	}
 }
 
@@ -52,16 +50,20 @@ func (cm *contractMapper) get(kvs types.KVStore, addr common.Address) (*Contract
 	return c, nil
 }
 
-func (cm *contractMapper) GetVM(ctx types.Context, addr common.Address) (*VM, error) {
-	return cm.getVM(cm.getStore(ctx), addr)
+func (cm *contractMapper) GetEnv(ctx types.Context, addr common.Address, args []string) (*Env, error) {
+	return cm.getEnv(cm.getStore(ctx), addr, args)
 }
 
-func (cm *contractMapper) getVM(kvs types.KVStore, addr common.Address) (*VM, error) {
+func (cm *contractMapper) getEnv(kvs types.KVStore, addr common.Address, args []string) (*Env, error) {
 	c, err := cm.get(kvs, addr)
 	if err != nil {
 		return nil, err
 	}
-	return cm.vmn.GetVM(kvs, c)
+	return &Env{
+		Contract: c,
+		DB:       kvs,
+		Args:     args,
+	}, nil
 }
 
 func (cm *contractMapper) getStore(ctx types.Context) types.KVStore {

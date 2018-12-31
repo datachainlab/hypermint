@@ -10,7 +10,7 @@ import (
 type ContractCallTx struct {
 	Address common.Address
 	Func    string // function name
-	Args    []byte
+	Args    []string
 	CommonTx
 }
 
