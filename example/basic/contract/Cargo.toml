@@ -1,0 +1,10 @@
+[package]
+name = "contract"
+version = "0.1.0"
+authors = ["Jun Kimura <junkxdev@gmail.com>"]
+
+[dependencies]
+
+
+[lib]
+crate-type = ["cdylib"]
