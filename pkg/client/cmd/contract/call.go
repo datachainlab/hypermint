@@ -14,6 +14,7 @@ import (
 const (
 	flagContract = "contract"
 	flagFunc     = "func"
+	flagSimulate = "simulate"
 )
 
 func init() {
@@ -22,6 +23,7 @@ func init() {
 	callCmd.Flags().String(flagContract, "", "contract address")
 	callCmd.Flags().String(flagFunc, "", "function name")
 	callCmd.Flags().Uint(flagGas, 0, "gas for tx")
+	callCmd.Flags().Bool(flagSimulate, false, "execute as simulation")
 	util.CheckRequiredFlag(callCmd, helper.FlagAddress, flagGas)
 }
 
@@ -43,6 +45,7 @@ var callCmd = &cobra.Command{
 		if err != nil {
 			return err
 		}
+
 		caddr := common.HexToAddress(viper.GetString(flagContract))
 		tx := &transaction.ContractCallTx{
 			Address: caddr,
@@ -54,9 +57,19 @@ var callCmd = &cobra.Command{
 				Nonce: nonce,
 			},
 		}
+		if viper.GetBool(flagSimulate) {
+			res, err := ctx.Client.ABCIQuery("/app/simulate", tx.Bytes())
+			if err != nil {
+				return err
+			}
+			_ = res
+			return nil
+		}
+
 		if err := ctx.SignAndBroadcastTx(tx, from); err != nil {
 			return err
 		}
+
 		return nil
 	},
 }

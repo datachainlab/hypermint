@@ -1,8 +1,8 @@
 package contract
 
 import (
+	"fmt"
 	"io/ioutil"
-	"log"
 	"os"
 
 	"github.com/bluele/hypermint/pkg/client"
@@ -62,7 +62,7 @@ var deployCmd = &cobra.Command{
 		if err := ctx.SignAndBroadcastTx(tx, from); err != nil {
 			return err
 		}
-		log.Printf("address=%v", tx.Address().Hex())
+		fmt.Printf("%v\n", tx.Address().Hex())
 		return nil
 	},
 }

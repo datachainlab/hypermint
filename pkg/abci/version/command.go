@@ -3,6 +3,7 @@ package version
 import (
 	"fmt"
 
+	"github.com/bluele/hypermint/pkg/consts"
 	"github.com/spf13/cobra"
 )
 
@@ -17,7 +18,7 @@ var (
 
 // return version of CLI/node and commit hash
 func GetVersion() string {
-	return Version
+	return consts.Version
 }
 
 // CMD
