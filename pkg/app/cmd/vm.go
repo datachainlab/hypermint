@@ -2,7 +2,6 @@ package cmd
 
 import (
 	"io/ioutil"
-	"log"
 	"os"
 
 	"github.com/bluele/hypermint/pkg/abci/store"
@@ -18,6 +17,8 @@ import (
 
 const (
 	flagWASMPath = "path"
+	flagArgs     = "args"
+	flagEntry    = "entry"
 )
 
 func vmCmd(ctx *app.Context) *cobra.Command {
@@ -36,7 +37,6 @@ func vmCmd(ctx *app.Context) *cobra.Command {
 			if err != nil {
 				return err
 			}
-
 			db, err := dbm.NewGoLevelDB("hm", "/tmp")
 			if err != nil {
 				return err
@@ -49,17 +49,15 @@ func vmCmd(ctx *app.Context) *cobra.Command {
 				return err
 			}
 			kvs := cms.GetKVStore(key)
-			value := kvs.Get([]byte("key"))
-			log.Println("value=>", string(value))
 			env := &contract.Env{
 				Contract: &contract.Contract{
 					Owner: common.Address{},
 					Code:  b,
 				},
 				DB:   kvs,
-				Args: []string{"first"},
+				Args: viper.GetStringSlice(flagArgs),
 			}
-			if err := env.Exec("app_main"); err != nil {
+			if err := env.Exec(viper.GetString(flagEntry)); err != nil {
 				return err
 			}
 			cms.Commit()
@@ -67,6 +65,8 @@ func vmCmd(ctx *app.Context) *cobra.Command {
 		},
 	}
 	cmd.Flags().String(flagWASMPath, "", "wasm path")
+	cmd.Flags().StringSlice(flagArgs, nil, "arguments")
+	cmd.Flags().String(flagEntry, "app_main", "")
 	util.CheckRequiredFlag(cmd, flagWASMPath)
 	return cmd
 }

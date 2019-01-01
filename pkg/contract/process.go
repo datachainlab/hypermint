@@ -1,6 +1,7 @@
 package contract
 
 import (
+	"encoding/binary"
 	"fmt"
 	"log"
 	"strconv"
@@ -20,38 +21,59 @@ func NewProcess(vm *exec.VirtualMachine, env *Env) *Process {
 	}
 }
 
-func (p *Process) ReadStr(key []byte, valPtr, valLen uint32) int64 {
+type Value interface {
+	Set([]byte) error
+}
+
+type StringValue struct {
+	mem  []byte
+	ptr  uint32
+	size uint32
+}
+
+func (sv *StringValue) Set(s []byte) error {
+	if len(s) < int(sv.size) {
+		copy(sv.mem[sv.ptr:], s)
+		return nil
+	}
+	return fmt.Errorf("%v >= %v", len(s), int(sv.size))
+}
+
+type Int64Value struct {
+	mem []byte
+	ptr uint32
+}
+
+func (v *Int64Value) Set(s []byte) error {
+	i, err := strconv.Atoi(string(s))
+	if err != nil {
+		return err
+	}
+	binary.LittleEndian.PutUint64(v.mem[v.ptr:], uint64(i))
+	return nil
+}
+
+// GetArg returns read size and error or nil
+func (p *Process) GetArg(idx int, ret Value) (int, error) {
+	if len(p.Env.Args) <= idx {
+		return 0, fmt.Errorf("not found idx: %v %v", len(p.Env.Args), idx)
+	}
+	arg := []byte(p.Env.Args[idx])
+	return len(arg), ret.Set(arg)
+}
+
+// ReadState returns read size and error or nil
+func (p *Process) ReadState(key []byte, ret Value) (int, error) {
 	v := p.DB.Get(key)
 	if v == nil {
-		return -1
+		return 0, fmt.Errorf("key not found")
 	}
-
 	log.Println("read:", string(key), string(v))
-
-	if len(v) < int(valLen) {
-		copy(p.vm.Memory[valPtr:], []byte(v))
-		return 0
-	}
-	return 1
+	return len(v), ret.Set(v)
 }
 
-func (p *Process) _ReadInt(keyPtr, keyLen, valPtr, valLen uint32) int {
-	key := string(readMem(p.vm.Memory, keyPtr, keyLen))
-
-	v := p.DB.Get([]byte(key))
-	if v == nil {
-		return 0
-	}
-	i, err := strconv.Atoi(string(v))
-	if err != nil {
-		panic(err)
-	}
-
-	return i
-}
-
-func (p *Process) WriteStr(key, v []byte) int64 {
-	log.Printf("key=%v value=%v", string(key), string(v))
+func (p *Process) WriteState(key, v []byte) int64 {
+	log.Printf("WriteState key=%v value=%v", string(key), string(v))
 	p.DB.Set(key, v)
 	return 0
 }

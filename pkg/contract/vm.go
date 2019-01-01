@@ -2,7 +2,6 @@ package contract
 
 import (
 	"fmt"
-	"log"
 
 	"github.com/bluele/hypermint/pkg/abci/types"
 	"github.com/perlin-network/life/exec"
@@ -53,6 +52,7 @@ func (env *Env) Exec(entry string) error {
 		vm.PrintStackTrace()
 		return err
 	}
-	log.Println(ret)
+	_ = ret
+	// log.Println(ret)
 	return nil
 }

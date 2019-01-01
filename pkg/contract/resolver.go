@@ -30,44 +30,47 @@ func (r *Resolver) ResolveFunc(module, field string) exec.FunctionImport {
 		switch field {
 		case "__get_arg_str":
 			return r.getF(func(vm *exec.VirtualMachine, ps *Process) int64 {
-				var key []byte
-				{
-					ptr := int(uint32(vm.GetCurrentFrame().Locals[0]))
-					msgLen := int(uint32(vm.GetCurrentFrame().Locals[1]))
-					key = vm.Memory[ptr : ptr+msgLen]
+				cf := vm.GetCurrentFrame()
+				idx := cf.Locals[0]
+				ret := &StringValue{
+					mem:  vm.Memory,
+					ptr:  uint32(cf.Locals[1]),
+					size: uint32(cf.Locals[2]),
 				}
-				valPtr := uint32(vm.GetCurrentFrame().Locals[2])
-				msgLen := uint32(vm.GetCurrentFrame().Locals[3])
-
-				return ps.ReadStr(key, valPtr, msgLen)
+				size, err := ps.GetArg(int(idx), ret)
+				if err != nil {
+					log.Println("error: ", err)
+					return -1
+				}
+				return int64(size)
 			})
-		case "__read_str":
+		case "__read_state_str":
 			return r.getF(func(vm *exec.VirtualMachine, ps *Process) int64 {
-				var key []byte
-				{
-					ptr := int(uint32(vm.GetCurrentFrame().Locals[0]))
-					msgLen := int(uint32(vm.GetCurrentFrame().Locals[1]))
-					key = vm.Memory[ptr : ptr+msgLen]
+				cf := vm.GetCurrentFrame()
+				key := readBytes(vm, 0, 1)
+				ret := &StringValue{
+					mem:  vm.Memory,
+					ptr:  uint32(cf.Locals[2]),
+					size: uint32(cf.Locals[3]),
 				}
-				valPtr := uint32(vm.GetCurrentFrame().Locals[2])
-				msgLen := uint32(vm.GetCurrentFrame().Locals[3])
-
-				return ps.ReadStr(key, valPtr, msgLen)
+				size, err := ps.ReadState(key, ret)
+				if err != nil {
+					log.Println(err)
+					return -1
+				}
+				return int64(size)
 			})
-		case "__write_str":
+		case "__write_state_str":
 			return r.getF(func(vm *exec.VirtualMachine, ps *Process) int64 {
-				var key, value []byte
-				{
-					ptr := int(uint32(vm.GetCurrentFrame().Locals[0]))
-					msgLen := int(uint32(vm.GetCurrentFrame().Locals[1]))
-					key = vm.Memory[ptr : ptr+msgLen]
-				}
-				{
-					ptr := int(uint32(vm.GetCurrentFrame().Locals[2]))
-					msgLen := int(uint32(vm.GetCurrentFrame().Locals[3]))
-					value = vm.Memory[ptr : ptr+msgLen]
-				}
-				return ps.WriteStr(key, value)
+				key := readBytes(vm, 0, 1)
+				value := readBytes(vm, 2, 3)
+				return ps.WriteState(key, value)
+			})
+		case "__log":
+			return r.getF(func(vm *exec.VirtualMachine, ps *Process) int64 {
+				msg := readBytes(vm, 0, 1)
+				log.Println(string(msg))
+				return 0
 			})
 		default:
 			panic(fmt.Errorf("unknown field: %s", field))
@@ -75,6 +78,12 @@ func (r *Resolver) ResolveFunc(module, field string) exec.FunctionImport {
 	default:
 		panic(fmt.Errorf("unknown module: %s", module))
 	}
+}
+
+func readBytes(vm *exec.VirtualMachine, ptrIdx, sizeIdx int) []byte {
+	ptr := int(uint32(vm.GetCurrentFrame().Locals[ptrIdx]))
+	msgLen := int(uint32(vm.GetCurrentFrame().Locals[sizeIdx]))
+	return vm.Memory[ptr : ptr+msgLen]
 }
 
 // ResolveGlobal defines a set of global variables for use within a WebAssembly module.
