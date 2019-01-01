@@ -1,10 +1,10 @@
 extern "C" {
     fn __get_arg_str(idx: usize, value_buf_ptr: *mut u8, value_buf_len: usize) -> i64;
+    fn __set_response(msg: *const u8, len: usize);
+    fn __log(msg: *const u8, len: usize);
 
     fn __read_state_str(msg: *const u8, len: usize, value_buf_ptr: *mut u8, value_buf_len: usize) -> i64;
     fn __write_state_str(msg1: *const u8, len1: usize, msg2: *const u8, len2: usize) -> i64;
-
-    fn __log(msg: *const u8, len: usize);
 }
 
 #[no_mangle]
@@ -29,6 +29,8 @@ pub extern "C" fn app_main() -> i32 {
         if (ret == -1) {
             return -1;
         }
+
+        __set_response(val_buf.as_ptr(), val_size as usize);
     }
 
     return 0;

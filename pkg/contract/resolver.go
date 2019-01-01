@@ -67,9 +67,15 @@ func (r *Resolver) ResolveFunc(module, field string) exec.FunctionImport {
 				return ps.WriteState(key, value)
 			})
 		case "__log":
-			return r.getF(func(vm *exec.VirtualMachine, ps *Process) int64 {
+			return r.getF(func(vm *exec.VirtualMachine, _ *Process) int64 {
 				msg := readBytes(vm, 0, 1)
 				log.Println(string(msg))
+				return 0
+			})
+		case "__set_response":
+			return r.getF(func(vm *exec.VirtualMachine, ps *Process) int64 {
+				value := readBytes(vm, 0, 1)
+				ps.SetResponse(value)
 				return 0
 			})
 		default:

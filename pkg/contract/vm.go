@@ -1,6 +1,7 @@
 package contract
 
 import (
+	"errors"
 	"fmt"
 
 	"github.com/bluele/hypermint/pkg/abci/types"
@@ -10,6 +11,8 @@ import (
 type Env struct {
 	Contract   *Contract
 	VMProvider VMProvider
+
+	Response []byte
 
 	DB   types.KVStore
 	Args []string
@@ -52,7 +55,17 @@ func (env *Env) Exec(entry string) error {
 		vm.PrintStackTrace()
 		return err
 	}
-	_ = ret
-	// log.Println(ret)
+	if ret == -1 {
+		return errors.New("execute contract error")
+	}
+	fmt.Printf("response is %v\n", string(env.GetReponse()))
 	return nil
+}
+
+func (env *Env) SetResponse(v []byte) {
+	env.Response = v
+}
+
+func (env *Env) GetReponse() []byte {
+	return env.Response
 }
