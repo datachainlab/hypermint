@@ -9,13 +9,16 @@ import (
 )
 
 type Env struct {
-	Contract *Contract
+	Contract   *Contract
+	VMProvider VMProvider
 
 	DB   types.KVStore
 	Args []string
 }
 
-func (env *Env) GetVM() (*VM, error) {
+type VMProvider func(*Env) (*VM, error)
+
+func DefaultVMProvider(env *Env) (*VM, error) {
 	v, err := exec.NewVirtualMachine(env.Contract.Code, exec.VMConfig{
 		EnableJIT:          false,
 		DefaultMemoryPages: 128,
@@ -33,7 +36,11 @@ type VM struct {
 
 // TODO calc gas cost
 func (env *Env) Exec(entry string) error {
-	vm, err := env.GetVM()
+	vmProvider := env.VMProvider
+	if vmProvider == nil {
+		vmProvider = DefaultVMProvider
+	}
+	vm, err := vmProvider(env)
 	if err != nil {
 		return err
 	}
