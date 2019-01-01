@@ -1,8 +1,6 @@
 BUILD_DIR?=../../build
 HMD?=$(BUILD_DIR)/hmd
 HMCLI?=$(BUILD_DIR)/hmcli
-HMD_HOME?=${HOME}/.hmd
-HMCLI_HOME?=${HOME}/.hmcli
 
 NODE_ADDR?=localhost:26657
 CONTRACT_CODE?=./contract/contract.min.wasm
