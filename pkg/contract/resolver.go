@@ -44,7 +44,7 @@ func (r *Resolver) ResolveFunc(module, field string) exec.FunctionImport {
 				}
 				return int64(size)
 			})
-		case "__read_state_str":
+		case "__read_state":
 			return r.getF(func(vm *exec.VirtualMachine, ps *Process) int64 {
 				cf := vm.GetCurrentFrame()
 				key := readBytes(vm, 0, 1)
@@ -60,7 +60,7 @@ func (r *Resolver) ResolveFunc(module, field string) exec.FunctionImport {
 				}
 				return int64(size)
 			})
-		case "__write_state_str":
+		case "__write_state":
 			return r.getF(func(vm *exec.VirtualMachine, ps *Process) int64 {
 				key := readBytes(vm, 0, 1)
 				value := readBytes(vm, 2, 3)

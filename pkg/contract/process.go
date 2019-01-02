@@ -73,29 +73,10 @@ func (p *Process) ReadState(key []byte, ret Value) (int, error) {
 }
 
 func (p *Process) WriteState(key, v []byte) int64 {
-	log.Printf("WriteState key=%v value=%v", string(key), string(v))
 	p.DB.Set(key, v)
 	return 0
 }
 
 func (p *Process) Log(msg []byte) {
 	fmt.Printf("[app] %s\n", string(msg))
-}
-
-func readMem(inp []byte, off uint32, max uint32) []byte {
-	var result []byte
-
-	mem := inp[int(off):]
-	for i, bt := range mem {
-		if uint32(i) == max {
-			return result
-		}
-		if bt == 0 {
-			return result
-		}
-
-		result = append(result, bt)
-	}
-
-	return result
 }
