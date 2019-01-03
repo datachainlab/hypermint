@@ -15,6 +15,7 @@ const (
 	flagContract = "contract"
 	flagFunc     = "func"
 	flagSimulate = "simulate"
+	flagArgs     = "args"
 )
 
 func init() {
@@ -22,6 +23,7 @@ func init() {
 	callCmd.Flags().String(helper.FlagAddress, "", "address")
 	callCmd.Flags().String(flagContract, "", "contract address")
 	callCmd.Flags().String(flagFunc, "", "function name")
+	callCmd.Flags().StringSlice(flagArgs, nil, "arguments")
 	callCmd.Flags().Uint(flagGas, 0, "gas for tx")
 	callCmd.Flags().Bool(flagSimulate, false, "execute as simulation")
 	util.CheckRequiredFlag(callCmd, helper.FlagAddress, flagGas)
@@ -50,7 +52,7 @@ var callCmd = &cobra.Command{
 		tx := &transaction.ContractCallTx{
 			Address: caddr,
 			Func:    viper.GetString(flagFunc),
-			Args:    []string{"first"},
+			Args:    viper.GetStringSlice(flagArgs),
 			CommonTx: transaction.CommonTx{
 				From:  from,
 				Gas:   uint64(viper.GetInt(flagGas)),

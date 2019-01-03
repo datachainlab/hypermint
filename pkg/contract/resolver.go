@@ -28,7 +28,7 @@ func (r *Resolver) ResolveFunc(module, field string) exec.FunctionImport {
 	switch module {
 	case "env":
 		switch field {
-		case "__get_arg_str":
+		case "__get_arg":
 			return r.getF(func(vm *exec.VirtualMachine, ps *Process) int64 {
 				cf := vm.GetCurrentFrame()
 				idx := cf.Locals[0]
@@ -55,7 +55,6 @@ func (r *Resolver) ResolveFunc(module, field string) exec.FunctionImport {
 				}
 				size, err := ps.ReadState(key, ret)
 				if err != nil {
-					log.Println(err)
 					return -1
 				}
 				return int64(size)
@@ -69,7 +68,7 @@ func (r *Resolver) ResolveFunc(module, field string) exec.FunctionImport {
 		case "__log":
 			return r.getF(func(vm *exec.VirtualMachine, _ *Process) int64 {
 				msg := readBytes(vm, 0, 1)
-				log.Println(string(msg))
+				log.Printf("__log: %v", string(msg))
 				return 0
 			})
 		case "__set_response":

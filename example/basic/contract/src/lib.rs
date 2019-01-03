@@ -1,7 +1,8 @@
 use std::str;
 
 extern "C" {
-    fn __get_arg_str(idx: usize, value_buf_ptr: *mut u8, value_buf_len: usize) -> i64;
+    fn __get_arg(idx: usize, value_buf_ptr: *mut u8, value_buf_len: usize) -> i64;
+
     fn __set_response(msg: *const u8, len: usize);
     fn __log(msg: *const u8, len: usize);
 
@@ -15,7 +16,7 @@ impl API {
     fn get_arg_str(idx: usize) -> String {
         let mut buf = [0u8; 64];
         let size = unsafe {
-            __get_arg_str(idx, buf.as_mut_ptr(), 64)
+            __get_arg(idx, buf.as_mut_ptr(), 64)
         };
         if size == -1 {
             panic!("argument not found")
@@ -33,19 +34,18 @@ impl API {
         }
     }
 
-    fn read_state(key: &[u8]) -> String {
+    fn read_state(key: &[u8]) -> Result<String, String> {
         let mut val_buf = [0u8; 64];
         let size = unsafe {
             __read_state(key.as_ptr(), key.len(), val_buf.as_mut_ptr(), val_buf.len())
         };
         if size == -1 {
-            panic!("panic")
+            return Err("key not found".to_string())
         }
-        let s = match str::from_utf8(&val_buf[0 .. size as usize]) {
-            Ok(v) => v,
-            Err(e) => panic!("Invalid UTF-8 sequence: {}", e),
-        };
-        return s.to_string();
+        match str::from_utf8(&val_buf[0 .. size as usize]) {
+            Ok(v) => Ok(v.to_string()),
+            Err(e) => Err(format!("Invalid UTF-8 sequence: {}", e)),
+        }
     }
 
     fn write_state(key: &[u8], value: &[u8]) {
@@ -56,27 +56,35 @@ impl API {
             }
         }
     }
+
+    fn revert(msg: String) {
+        API::log(msg.as_bytes());
+        panic!(msg);
+    }
 }
 
 #[no_mangle]
 pub extern "C" fn app_main() -> i32 {
-    let key = API::get_arg_str(0);
-    API::log(key.as_bytes());
-    let value = API::get_arg_str(1);
-    API::log(value.as_bytes());
+    let name = API::get_arg_str(0);
+    let amount = API::get_arg_str(1).parse::<i64>().unwrap();
+    if amount <= 0 {
+        API::revert(format!("must specify posotive value, not {}", amount))
+    }
 
-    API::write_state(key.as_bytes(), value.as_bytes());
+    API::log(format!("will incr {}", amount).as_bytes());
+    let v: i64 = match API::read_state(name.as_bytes()) {
+        Ok(v) => {
+            API::log(format!("read {}", v).as_bytes());
+            v.parse::<i64>().unwrap()
+        },
+        Err(m) => {
+            API::log(m.as_bytes());
+            0
+        },
+    } + amount;
 
-    return 0;
-}
-
-#[no_mangle]
-pub extern "C" fn app_read() -> i32 {
-    let key = API::get_arg_str(0);
-    API::log(key.as_bytes());
-
-    let value = API::read_state(key.as_bytes());
-    API::log(value.as_bytes());
+    API::log(format!("will write {}", v).as_bytes());
+    API::write_state(name.as_bytes(), format!("{}", v).as_bytes());
 
     return 0;
 }

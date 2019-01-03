@@ -3,7 +3,6 @@ package contract
 import (
 	"encoding/binary"
 	"fmt"
-	"log"
 	"strconv"
 
 	"github.com/perlin-network/life/exec"
@@ -32,11 +31,12 @@ type StringValue struct {
 }
 
 func (sv *StringValue) Set(s []byte) error {
-	if len(s) < int(sv.size) {
+	fmt.Println("StringValue.Set:", s)
+	if len(s) <= int(sv.size) {
 		copy(sv.mem[sv.ptr:], s)
 		return nil
 	}
-	return fmt.Errorf("%v >= %v", len(s), int(sv.size))
+	return fmt.Errorf("error: %v >= %v", len(s), int(sv.size))
 }
 
 type Int64Value struct {
@@ -68,7 +68,6 @@ func (p *Process) ReadState(key []byte, ret Value) (int, error) {
 	if v == nil {
 		return 0, fmt.Errorf("key not found")
 	}
-	log.Println("read:", string(key), string(v))
 	return len(v), ret.Set(v)
 }
 
