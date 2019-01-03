@@ -13,19 +13,18 @@ extern "C" {
 struct API {}
 
 impl API {
-    fn get_arg_str(idx: usize) -> String {
+    fn get_arg_str(idx: usize) -> Result<String, String> {
         let mut buf = [0u8; 64];
         let size = unsafe {
             __get_arg(idx, buf.as_mut_ptr(), 64)
         };
         if size == -1 {
-            panic!("argument not found")
+            return Err(format!("argument {} not found", idx));
         }
-        let s = match str::from_utf8(&buf[0 .. size as usize]) {
-            Ok(v) => v,
-            Err(e) => panic!("Invalid UTF-8 sequence: {}", e),
-        };
-        return s.to_string();
+        match str::from_utf8(&buf[0 .. size as usize]) {
+            Ok(v) => Ok(v.to_string()),
+            Err(e) => Err(format!("Invalid UTF-8 sequence: {}", e)),
+        }
     }
 
     fn log(b: &[u8]) {
@@ -65,8 +64,8 @@ impl API {
 
 #[no_mangle]
 pub extern "C" fn app_main() -> i32 {
-    let name = API::get_arg_str(0);
-    let amount = API::get_arg_str(1).parse::<i64>().unwrap();
+    let name = API::get_arg_str(0).unwrap();
+    let amount = API::get_arg_str(1).unwrap().parse::<i64>().unwrap();
     if amount <= 0 {
         API::revert(format!("must specify posotive value, not {}", amount))
     }
