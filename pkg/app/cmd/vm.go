@@ -7,6 +7,7 @@ import (
 	"github.com/bluele/hypermint/pkg/abci/store"
 	sdk "github.com/bluele/hypermint/pkg/abci/types"
 	"github.com/bluele/hypermint/pkg/app"
+	"github.com/bluele/hypermint/pkg/client/helper"
 	"github.com/bluele/hypermint/pkg/contract"
 	"github.com/bluele/hypermint/pkg/util"
 	"github.com/ethereum/go-ethereum/common"
@@ -27,6 +28,9 @@ func vmCmd(ctx *app.Context) *cobra.Command {
 		Short: "exec wasm on vm",
 		RunE: func(cmd *cobra.Command, args []string) error {
 			viper.BindPFlags(cmd.Flags())
+			addr := viper.GetString(helper.FlagAddress)
+			from := common.HexToAddress(addr)
+
 			path := viper.GetString(flagWASMPath)
 			f, err := os.Open(path)
 			if err != nil {
@@ -51,7 +55,7 @@ func vmCmd(ctx *app.Context) *cobra.Command {
 			kvs := cms.GetKVStore(key)
 			env := &contract.Env{
 				Contract: &contract.Contract{
-					Owner: common.Address{},
+					Owner: from,
 					Code:  b,
 				},
 				DB:   kvs,
@@ -67,6 +71,7 @@ func vmCmd(ctx *app.Context) *cobra.Command {
 	cmd.Flags().String(flagWASMPath, "", "wasm path")
 	cmd.Flags().StringSlice(flagArgs, nil, "arguments")
 	cmd.Flags().String(flagEntry, "app_main", "")
+	cmd.Flags().String(helper.FlagAddress, "", "address")
 	util.CheckRequiredFlag(cmd, flagWASMPath)
 	return cmd
 }

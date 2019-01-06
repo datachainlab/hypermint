@@ -28,6 +28,21 @@ func (r *Resolver) ResolveFunc(module, field string) exec.FunctionImport {
 	switch module {
 	case "env":
 		switch field {
+		case "__get_sender":
+			return r.getF(func(vm *exec.VirtualMachine, ps *Process) int64 {
+				cf := vm.GetCurrentFrame()
+				sender := ps.GetSender()
+				ret := &StringValue{
+					mem:  vm.Memory,
+					ptr:  uint32(cf.Locals[0]),
+					size: uint32(cf.Locals[1]),
+				}
+				if err := ret.Set(sender[:]); err != nil {
+					log.Println("error: ", err)
+					return -1
+				}
+				return 0
+			})
 		case "__get_arg":
 			return r.getF(func(vm *exec.VirtualMachine, ps *Process) int64 {
 				cf := vm.GetCurrentFrame()
@@ -93,16 +108,5 @@ func readBytes(vm *exec.VirtualMachine, ptrIdx, sizeIdx int) []byte {
 
 // ResolveGlobal defines a set of global variables for use within a WebAssembly module.
 func (r *Resolver) ResolveGlobal(module, field string) int64 {
-	log.Printf("Resolve global: %s %s\n", module, field)
-	switch module {
-	case "env":
-		switch field {
-		case "__life_magic":
-			return 424
-		default:
-			panic(fmt.Errorf("unknown field: %s", field))
-		}
-	default:
-		panic(fmt.Errorf("unknown module: %s", module))
-	}
+	panic(fmt.Errorf("not supported module: %s %s", module, field))
 }

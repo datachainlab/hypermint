@@ -1,10 +1,9 @@
 package contract
 
 import (
-	"encoding/binary"
 	"fmt"
-	"strconv"
 
+	"github.com/ethereum/go-ethereum/common"
 	"github.com/perlin-network/life/exec"
 )
 
@@ -39,20 +38,6 @@ func (sv *StringValue) Set(s []byte) error {
 	return fmt.Errorf("error: %v >= %v", len(s), int(sv.size))
 }
 
-type Int64Value struct {
-	mem []byte
-	ptr uint32
-}
-
-func (v *Int64Value) Set(s []byte) error {
-	i, err := strconv.Atoi(string(s))
-	if err != nil {
-		return err
-	}
-	binary.LittleEndian.PutUint64(v.mem[v.ptr:], uint64(i))
-	return nil
-}
-
 // GetArg returns read size and error or nil
 func (p *Process) GetArg(idx int, ret Value) (int, error) {
 	if len(p.Env.Args) <= idx {
@@ -76,6 +61,6 @@ func (p *Process) WriteState(key, v []byte) int64 {
 	return 0
 }
 
-func (p *Process) Log(msg []byte) {
-	fmt.Printf("[app] %s\n", string(msg))
+func (p *Process) GetSender() common.Address {
+	return p.Env.Contract.Owner
 }
