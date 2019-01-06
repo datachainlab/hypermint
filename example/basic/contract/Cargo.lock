@@ -1,4 +1,11 @@
 [[package]]
 name = "contract"
 version = "0.1.0"
+dependencies = [
+ "hmc 0.1.0",
+]
+
+[[package]]
+name = "hmc"
+version = "0.1.0"
 

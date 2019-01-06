@@ -1,7 +1,10 @@
 [package]
-name = "contract"
+name = "hmc"
 version = "0.1.0"
 authors = ["Jun Kimura <junkxdev@gmail.com>"]
 
 [dependencies]
-hmc = { path = "../../../hmc" }
+
+[lib]
+name = "hmc"
+crate-type = ["cdylib", "lib"]
