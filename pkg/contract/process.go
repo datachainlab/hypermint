@@ -30,7 +30,6 @@ type StringValue struct {
 }
 
 func (sv *StringValue) Set(s []byte) error {
-	fmt.Println("StringValue.Set:", s)
 	if len(s) <= int(sv.size) {
 		copy(sv.mem[sv.ptr:], s)
 		return nil

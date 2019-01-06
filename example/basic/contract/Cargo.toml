@@ -5,3 +5,6 @@ authors = ["Jun Kimura <junkxdev@gmail.com>"]
 
 [dependencies]
 hmc = { path = "../../../hmc" }
+
+[lib]
+crate-type = ["lib"]

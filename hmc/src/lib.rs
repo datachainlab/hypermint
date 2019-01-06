@@ -45,17 +45,26 @@ pub fn log(b: &[u8]) {
     }
 }
 
-pub fn read_state(key: &[u8]) -> Result<String, String> {
+pub fn read_state(key: &[u8]) -> Result<Vec<u8>, String> {
     let mut val_buf = [0u8; 64];
-    let size = unsafe {
+    match unsafe {
         __read_state(key.as_ptr(), key.len(), val_buf.as_mut_ptr(), val_buf.len())
-    };
-    if size == -1 {
-        return Err("key not found".to_string())
+    } {
+        -1 => Err("key not found".to_string()),
+        size => Ok((&val_buf[0 .. size as usize]).to_vec())
     }
-    match str::from_utf8(&val_buf[0 .. size as usize]) {
-        Ok(v) => Ok(v.to_string()),
-        Err(e) => Err(format!("Invalid UTF-8 sequence: {}", e)),
+}
+
+pub fn read_state_str(key: &[u8]) -> Result<String, String> {
+    let mut val_buf = [0u8; 64];
+    match unsafe {
+        __read_state(key.as_ptr(), key.len(), val_buf.as_mut_ptr(), val_buf.len())
+    } {
+        -1 => Err("key not found".to_string()),
+        size => match str::from_utf8(&val_buf[0 .. size as usize]) {
+            Ok(v) => Ok(v.to_string()),
+            Err(e) => Err(format!("Invalid UTF-8 sequence: {}", e)),
+        }
     }
 }
 
