@@ -10,6 +10,7 @@ import (
 	"path"
 	"path/filepath"
 	"sort"
+	"time"
 
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
@@ -23,6 +24,7 @@ import (
 	pvm "github.com/tendermint/tendermint/privval"
 	"github.com/tendermint/tendermint/types"
 	tmtypes "github.com/tendermint/tendermint/types"
+	tmtime "github.com/tendermint/tendermint/types/time"
 
 	"github.com/bluele/hypermint/pkg/app"
 	"github.com/bluele/hypermint/pkg/config"
@@ -55,10 +57,11 @@ type GenesisTx struct {
 
 // Storage for init command input parameters
 type InitConfig struct {
-	ChainID   string
-	GenTxs    bool
-	GenTxsDir string
-	Overwrite bool
+	ChainID     string
+	GenTxs      bool
+	GenTxsDir   string
+	Overwrite   bool
+	GenesisTime time.Time
 }
 
 // get cmd to initialize all files for tendermint and application
@@ -126,6 +129,7 @@ func initCmd(ctx *app.Context, cdc *amino.Codec, appInit app.AppInit) *cobra.Com
 				viper.GetBool(FlagWithTxs),
 				filepath.Join(config.RootDir, "config", "gentx"),
 				viper.GetBool(FlagOverwrite),
+				tmtime.Now(),
 			}
 
 			chainID, nodeID, appMessage, err := initWithConfig(cdc, appInit, config, initConfig)
@@ -272,7 +276,7 @@ func initWithConfig(cdc *amino.Codec, appInit app.AppInit, c *cfg.Config, initCo
 		return
 	}
 
-	err = writeGenesisFile(cdc, genFile, initConfig.ChainID, validators, appState)
+	err = writeGenesisFile(cdc, genFile, initConfig.ChainID, validators, appState, initConfig.GenesisTime)
 	if err != nil {
 		return
 	}
@@ -298,11 +302,12 @@ func readOrCreatePrivValidator(tmConfig *cfg.Config) crypto.PubKey {
 // writeGenesisFile creates and writes the genesis configuration to disk. An
 // error is returned if building or writing the configuration to file fails.
 // nolint: unparam
-func writeGenesisFile(cdc *amino.Codec, genesisFile, chainID string, validators []tmtypes.GenesisValidator, appState json.RawMessage) error {
+func writeGenesisFile(cdc *amino.Codec, genesisFile, chainID string, validators []tmtypes.GenesisValidator, appState json.RawMessage, genesisTime time.Time) error {
 	genDoc := tmtypes.GenesisDoc{
-		ChainID:    chainID,
-		Validators: validators,
-		AppState:   appState,
+		GenesisTime: genesisTime,
+		ChainID:     chainID,
+		Validators:  validators,
+		AppState:    appState,
 	}
 
 	if err := genDoc.ValidateAndComplete(); err != nil {

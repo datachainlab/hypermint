@@ -10,6 +10,7 @@ import (
 	amino "github.com/tendermint/go-amino"
 	cfg "github.com/tendermint/tendermint/config"
 	cmn "github.com/tendermint/tendermint/libs/common"
+	tmtime "github.com/tendermint/tendermint/types/time"
 
 	"github.com/bluele/hypermint/pkg/app"
 	"github.com/bluele/hypermint/pkg/config"
@@ -117,6 +118,7 @@ func testnetWithConfig(c *cfg.Config, cdc *amino.Codec, appInit app.AppInit) err
 
 	// Generate genesis.json and config.toml
 	chainID := "chain-" + cmn.RandStr(6)
+	genTime := tmtime.Now()
 	for i := 0; i < numValidators; i++ {
 		nodeDirName := fmt.Sprintf("%s%d", viper.GetString(nodeDirPrefix), i)
 		nodeDir := filepath.Join(outDir, nodeDirName, "hmd")
@@ -126,6 +128,7 @@ func testnetWithConfig(c *cfg.Config, cdc *amino.Codec, appInit app.AppInit) err
 			true,
 			gentxsDir,
 			true,
+			genTime,
 		}
 		c.Moniker = nodeDirName
 		c.SetRoot(nodeDir)

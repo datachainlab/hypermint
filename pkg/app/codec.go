@@ -5,6 +5,9 @@ import (
 	"encoding/json"
 
 	amino "github.com/tendermint/go-amino"
+	"github.com/tendermint/tendermint/crypto"
+	"github.com/tendermint/tendermint/crypto/ed25519"
+	"github.com/tendermint/tendermint/crypto/secp256k1"
 )
 
 var cdc *amino.Codec
@@ -30,4 +33,16 @@ func MarshalJSONIndent(cdc *amino.Codec, obj interface{}) ([]byte, error) {
 
 func init() {
 	cdc = amino.NewCodec()
+	cdc.RegisterInterface((*crypto.PubKey)(nil), nil)
+	cdc.RegisterInterface((*crypto.PrivKey)(nil), nil)
+
+	cdc.RegisterConcrete(secp256k1.PubKeySecp256k1{},
+		secp256k1.PubKeyAminoRoute, nil)
+	cdc.RegisterConcrete(secp256k1.PrivKeySecp256k1{},
+		secp256k1.PrivKeyAminoRoute, nil)
+
+	cdc.RegisterConcrete(ed25519.PubKeyEd25519{},
+		ed25519.PubKeyAminoRoute, nil)
+	cdc.RegisterConcrete(ed25519.PrivKeyEd25519{},
+		ed25519.PrivKeyAminoRoute, nil)
 }
