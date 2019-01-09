@@ -12,6 +12,10 @@ import (
 	abci "github.com/tendermint/tendermint/abci/types"
 )
 
+const (
+	genesisBalance = 100
+)
+
 // State to Unmarshal
 type GenesisState struct {
 	Accounts []account.Account `json:"accounts"`
@@ -55,6 +59,7 @@ func AppGenState(cdc *amino.Codec, appGenTxs []json.RawMessage) (genesisState Ge
 
 	// get genesis flag account information
 	accounts := make([]account.Account, 0, len(appGenTxs))
+	accountm := make(map[common.Address]struct{})
 	for _, appGenTx := range appGenTxs {
 
 		var genTx AppGenTx
@@ -63,11 +68,13 @@ func AppGenState(cdc *amino.Codec, appGenTxs []json.RawMessage) (genesisState Ge
 			return
 		}
 
-		if genTx.Address != "" {
+		addr := common.HexToAddress(genTx.Address)
+		if _, ok := accountm[addr]; !ok && genTx.Address != "" {
 			accounts = append(accounts, account.Account{
-				Address: common.HexToAddress(genTx.Address),
-				Amount:  100,
+				Address: addr,
+				Amount:  genesisBalance,
 			})
+			accountm[addr] = struct{}{}
 		}
 	}
 
