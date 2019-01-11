@@ -2,11 +2,7 @@ package validator
 
 import (
 	"crypto/ecdsa"
-	"errors"
 
-	"github.com/ethereum/go-ethereum/accounts/abi/bind"
-	"github.com/ethereum/go-ethereum/common"
-	"github.com/ethereum/go-ethereum/core/types"
 	gcrypto "github.com/ethereum/go-ethereum/crypto"
 	"github.com/tendermint/tendermint/crypto"
 	"github.com/tendermint/tendermint/crypto/secp256k1"
@@ -27,25 +23,6 @@ func GenFilePVWithECDSA(path string, prv *ecdsa.PrivateKey) *pvm.FilePV {
 	var p secp256k1.PrivKeySecp256k1
 	copy(p[:], pb)
 	return GenFilePV(path, p)
-}
-
-func NewTransactorFromPV(pv *pvm.FilePV) *bind.TransactOpts {
-	addr := common.BytesToAddress(pv.Address)
-	return &bind.TransactOpts{
-		From: addr,
-		Signer: func(signer types.Signer, address common.Address, tx *types.Transaction) (*types.Transaction, error) {
-			if address != addr {
-				return nil, errors.New("not authorized to sign this account")
-			}
-			prv := pv.PrivKey.(secp256k1.PrivKeySecp256k1)
-			key := bytesToECDSAPrvKey(prv[:])
-			signature, err := gcrypto.Sign(signer.Hash(tx).Bytes(), key)
-			if err != nil {
-				return nil, err
-			}
-			return tx.WithSignature(signer, signature)
-		},
-	}
 }
 
 func bytesToECDSAPrvKey(b []byte) *ecdsa.PrivateKey {

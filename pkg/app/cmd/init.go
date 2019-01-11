@@ -308,6 +308,11 @@ func writeGenesisFile(cdc *amino.Codec, genesisFile, chainID string, validators 
 		ChainID:     chainID,
 		Validators:  validators,
 		AppState:    appState,
+		ConsensusParams: &types.ConsensusParams{
+			BlockSize: types.DefaultBlockSizeParams(),
+			Evidence:  types.DefaultEvidenceParams(),
+			Validator: types.ValidatorParams{PubKeyTypes: []string{types.ABCIPubKeyTypeSecp256k1}},
+		},
 	}
 
 	if err := genDoc.ValidateAndComplete(); err != nil {
