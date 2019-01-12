@@ -48,3 +48,6 @@ test:
 
 build-image:
 	docker build . -t bluele/hypermint:${VERSION}
+
+build-linux:
+	docker run -v $(PWD):/go/src/github.com/bluele/hypermint -it golang:1.11.4-stretch make build

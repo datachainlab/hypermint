@@ -18,8 +18,8 @@ import (
 
 var (
 	nodeDirPrefix = "node-dir-prefix"
-	nValidators   = "v"
-	outputDir     = "o"
+	nValidators   = "validators-num"
+	outputDir     = "output-dir"
 
 	startingIPAddress = "starting-ip-address"
 )
@@ -38,7 +38,7 @@ Note, strict routability for addresses is turned off in the config file.
 
 Example:
 
-	hmd testnet --v 4 --output-dir ./output --starting-ip-address 192.168.10.2
+	hmd testnet --validators-num 4 --output-dir ./output --starting-ip-address 192.168.10.2
 	`,
 		RunE: func(_ *cobra.Command, _ []string) error {
 			config := ctx.Config
@@ -46,9 +46,9 @@ Example:
 			return err
 		},
 	}
-	cmd.Flags().Int(nValidators, 4,
+	cmd.Flags().IntP(nValidators, "v", 4,
 		"Number of validators to initialize the testnet with")
-	cmd.Flags().String(outputDir, "./mytestnet",
+	cmd.Flags().StringP(outputDir, "o", "./mytestnet",
 		"Directory to store initialization data for the testnet")
 	cmd.Flags().String(nodeDirPrefix, "node",
 		"Prefix the directory name for each node with (node results in node0, node1, ...)")
