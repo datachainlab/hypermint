@@ -9,7 +9,7 @@ import (
 	"github.com/bluele/hypermint/pkg/transaction"
 )
 
-func NewHandler(am account.AccountMapper, cm *contract.ContractManager) types.Handler {
+func NewHandler(am account.AccountMapper, cm *contract.ContractManager, envm *contract.EnvManager) types.Handler {
 	return func(ctx types.Context, tx types.Tx) types.Result {
 		switch tx := tx.(type) {
 		case *transaction.TransferTx:
@@ -17,7 +17,7 @@ func NewHandler(am account.AccountMapper, cm *contract.ContractManager) types.Ha
 		case *transaction.ContractDeployTx:
 			return handleContractDeployTx(ctx, cm, tx)
 		case *transaction.ContractCallTx:
-			return handleContractCallTx(ctx, cm, tx)
+			return handleContractCallTx(ctx, cm, envm, tx)
 		default:
 			errMsg := "Unrecognized Tx type: " + reflect.TypeOf(tx).Name()
 			return types.ErrUnknownRequest(errMsg).Result()
@@ -39,8 +39,8 @@ func handleContractDeployTx(ctx types.Context, cm *contract.ContractManager, tx 
 	return types.Result{}
 }
 
-func handleContractCallTx(ctx types.Context, cm *contract.ContractManager, tx *transaction.ContractCallTx) types.Result {
-	env, err := cm.GetEnv(ctx, tx.Address, tx.Args)
+func handleContractCallTx(ctx types.Context, cm *contract.ContractManager, envm *contract.EnvManager, tx *transaction.ContractCallTx) types.Result {
+	env, err := envm.Get(ctx, tx.Address, tx.Args)
 	if err != nil {
 		return transaction.ErrInvalidCall(transaction.DefaultCodespace, err.Error()).Result()
 	}

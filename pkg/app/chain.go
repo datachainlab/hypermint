@@ -36,7 +36,9 @@ var (
 	DefaultCLIHome  = os.ExpandEnv("$HOME/.hmcli")
 	DefaultNodeHome = os.ExpandEnv("$HOME/.hmd")
 
-	CapKeyMainStoreKey = sdk.NewKVStoreKey("main")
+	MainStoreKey     = sdk.NewKVStoreKey("main")
+	ContractStoreKey = sdk.NewKVStoreKey("contract")
+	StorageStoreKey  = sdk.NewKVStoreKey("storage")
 )
 
 type Chain struct {
@@ -44,8 +46,10 @@ type Chain struct {
 
 	logger log.Logger
 	cdc    *amino.Codec
+
 	// keys to access the substores
 	capKeyMainStore *sdk.KVStoreKey
+	contractStore   *sdk.KVStoreKey
 }
 
 func NewChain(logger log.Logger, db db.DB, traceStore io.Writer) *Chain {
@@ -53,23 +57,40 @@ func NewChain(logger log.Logger, db db.DB, traceStore io.Writer) *Chain {
 	c := &Chain{
 		BaseApp:         app,
 		cdc:             cdc,
-		capKeyMainStore: CapKeyMainStoreKey,
+		capKeyMainStore: MainStoreKey,
+		contractStore:   ContractStoreKey,
 	}
 	am := account.NewAccountMapper(c.capKeyMainStore)
-	cm := contract.NewContractMapper(c.capKeyMainStore)
+	cm := contract.NewContractMapper(c.contractStore)
 	cmn := contract.NewContractManager(cm)
+	envm := contract.NewEnvManager(c.contractStore, cm)
 
-	c.SetHandler(handler.NewHandler(am, cmn))
+	c.SetHandler(handler.NewHandler(am, cmn, envm))
 	c.SetAnteHandler(handler.NewAnteHandler(am))
-	c.MountStoresIAVL(c.capKeyMainStore) // TODO account state, contract stateを別で実装する(appHash)
 	c.SetInitChainer(GetInitChainer(am))
 
-	err := c.LoadLatestVersion(c.capKeyMainStore)
+	err := c.mountStores()
 	if err != nil {
 		common.Exit(err.Error())
 	}
 
 	return c
+}
+
+func (c *Chain) mountStores() error {
+	keys := []*sdk.KVStoreKey{
+		c.capKeyMainStore, c.contractStore,
+	}
+
+	c.MountStoresIAVL(keys...)
+
+	for _, key := range keys {
+		if err := c.LoadLatestVersion(key); err != nil {
+			return err
+		}
+	}
+
+	return nil
 }
 
 func (c *Chain) ExportAppStateJSON() (json.RawMessage, []types.GenesisValidator, error) {

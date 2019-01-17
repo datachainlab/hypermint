@@ -5,12 +5,15 @@ import (
 	"fmt"
 
 	"github.com/bluele/hypermint/pkg/abci/types"
+	sdk "github.com/bluele/hypermint/pkg/abci/types"
+	"github.com/ethereum/go-ethereum/common"
 	"github.com/perlin-network/life/exec"
 )
 
 type Env struct {
-	Contract   *Contract
-	VMProvider VMProvider
+	Contract       *Contract
+	VMProvider     VMProvider
+	ContractMapper ContractMapper
 
 	Response []byte
 
@@ -68,4 +71,29 @@ func (env *Env) SetResponse(v []byte) {
 
 func (env *Env) GetReponse() []byte {
 	return env.Response
+}
+
+type EnvManager struct {
+	key sdk.StoreKey
+	cm  ContractMapper
+}
+
+func NewEnvManager(key sdk.StoreKey, cm ContractMapper) *EnvManager {
+	return &EnvManager{
+		key: key,
+		cm:  cm,
+	}
+}
+
+func (em *EnvManager) Get(ctx sdk.Context, addr common.Address, args []string) (*Env, error) {
+	c, err := em.cm.Get(ctx, addr)
+	if err != nil {
+		return nil, err
+	}
+	return &Env{
+		Contract:       c,
+		ContractMapper: em.cm,
+		DB:             ctx.KVStore(em.key).Prefix(addr.Bytes()),
+		Args:           args,
+	}, nil
 }
