@@ -1,5 +1,5 @@
 [[package]]
-name = "contract"
+name = "basic"
 version = "0.1.0"
 dependencies = [
  "hmc 0.1.0",

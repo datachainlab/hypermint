@@ -5,6 +5,7 @@ import (
 	"os"
 
 	"github.com/bluele/hypermint/pkg/abci/store"
+	"github.com/bluele/hypermint/pkg/abci/types"
 	sdk "github.com/bluele/hypermint/pkg/abci/types"
 	"github.com/bluele/hypermint/pkg/app"
 	"github.com/bluele/hypermint/pkg/client/helper"
@@ -13,6 +14,7 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
+	abci "github.com/tendermint/tendermint/abci/types"
 	dbm "github.com/tendermint/tendermint/libs/db"
 )
 
@@ -61,7 +63,8 @@ func vmCmd(ctx *app.Context) *cobra.Command {
 				DB:   kvs,
 				Args: viper.GetStringSlice(flagArgs),
 			}
-			if err := env.Exec(viper.GetString(flagEntry)); err != nil {
+			c := types.NewContext(cms, abci.Header{}, false, nil)
+			if err := env.Exec(c, viper.GetString(flagEntry)); err != nil {
 				return err
 			}
 			cms.Commit()

@@ -11,9 +11,10 @@ import (
 )
 
 type Env struct {
-	Contract       *Contract
-	VMProvider     VMProvider
-	ContractMapper ContractMapper
+	Context    sdk.Context
+	EnvManager *EnvManager
+	Contract   *Contract
+	VMProvider VMProvider
 
 	Response []byte
 
@@ -40,7 +41,7 @@ type VM struct {
 }
 
 // TODO calc gas cost
-func (env *Env) Exec(entry string) error {
+func (env *Env) Exec(ctx sdk.Context, entry string) error {
 	vmProvider := env.VMProvider
 	if vmProvider == nil {
 		vmProvider = DefaultVMProvider
@@ -91,9 +92,10 @@ func (em *EnvManager) Get(ctx sdk.Context, addr common.Address, args []string) (
 		return nil, err
 	}
 	return &Env{
-		Contract:       c,
-		ContractMapper: em.cm,
-		DB:             ctx.KVStore(em.key).Prefix(addr.Bytes()),
-		Args:           args,
+		Context:    ctx,
+		EnvManager: em,
+		Contract:   c,
+		DB:         ctx.KVStore(em.key).Prefix(addr.Bytes()),
+		Args:       args,
 	}, nil
 }

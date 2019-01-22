@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"log"
 
+	"github.com/ethereum/go-ethereum/common"
 	"github.com/perlin-network/life/exec"
 )
 
@@ -91,6 +92,32 @@ func (r *Resolver) ResolveFunc(module, field string) exec.FunctionImport {
 				value := readBytes(vm, 0, 1)
 				ps.SetResponse(value)
 				return 0
+			})
+		case "__call_contract":
+			return r.getF(func(vm *exec.VirtualMachine, ps *Process) int64 {
+				addr := common.BytesToAddress(readBytes(vm, 0, 1))
+				entry := string(readBytes(vm, 2, 3))
+				cf := vm.GetCurrentFrame()
+				ret := &StringValue{
+					mem:  vm.Memory,
+					ptr:  uint32(cf.Locals[3]),
+					size: uint32(cf.Locals[4]),
+				}
+				env, err := ps.EnvManager.Get(ps.Env.Context, addr, nil)
+				if err != nil {
+					log.Println("error: ", err)
+					return -1
+				}
+				if err := env.Exec(ps.Env.Context, entry); err != nil {
+					log.Println("error: ", err)
+					return -1
+				}
+				res := env.GetReponse()
+				if err := ret.Set(res); err != nil {
+					log.Println("error: ", err)
+					return -1
+				}
+				return int64(len(res))
 			})
 		default:
 			panic(fmt.Errorf("unknown field: %s", field))
