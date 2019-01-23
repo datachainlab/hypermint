@@ -25,7 +25,6 @@ func (r *Resolver) getF(cb func(*exec.VirtualMachine, *Process) int64) exec.Func
 
 // ResolveFunc defines a set of import functions that may be called within a WebAssembly module.
 func (r *Resolver) ResolveFunc(module, field string) exec.FunctionImport {
-	log.Printf("Resolve func: %s %s\n", module, field)
 	switch module {
 	case "env":
 		switch field {
@@ -100,8 +99,8 @@ func (r *Resolver) ResolveFunc(module, field string) exec.FunctionImport {
 				cf := vm.GetCurrentFrame()
 				ret := &StringValue{
 					mem:  vm.Memory,
-					ptr:  uint32(cf.Locals[3]),
-					size: uint32(cf.Locals[4]),
+					ptr:  uint32(cf.Locals[4]),
+					size: uint32(cf.Locals[5]),
 				}
 				env, err := ps.EnvManager.Get(ps.Env.Context, addr, nil)
 				if err != nil {

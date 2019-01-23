@@ -62,7 +62,7 @@ func (env *Env) Exec(ctx sdk.Context, entry string) error {
 	if ret == -1 {
 		return errors.New("execute contract error")
 	}
-	fmt.Printf("response is %v\n", string(env.GetReponse()))
+	fmt.Printf("%v: response is %v\n", entry, string(env.GetReponse()))
 	return nil
 }
 
