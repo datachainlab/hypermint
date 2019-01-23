@@ -23,18 +23,18 @@ type Value interface {
 	Set([]byte) error
 }
 
-type StringValue struct {
+type BytesValue struct {
 	mem  []byte
 	ptr  uint32
 	size uint32
 }
 
-func (sv *StringValue) Set(s []byte) error {
-	if len(s) <= int(sv.size) {
-		copy(sv.mem[sv.ptr:], s)
+func (bv *BytesValue) Set(b []byte) error {
+	if len(b) <= int(bv.size) {
+		copy(bv.mem[bv.ptr:], b)
 		return nil
 	}
-	return fmt.Errorf("error: %v >= %v", len(s), int(sv.size))
+	return fmt.Errorf("error: %v >= %v", len(b), int(bv.size))
 }
 
 // GetArg returns read size and error or nil

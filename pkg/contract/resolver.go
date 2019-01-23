@@ -32,7 +32,7 @@ func (r *Resolver) ResolveFunc(module, field string) exec.FunctionImport {
 			return r.getF(func(vm *exec.VirtualMachine, ps *Process) int64 {
 				cf := vm.GetCurrentFrame()
 				sender := ps.GetSender()
-				ret := &StringValue{
+				ret := &BytesValue{
 					mem:  vm.Memory,
 					ptr:  uint32(cf.Locals[0]),
 					size: uint32(cf.Locals[1]),
@@ -47,7 +47,7 @@ func (r *Resolver) ResolveFunc(module, field string) exec.FunctionImport {
 			return r.getF(func(vm *exec.VirtualMachine, ps *Process) int64 {
 				cf := vm.GetCurrentFrame()
 				idx := cf.Locals[0]
-				ret := &StringValue{
+				ret := &BytesValue{
 					mem:  vm.Memory,
 					ptr:  uint32(cf.Locals[1]),
 					size: uint32(cf.Locals[2]),
@@ -63,7 +63,7 @@ func (r *Resolver) ResolveFunc(module, field string) exec.FunctionImport {
 			return r.getF(func(vm *exec.VirtualMachine, ps *Process) int64 {
 				cf := vm.GetCurrentFrame()
 				key := readBytes(vm, 0, 1)
-				ret := &StringValue{
+				ret := &BytesValue{
 					mem:  vm.Memory,
 					ptr:  uint32(cf.Locals[2]),
 					size: uint32(cf.Locals[3]),
@@ -97,7 +97,7 @@ func (r *Resolver) ResolveFunc(module, field string) exec.FunctionImport {
 				addr := common.BytesToAddress(readBytes(vm, 0, 1))
 				entry := string(readBytes(vm, 2, 3))
 				cf := vm.GetCurrentFrame()
-				ret := &StringValue{
+				ret := &BytesValue{
 					mem:  vm.Memory,
 					ptr:  uint32(cf.Locals[4]),
 					size: uint32(cf.Locals[5]),
