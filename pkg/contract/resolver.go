@@ -1,6 +1,7 @@
 package contract
 
 import (
+	"bytes"
 	"fmt"
 	"log"
 
@@ -83,7 +84,7 @@ func (r *Resolver) ResolveFunc(module, field string) exec.FunctionImport {
 		case "__log":
 			return r.getF(func(vm *exec.VirtualMachine, _ *Process) int64 {
 				msg := readBytes(vm, 0, 1)
-				log.Printf("__log: %v", string(msg))
+				log.Printf("__log: %v(%v)", string(msg), msg)
 				return 0
 			})
 		case "__set_response":
@@ -102,7 +103,13 @@ func (r *Resolver) ResolveFunc(module, field string) exec.FunctionImport {
 					ptr:  uint32(cf.Locals[4]),
 					size: uint32(cf.Locals[5]),
 				}
-				env, err := ps.EnvManager.Get(ps.Env.Context, addr, nil)
+				args, err := readArgs(vm, int(cf.Locals[6]), uint32(cf.Locals[7]))
+				if err != nil {
+					log.Println("error: ", err)
+					return -1
+				}
+				log.Println("args:", args)
+				env, err := ps.EnvManager.Get(ps.Env.Context, addr, args)
 				if err != nil {
 					log.Println("error: ", err)
 					return -1
@@ -130,6 +137,27 @@ func readBytes(vm *exec.VirtualMachine, ptrIdx, sizeIdx int) []byte {
 	ptr := int(uint32(vm.GetCurrentFrame().Locals[ptrIdx]))
 	msgLen := int(uint32(vm.GetCurrentFrame().Locals[sizeIdx]))
 	return vm.Memory[ptr : ptr+msgLen]
+}
+
+func readArgs(vm *exec.VirtualMachine, argc int, argvPtr uint32) ([]string, error) {
+	var args []string
+
+	buf := bytes.NewBuffer(nil)
+	cur := argvPtr
+	num := 0
+	for num < argc {
+		b := vm.Memory[cur]
+		cur++
+		if b == 0 {
+			args = append(args, buf.String())
+			buf.Reset()
+			num++
+			continue
+		}
+		buf.WriteByte(b)
+	}
+
+	return args, nil
 }
 
 // ResolveGlobal defines a set of global variables for use within a WebAssembly module.

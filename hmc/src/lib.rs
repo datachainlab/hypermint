@@ -3,7 +3,7 @@ use std::str;
 extern "C" {
     fn __get_arg(idx: usize, value_buf_ptr: *mut u8, value_buf_len: usize) -> i64;
     fn __get_sender(value_buf_ptr: *mut u8, value_buf_len: usize) -> i64;
-    fn __call_contract(addr: *const u8, addr_size: usize, entry: *const u8, entry_size: usize, value_buf_ptr: *mut u8, value_buf_len: usize) -> i64;
+    fn __call_contract(addr: *const u8, addr_size: usize, entry: *const u8, entry_size: usize, value_buf_ptr: *mut u8, value_buf_len: usize, argc: usize, argv: *const u8) -> i64;
 
     fn __set_response(msg: *const u8, len: usize) -> i64;
     fn __log(msg: *const u8, len: usize);
@@ -40,10 +40,20 @@ pub fn get_sender_str() -> Result<String, String> {
     Ok(format!("{:X?}", sender))
 }
 
-pub fn call_contract(addr: &[u8], entry: &[u8]) -> Result<Vec<u8>, String> {
+pub fn call_contract(addr: &[u8], entry: &[u8], args: Vec<&str>) -> Result<Vec<u8>, String> {
     let mut val_buf = [0u8; 64];
+    let size = args.len();
+
+    let mut bs: Vec<u8> = vec![];
+    for arg in args {
+        for b in arg.as_bytes() {
+            bs.push(*b);
+        }
+        bs.push(0u8);
+    }
+
     match unsafe {
-        __call_contract(addr.as_ptr(), addr.len(), entry.as_ptr(), entry.len(), val_buf.as_mut_ptr(), val_buf.len())
+        __call_contract(addr.as_ptr(), addr.len(), entry.as_ptr(), entry.len(), val_buf.as_mut_ptr(), val_buf.len(), size, bs.as_ptr())
     } {
         -1 => Err("failed to call contract".to_string()),
         size => Ok((&val_buf[0 .. size as usize]).to_vec())

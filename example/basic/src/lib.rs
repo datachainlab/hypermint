@@ -31,7 +31,7 @@ pub fn app_main() -> i32 {
 #[no_mangle]
 pub fn call_contract() -> i64 {
     let token_addr = hmc::hex_to_bytes(hmc::get_arg_str(0).unwrap().as_ref());
-    match hmc::call_contract(&token_addr, "get_balance".as_bytes()) {
+    match hmc::call_contract(&token_addr, "get_balance".as_bytes(), vec![]) {
         Ok(v) => {
             hmc::return_value(&v)
         },
