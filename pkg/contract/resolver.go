@@ -114,11 +114,11 @@ func (r *Resolver) ResolveFunc(module, field string) exec.FunctionImport {
 					log.Println("error: ", err)
 					return -1
 				}
-				if err := env.Exec(ps.Env.Context, entry); err != nil {
+				res, err := env.Exec(ps.Env.Context, entry)
+				if err != nil {
 					log.Println("error: ", err)
 					return -1
 				}
-				res := env.GetReponse()
 				if err := ret.Set(res); err != nil {
 					log.Println("error: ", err)
 					return -1

@@ -4,6 +4,7 @@ import (
 	"github.com/bluele/hypermint/pkg/abci/types"
 	"github.com/bluele/hypermint/pkg/util"
 	"github.com/ethereum/go-ethereum/common"
+	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/ethereum/go-ethereum/rlp"
 )
 
@@ -41,8 +42,5 @@ func (tx *ContractDeployTx) Bytes() []byte {
 }
 
 func (tx *ContractDeployTx) Address() common.Address {
-	hash := tx.GetSignBytes()
-	var addr common.Address
-	copy(addr[:], hash[:20])
-	return addr
+	return common.BytesToAddress(crypto.Keccak256(tx.Code)[12:])
 }

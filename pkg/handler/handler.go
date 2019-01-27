@@ -15,7 +15,7 @@ func NewHandler(am account.AccountMapper, cm *contract.ContractManager, envm *co
 		case *transaction.TransferTx:
 			return handleTransferTx(ctx, am, tx)
 		case *transaction.ContractDeployTx:
-			return handleContractDeployTx(ctx, cm, tx)
+			return handleContractDeployTx(ctx, cm, envm, tx)
 		case *transaction.ContractCallTx:
 			return handleContractCallTx(ctx, cm, envm, tx)
 		default:
@@ -32,11 +32,16 @@ func handleTransferTx(ctx types.Context, am account.AccountMapper, tx *transacti
 	return types.Result{}
 }
 
-func handleContractDeployTx(ctx types.Context, cm *contract.ContractManager, tx *transaction.ContractDeployTx) types.Result {
-	if _, err := cm.DeployContract(ctx, tx); err != nil {
+func handleContractDeployTx(ctx types.Context, cm *contract.ContractManager, envm *contract.EnvManager, tx *transaction.ContractDeployTx) types.Result {
+	addr, err := cm.DeployContract(ctx, tx)
+	if err != nil {
 		return transaction.ErrInvalidDeploy(transaction.DefaultCodespace, err.Error()).Result()
 	}
-	return types.Result{}
+	return handleContractCallTx(ctx, cm, envm, &transaction.ContractCallTx{
+		Address:  addr,
+		Func:     transaction.ContractInitFunc,
+		CommonTx: tx.CommonTx,
+	})
 }
 
 func handleContractCallTx(ctx types.Context, cm *contract.ContractManager, envm *contract.EnvManager, tx *transaction.ContractCallTx) types.Result {
@@ -44,8 +49,11 @@ func handleContractCallTx(ctx types.Context, cm *contract.ContractManager, envm 
 	if err != nil {
 		return transaction.ErrInvalidCall(transaction.DefaultCodespace, err.Error()).Result()
 	}
-	if err := env.Exec(ctx, tx.Func); err != nil {
+	res, err := env.Exec(ctx, tx.Func)
+	if err != nil {
 		return transaction.ErrInvalidCall(transaction.DefaultCodespace, err.Error()).Result()
 	}
-	return types.Result{}
+	return types.Result{
+		Data: res,
+	}
 }

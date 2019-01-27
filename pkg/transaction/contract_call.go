@@ -1,10 +1,16 @@
 package transaction
 
 import (
+	"fmt"
+
 	"github.com/bluele/hypermint/pkg/abci/types"
 	"github.com/bluele/hypermint/pkg/util"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/rlp"
+)
+
+const (
+	ContractInitFunc = "init"
 )
 
 type ContractCallTx struct {
@@ -17,6 +23,9 @@ type ContractCallTx struct {
 func (tx *ContractCallTx) ValidateBasic() types.Error {
 	if err := tx.CommonTx.ValidateBasic(); err != nil {
 		return err
+	}
+	if tx.Func == ContractInitFunc {
+		return ErrInvalidCall(DefaultCodespace, fmt.Sprintf("func '%v' is reserved by contract initializer", ContractInitFunc))
 	}
 	return tx.VerifySignature(tx.GetSignBytes())
 }

@@ -1,14 +1,13 @@
 package contract
 
 import (
-	"errors"
+	"fmt"
 
 	"github.com/bluele/hypermint/pkg/abci/types"
 	"github.com/bluele/hypermint/pkg/transaction"
 	"github.com/ethereum/go-ethereum/common"
 )
 
-// FIXME split cmapper with contract and vm, then add vmmapper to this struct
 type ContractManager struct {
 	mapper ContractMapper
 }
@@ -32,7 +31,7 @@ func (cm *ContractManager) DeployContract(ctx types.Context, tx *transaction.Con
 	addr := tx.Address()
 	_, err := cm.GetContract(ctx, addr)
 	if err == nil {
-		return addr, errors.New("already exists")
+		return addr, fmt.Errorf("already exists: %v", addr.Hex())
 	} else if err != ErrContractNotFound {
 		return addr, err
 	}
