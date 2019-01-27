@@ -51,7 +51,6 @@ pub fn transfer() -> i64 {
 
 #[no_mangle]
 pub fn init() -> i64 {
-    // TODO add initializer once
     let sender = hmc::get_sender().unwrap();
     hmc::write_state(&sender, format!("{}", TOTAL).as_bytes());
     0

@@ -1,6 +1,7 @@
 package cmd
 
 import (
+	"fmt"
 	"io/ioutil"
 	"os"
 
@@ -64,10 +65,12 @@ func vmCmd(ctx *app.Context) *cobra.Command {
 				Args: viper.GetStringSlice(flagArgs),
 			}
 			c := types.NewContext(cms, abci.Header{}, false, nil)
-			if err := env.Exec(c, viper.GetString(flagEntry)); err != nil {
+			res, err := env.Exec(c, viper.GetString(flagEntry))
+			if err != nil {
 				return err
 			}
 			cms.Commit()
+			fmt.Println("response: ", string(res))
 			return nil
 		},
 	}

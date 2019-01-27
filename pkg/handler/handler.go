@@ -49,8 +49,11 @@ func handleContractCallTx(ctx types.Context, cm *contract.ContractManager, envm 
 	if err != nil {
 		return transaction.ErrInvalidCall(transaction.DefaultCodespace, err.Error()).Result()
 	}
-	if err := env.Exec(ctx, tx.Func); err != nil {
+	res, err := env.Exec(ctx, tx.Func)
+	if err != nil {
 		return transaction.ErrInvalidCall(transaction.DefaultCodespace, err.Error()).Result()
 	}
-	return types.Result{}
+	return types.Result{
+		Data: res,
+	}
 }

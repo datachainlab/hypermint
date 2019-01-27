@@ -1,6 +1,8 @@
 package contract
 
 import (
+	"fmt"
+
 	"github.com/bluele/hypermint/pkg/client"
 	"github.com/bluele/hypermint/pkg/client/helper"
 	"github.com/bluele/hypermint/pkg/transaction"
@@ -60,11 +62,11 @@ var callCmd = &cobra.Command{
 			},
 		}
 		if viper.GetBool(flagSimulate) {
-			res, err := ctx.Client.ABCIQuery("/app/simulate", tx.Bytes())
+			res, err := ctx.SignAndSimulateTx(tx, from)
 			if err != nil {
 				return err
 			}
-			_ = res
+			fmt.Println("result:", string(res))
 			return nil
 		}
 

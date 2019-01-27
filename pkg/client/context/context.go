@@ -11,6 +11,8 @@ import (
 	rpclient "github.com/tendermint/tendermint/rpc/client"
 	ctypes "github.com/tendermint/tendermint/rpc/core/types"
 
+	"github.com/bluele/hypermint/pkg/abci/codec"
+	"github.com/bluele/hypermint/pkg/abci/types"
 	"github.com/bluele/hypermint/pkg/client/helper"
 	"github.com/bluele/hypermint/pkg/transaction"
 	"github.com/bluele/hypermint/pkg/util"
@@ -112,6 +114,28 @@ func (ctx *Context) SignAndBroadcastTx(tx transaction.Transaction, addr common.A
 		fmt.Printf("txHash=%v BlockHeight=%v\n", res.Hash.String(), res.Height)
 	}
 	return nil
+}
+
+func (ctx *Context) SignAndSimulateTx(tx transaction.Transaction, addr common.Address) ([]byte, error) {
+	sig, err := ctx.Sign(tx.GetSignBytes(), addr)
+	if err != nil {
+		return nil, err
+	}
+	tx.SetSignature(sig)
+
+	res, err := ctx.Client.ABCIQuery("/app/simulate", tx.Bytes())
+	if err != nil {
+		return nil, err
+	}
+	var result types.Result
+	codec.Cdc.MustUnmarshalBinaryLengthPrefixed(res.Response.Value, &result)
+
+	if result.Code != 0 {
+		return result.Data, errors.Errorf("Simulate failed: (%d) %s",
+			result.Code, result.Log)
+	}
+
+	return result.Data, nil
 }
 
 func (ctx *Context) GetBalanceByAddress(addr common.Address) (uint64, error) {

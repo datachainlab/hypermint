@@ -41,29 +41,28 @@ type VM struct {
 }
 
 // TODO calc gas cost
-func (env *Env) Exec(ctx sdk.Context, entry string) error {
+func (env *Env) Exec(ctx sdk.Context, entry string) ([]byte, error) {
 	vmProvider := env.VMProvider
 	if vmProvider == nil {
 		vmProvider = DefaultVMProvider
 	}
 	vm, err := vmProvider(env)
 	if err != nil {
-		return err
+		return nil, err
 	}
 	id, ok := vm.GetFunctionExport(entry)
 	if !ok {
-		return fmt.Errorf("entry point not found")
+		return nil, fmt.Errorf("entry point not found")
 	}
 	ret, err := vm.Run(id)
 	if err != nil {
 		vm.PrintStackTrace()
-		return err
+		return nil, err
 	}
 	if ret == -1 {
-		return errors.New("execute contract error")
+		return nil, errors.New("execute contract error")
 	}
-	fmt.Printf("%v: response is %v\n", entry, string(env.GetReponse()))
-	return nil
+	return env.GetReponse(), nil
 }
 
 func (env *Env) SetResponse(v []byte) {
