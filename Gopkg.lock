@@ -72,8 +72,6 @@
   packages = [
     ".",
     "accounts",
-    "accounts/abi",
-    "accounts/abi/bind",
     "accounts/keystore",
     "common",
     "common/hexutil",
@@ -705,10 +703,8 @@
     "github.com/btcsuite/btcd/chaincfg",
     "github.com/btcsuite/btcutil/hdkeychain",
     "github.com/ethereum/go-ethereum/accounts",
-    "github.com/ethereum/go-ethereum/accounts/abi/bind",
     "github.com/ethereum/go-ethereum/accounts/keystore",
     "github.com/ethereum/go-ethereum/common",
-    "github.com/ethereum/go-ethereum/core/types",
     "github.com/ethereum/go-ethereum/crypto",
     "github.com/ethereum/go-ethereum/rlp",
     "github.com/golang/protobuf/proto",
@@ -744,6 +740,7 @@
     "github.com/tendermint/tendermint/rpc/client",
     "github.com/tendermint/tendermint/rpc/core/types",
     "github.com/tendermint/tendermint/types",
+    "github.com/tendermint/tendermint/types/time",
     "github.com/tyler-smith/go-bip39",
   ]
   solver-name = "gps-cdcl"
