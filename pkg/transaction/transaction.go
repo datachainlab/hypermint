@@ -6,12 +6,16 @@ const (
 	TRANSFER uint8 = 1 + iota
 	CONTRACT_DEPLOY
 	CONTRACT_CALL
+	VALIDATOR_ADD
+	VALIDATOR_REMOVE
+	VALIDATOR_DELEGATE
 )
 
 type Transaction interface {
 	types.Tx
 	GetSignBytes() []byte
 	SetSignature([]byte)
+	Decode(b []byte) error
 	Bytes() []byte
 }
 

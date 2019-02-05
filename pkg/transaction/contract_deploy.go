@@ -8,6 +8,8 @@ import (
 	"github.com/ethereum/go-ethereum/rlp"
 )
 
+var _ Transaction = &ContractDeployTx{}
+
 type ContractDeployTx struct {
 	Code []byte
 	CommonTx

@@ -13,6 +13,8 @@ const (
 	ContractInitFunc = "init"
 )
 
+var _ Transaction = &ContractCallTx{}
+
 type ContractCallTx struct {
 	Address common.Address
 	Func    string // function name
