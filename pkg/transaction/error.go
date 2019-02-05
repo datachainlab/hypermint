@@ -8,11 +8,14 @@ import (
 const (
 	DefaultCodespace types.CodespaceType = "2"
 
-	CodeInvalidTx       types.CodeType = 101
-	CodeInvalidTransfer types.CodeType = 102
-	CodeFailTransfer    types.CodeType = 103
-	CodeInvalidDeploy   types.CodeType = 104
-	CodeInvalidCall     types.CodeType = 105
+	CodeInvalidTx              types.CodeType = 101
+	CodeInvalidTransfer        types.CodeType = 102
+	CodeFailTransfer           types.CodeType = 103
+	CodeInvalidDeploy          types.CodeType = 104
+	CodeInvalidCall            types.CodeType = 105
+	CodeInvalidValidatorAdd    types.CodeType = 106
+	CodeInvalidValidatorRemove types.CodeType = 107
+	CodeInvalidDelegation      types.CodeType = 108
 )
 
 // NOTE: Don't stringer this, we'll put better messages in later.
@@ -46,6 +49,18 @@ func ErrInvalidDeploy(codespace types.CodespaceType, msg string) types.Error {
 
 func ErrInvalidCall(codespace types.CodespaceType, msg string) types.Error {
 	return newError(codespace, CodeInvalidCall, msg)
+}
+
+func ErrInvalidValidatorAdd(codespace types.CodespaceType, msg string) types.Error {
+	return newError(codespace, CodeInvalidValidatorAdd, msg)
+}
+
+func ErrInvalidValidatorRemove(codespace types.CodespaceType, msg string) types.Error {
+	return newError(codespace, CodeInvalidValidatorRemove, msg)
+}
+
+func ErrInvalidDelegation(codespace types.CodespaceType, msg string) types.Error {
+	return newError(codespace, CodeInvalidDelegation, msg)
 }
 
 //----------------------------------------

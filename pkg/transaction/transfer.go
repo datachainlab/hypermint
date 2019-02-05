@@ -7,7 +7,7 @@ import (
 	"github.com/ethereum/go-ethereum/rlp"
 )
 
-var emptyAddr common.Address
+var _ Transaction = &TransferTx{}
 
 type TransferTx struct {
 	To     common.Address
@@ -48,8 +48,4 @@ func (tx *TransferTx) Bytes() []byte {
 		panic(err)
 	}
 	return append([]byte{TRANSFER}, b...)
-}
-
-func isEmptyAddr(addr common.Address) bool {
-	return addr == emptyAddr
 }

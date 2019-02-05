@@ -7,9 +7,11 @@ import (
 	"github.com/bluele/hypermint/pkg/account"
 	"github.com/bluele/hypermint/pkg/contract"
 	"github.com/bluele/hypermint/pkg/transaction"
+	"github.com/bluele/hypermint/pkg/validator"
+	"github.com/ethereum/go-ethereum/common"
 )
 
-func NewHandler(am account.AccountMapper, cm *contract.ContractManager, envm *contract.EnvManager) types.Handler {
+func NewHandler(am account.AccountMapper, cm *contract.ContractManager, envm *contract.EnvManager, valm validator.ValidatorMapper) types.Handler {
 	return func(ctx types.Context, tx types.Tx) types.Result {
 		switch tx := tx.(type) {
 		case *transaction.TransferTx:
@@ -18,6 +20,10 @@ func NewHandler(am account.AccountMapper, cm *contract.ContractManager, envm *co
 			return handleContractDeployTx(ctx, cm, envm, tx)
 		case *transaction.ContractCallTx:
 			return handleContractCallTx(ctx, cm, envm, tx)
+		case *transaction.ValidatorAddTx:
+			return handleValidatorAddTx(ctx, tx, valm)
+		case *transaction.ValidatorRemoveTx:
+			return handleValidatorRemoveTx(ctx, tx, valm)
 		default:
 			errMsg := "Unrecognized Tx type: " + reflect.TypeOf(tx).Name()
 			return types.ErrUnknownRequest(errMsg).Result()
@@ -56,4 +62,19 @@ func handleContractCallTx(ctx types.Context, cm *contract.ContractManager, envm 
 	return types.Result{
 		Data: res,
 	}
+}
+
+// TODO subtract bonded amount from the balance
+func handleValidatorAddTx(ctx types.Context, tx *transaction.ValidatorAddTx, valm validator.ValidatorMapper) types.Result {
+	val := validator.MakeValidatorFromTx(tx)
+	if err := valm.Set(ctx, val); err != nil {
+		return transaction.ErrInvalidValidatorAdd(transaction.DefaultCodespace, err.Error()).Result()
+	}
+	return types.Result{}
+}
+
+// TODO return bonded amount to the balance
+func handleValidatorRemoveTx(ctx types.Context, tx *transaction.ValidatorRemoveTx, valm validator.ValidatorMapper) types.Result {
+	valm.Remove(ctx, common.BytesToAddress(tx.PubKey.Bytes()))
+	return types.Result{}
 }
