@@ -24,6 +24,7 @@ import (
 	"github.com/bluele/hypermint/pkg/contract"
 	"github.com/bluele/hypermint/pkg/handler"
 	"github.com/bluele/hypermint/pkg/transaction"
+	"github.com/bluele/hypermint/pkg/validator"
 )
 
 const (
@@ -50,6 +51,7 @@ type Chain struct {
 	// keys to access the substores
 	capKeyMainStore *sdk.KVStoreKey
 	contractStore   *sdk.KVStoreKey
+	validatorStore  *sdk.KVStoreKey
 }
 
 func NewChain(logger log.Logger, db db.DB, traceStore io.Writer) *Chain {
@@ -65,7 +67,9 @@ func NewChain(logger log.Logger, db db.DB, traceStore io.Writer) *Chain {
 	cmn := contract.NewContractManager(cm)
 	envm := contract.NewEnvManager(c.contractStore, cm)
 
-	c.SetHandler(handler.NewHandler(am, cmn, envm))
+	valm := validator.NewValidatorMapper(c.validatorStore)
+
+	c.SetHandler(handler.NewHandler(am, cmn, envm, valm))
 	c.SetAnteHandler(handler.NewAnteHandler(am))
 	c.SetInitChainer(GetInitChainer(am))
 
@@ -79,7 +83,7 @@ func NewChain(logger log.Logger, db db.DB, traceStore io.Writer) *Chain {
 
 func (c *Chain) mountStores() error {
 	keys := []*sdk.KVStoreKey{
-		c.capKeyMainStore, c.contractStore,
+		c.capKeyMainStore, c.contractStore, c.validatorStore,
 	}
 
 	c.MountStoresIAVL(keys...)
