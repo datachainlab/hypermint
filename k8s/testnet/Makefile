@@ -1,9 +1,12 @@
-BUILD_DIR?=../build
+BUILD_DIR?=../../build
 CONFIG_DIR?=./config
 VERSION?=$(shell cat ../../version)
 RESOURCES?=$(wildcard $(CONFIG_DIR)/*.yaml)
 RESOURCES_OPT?=$(addprefix -f,$(RESOURCES))
 VALS_NUM?=4
+# mnemonic "token dash time stand brisk fatal health honey frozen brown flight kitchen"
+# m/44'/60'/0'/0
+GENESIS_ADDR?=0x1221a0726d56aEdeA9dBe2522DdAE3Dd8ED0f36c
 
 create:
 	kubectl apply $(RESOURCES_OPT)
@@ -16,4 +19,8 @@ gen-config: build-image
 	@bash ./gen_testnet.sh $(VALS_NUM)
 
 build-image:
-	sed -e "s/<VERSION>/${VERSION}/g" -e "s/<VALS_NUM>/$(VALS_NUM)/g" Dockerfile-test.tpl | docker build -t bluele/hypermint-testnet:${VERSION} -
+	sed -e "s/<VERSION>/${VERSION}/g" -e "s/<VALS_NUM>/$(VALS_NUM)/g" -e "s/<GENESIS_ADDR>/$(GENESIS_ADDR)/g" Dockerfile-test.tpl | docker build -t bluele/hypermint-testnet:${VERSION} -
+
+balance0:
+	$(eval port := $(shell kubectl get services/hm-validator-0 -o go-template='{{(index .spec.ports 1).nodePort}}'))
+	@$(BUILD_DIR)/hmcli balance --address=$(GENESIS_ADDR) --node=tcp://localhost:$(port)
