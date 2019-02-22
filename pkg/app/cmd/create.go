@@ -54,7 +54,7 @@ func createCmd(ctx *app.Context) *cobra.Command {
 					return err
 				}
 			}
-			validator.GenFilePVWithECDSA(config.PrivValidatorFile(), prv)
+			validator.GenFilePVWithECDSA(config.PrivValidatorKeyFile(), config.PrivValidatorStateFile(), prv)
 			return util.CopyFile(genesisPath, filepath.Join(config.RootDir, "config/genesis.json"))
 		},
 	}

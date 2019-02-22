@@ -30,8 +30,7 @@ func main() {
 		Use:   "hmd",
 		Short: "hm node",
 		PersistentPreRunE: func(cmd *cobra.Command, args []string) error {
-			app.SetupContext(ctx)
-			return nil
+			return app.SetupContext(ctx)
 		},
 	}
 	rootCmd.PersistentFlags().String("log_level", "debug", "Log level")

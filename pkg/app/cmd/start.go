@@ -100,7 +100,7 @@ func startInProcess(ctx *app.Context, appCreator app.AppCreator) (*node.Node, er
 	if err != nil {
 		return nil, err
 	}
-	pv := pvm.LoadOrGenFilePV(cfg.PrivValidatorFile())
+	pv := pvm.LoadOrGenFilePV(cfg.PrivValidatorKeyFile(), cfg.PrivValidatorStateFile())
 
 	// create & start tendermint node
 	tmNode, err := node.NewNode(

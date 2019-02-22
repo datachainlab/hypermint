@@ -9,20 +9,20 @@ import (
 	pvm "github.com/tendermint/tendermint/privval"
 )
 
-func GenFilePV(path string, prv crypto.PrivKey) *pvm.FilePV {
-	privValidator := pvm.GenFilePV(path)
-	privValidator.PrivKey = prv
-	privValidator.PubKey = prv.PubKey()
-	privValidator.Address = prv.PubKey().Address()
+func GenFilePV(keyFilePath, stateFilePath string, prv crypto.PrivKey) *pvm.FilePV {
+	privValidator := pvm.GenFilePV(keyFilePath, stateFilePath)
+	privValidator.Key.PrivKey = prv
+	privValidator.Key.PubKey = prv.PubKey()
+	privValidator.Key.Address = prv.PubKey().Address()
 	privValidator.Save()
 	return privValidator
 }
 
-func GenFilePVWithECDSA(path string, prv *ecdsa.PrivateKey) *pvm.FilePV {
+func GenFilePVWithECDSA(keyFilePath, stateFilePath string, prv *ecdsa.PrivateKey) *pvm.FilePV {
 	pb := gcrypto.FromECDSA(prv)
 	var p secp256k1.PrivKeySecp256k1
 	copy(p[:], pb)
-	return GenFilePV(path, p)
+	return GenFilePV(keyFilePath, stateFilePath, p)
 }
 
 func bytesToECDSAPrvKey(b []byte) *ecdsa.PrivateKey {

@@ -28,6 +28,7 @@ import (
 
 const (
 	flagAddress    = "address"
+	flagName       = "name"
 	flagClientHome = "home-client"
 )
 

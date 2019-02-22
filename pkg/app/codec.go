@@ -36,7 +36,7 @@ func init() {
 	cdc.RegisterInterface((*crypto.PrivKey)(nil), nil)
 
 	cdc.RegisterConcrete(secp256k1.PubKeySecp256k1{},
-		secp256k1.PubKeyAminoRoute, nil)
+		secp256k1.PubKeyAminoName, nil)
 	cdc.RegisterConcrete(secp256k1.PrivKeySecp256k1{},
-		secp256k1.PrivKeyAminoRoute, nil)
+		secp256k1.PrivKeyAminoName, nil)
 }

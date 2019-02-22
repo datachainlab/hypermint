@@ -42,10 +42,9 @@ func showValidatorCmd(ctx *app.Context) *cobra.Command {
 		Use:   "show-validator",
 		Short: "Show this node's tendermint validator info",
 		RunE: func(cmd *cobra.Command, args []string) error {
-
 			cfg := ctx.Config
-			privValidator := pvm.LoadOrGenFilePV(cfg.PrivValidatorFile())
-			valPubKey := privValidator.PubKey
+			privValidator := pvm.LoadOrGenFilePV(cfg.PrivValidatorKeyFile(), cfg.PrivValidatorStateFile())
+			valPubKey := privValidator.Key.PubKey
 
 			if viper.GetBool(FlagJson) {
 				return printlnJSON(valPubKey)
@@ -71,8 +70,8 @@ func showAddressCmd(ctx *app.Context) *cobra.Command {
 		Short: "Shows this node's tendermint validator address",
 		RunE: func(cmd *cobra.Command, args []string) error {
 			cfg := ctx.Config
-			privValidator := pvm.LoadOrGenFilePV(cfg.PrivValidatorFile())
-			valAddr := privValidator.Address
+			privValidator := pvm.LoadOrGenFilePV(cfg.PrivValidatorKeyFile(), cfg.PrivValidatorStateFile())
+			valAddr := privValidator.Key.Address
 
 			if viper.GetBool(FlagJson) {
 				return printlnJSON(valAddr)
@@ -104,7 +103,7 @@ func UnsafeResetAllCmd(ctx *app.Context) *cobra.Command {
 		Short: "Resets the blockchain database, removes address book files, and resets priv_validator.json to the genesis state",
 		RunE: func(cmd *cobra.Command, args []string) error {
 			cfg := ctx.Config
-			tcmd.ResetAll(cfg.DBDir(), cfg.P2P.AddrBookFile(), cfg.PrivValidatorFile(), ctx.Logger)
+			tcmd.ResetAll(cfg.DBDir(), cfg.P2P.AddrBookFile(), cfg.PrivValidatorKeyFile(), cfg.PrivValidatorStateFile(), ctx.Logger)
 			return nil
 		},
 	}

@@ -121,7 +121,6 @@ func initCmd(ctx *app.Context, cdc *amino.Codec, appInit app.AppInit) *cobra.Com
 		Short: "Initialize genesis config, priv-validator file, and p2p-node file",
 		Args:  cobra.NoArgs,
 		RunE: func(_ *cobra.Command, _ []string) error {
-
 			config := ctx.Config
 			config.SetRoot(viper.GetString(tmcli.HomeFlag))
 			initConfig := InitConfig{
@@ -248,8 +247,7 @@ func initWithConfig(cdc *amino.Codec, appInit app.AppInit, c *cfg.Config, initCo
 			return
 		}
 		c.P2P.PersistentPeers = persistentPeers
-		configFilePath := filepath.Join(c.RootDir, "config", "config.toml")
-		cfg.WriteConfigFile(configFilePath, c)
+		config.SaveConfig(c)
 	} else {
 		genTxConfig := config.GenTx{
 			viper.GetString(FlagName),
@@ -259,9 +257,8 @@ func initWithConfig(cdc *amino.Codec, appInit app.AppInit, c *cfg.Config, initCo
 		}
 
 		// Write updated config with moniker
-		c.Moniker = genTxConfig.Name
-		configFilePath := filepath.Join(c.RootDir, "config", "config.toml")
-		cfg.WriteConfigFile(configFilePath, c)
+		// c.Moniker = genTxConfig.Name
+		// config.SaveConfig(c)
 		appGenTx, am, validator, err := appInit.AppGenTx(cdc, pubKey, genTxConfig)
 		appMessage = am
 		if err != nil {
@@ -289,12 +286,14 @@ func initWithConfig(cdc *amino.Codec, appInit app.AppInit, c *cfg.Config, initCo
 // read of create the private key file for this config
 func readOrCreatePrivValidator(tmConfig *cfg.Config) crypto.PubKey {
 	// private validator
-	privValFile := tmConfig.PrivValidatorFile()
+	privValKeyFile := tmConfig.PrivValidatorKeyFile()
+	privValStateFile := tmConfig.PrivValidatorStateFile()
+
 	var privValidator *pvm.FilePV
-	if cmn.FileExists(privValFile) {
-		privValidator = pvm.LoadFilePV(privValFile)
+	if cmn.FileExists(privValKeyFile) {
+		privValidator = pvm.LoadFilePV(privValKeyFile, privValStateFile)
 	} else {
-		privValidator = validator.GenFilePV(privValFile, secp256k1.GenPrivKey())
+		privValidator = validator.GenFilePV(privValKeyFile, privValStateFile, secp256k1.GenPrivKey())
 	}
 	return privValidator.GetPubKey()
 }

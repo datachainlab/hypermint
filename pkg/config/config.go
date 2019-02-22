@@ -1,16 +1,18 @@
 package config
 
 import (
+	"errors"
 	"os"
 	"path/filepath"
 	"time"
 
 	"github.com/spf13/viper"
 	cfg "github.com/tendermint/tendermint/config"
-	tmcli "github.com/tendermint/tendermint/libs/cli"
 
 	"github.com/bluele/hypermint/pkg/util"
 )
+
+var ErrConfigNotFound = errors.New("config not found")
 
 //_____________________________________________________________________
 
@@ -25,36 +27,38 @@ type GenTx struct {
 	IP        string
 }
 
-func GetConfig() (*cfg.Config, error) {
+func SaveConfig(c *cfg.Config) {
+	configFilePath := filepath.Join(c.RootDir, "config/config.toml")
+	cfg.EnsureRoot(c.RootDir)
+	cfg.WriteConfigFile(configFilePath, c)
+}
+
+func CreateConfig(moniker, root string) (*cfg.Config, error) {
 	c := cfg.DefaultConfig()
-	c.SetRoot(viper.GetString(tmcli.HomeFlag))
+	c.SetRoot(root)
+	c.Moniker = moniker
 	c.ProfListenAddress = "localhost:6060"
 	c.P2P.RecvRate = 5120000
 	c.P2P.SendRate = 5120000
 	c.Consensus.TimeoutCommit = 5000 * time.Millisecond
+	return c, unmarshalWithViper(viper.GetViper(), c)
+}
 
-	vp := viper.GetViper()
+func GetConfig(root string) (*cfg.Config, error) {
+	configFilePath := filepath.Join(root, "config/config.toml")
+	if _, err := os.Stat(configFilePath); err != nil && !os.IsExist(err) {
+		return nil, ErrConfigNotFound
+	}
+	c := new(cfg.Config)
+	return c, unmarshalWithViper(viper.GetViper(), c)
+}
+
+func unmarshalWithViper(vp *viper.Viper, c *cfg.Config) error {
 	// you can configure tedermint params via environment variables.
 	// TM_PARAMS="consensus.timeout_commit=3000,instrumentation.prometheus=true" ./liamd start
 	util.SetEnvToViper(vp, "TM_PARAMS")
 	if err := vp.Unmarshal(c); err != nil {
-		return nil, err
+		return err
 	}
-
-	configFilePath := filepath.Join(c.RootDir, "config/config.toml")
-	if _, err := os.Stat(configFilePath); os.IsNotExist(err) {
-		cfg.EnsureRoot(c.RootDir)
-		cfg.WriteConfigFile(configFilePath, c)
-		// Fall through, just so that its parsed into memory.
-	}
-
-	return c, nil
-}
-
-func MustGetConfig() *cfg.Config {
-	c, err := GetConfig()
-	if err != nil {
-		panic(err)
-	}
-	return c
+	return nil
 }

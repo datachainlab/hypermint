@@ -2,6 +2,17 @@
 
 
 [[projects]]
+  digest = "1:f96ba6ecca7ba87b1dddd70ae38cfc4ce5ea844f58d1f728e121d2e29cdfb8a2"
+  name = "github.com/allegro/bigcache"
+  packages = [
+    ".",
+    "queue",
+  ]
+  pruneopts = "UT"
+  revision = "84a0ff3f153cbd7e280a19029a864bb04b504e62"
+  version = "v1.2.0"
+
+[[projects]]
   branch = "master"
   digest = "1:7d191fd0c54ff370eaf6116a14dafe2a328df487baea280699f597aae858d00d"
   name = "github.com/aristanetworks/goarista"
@@ -26,8 +37,7 @@
   version = "v0.1.0"
 
 [[projects]]
-  branch = "master"
-  digest = "1:401d088d63d37e8da99e1cf7e917a465436a41a143ef16a0a8013873745a2ddd"
+  digest = "1:8767561e1d23eb39126857abd076db5f29421dcd7ed56dc3c9c9d5ff4763144a"
   name = "github.com/btcsuite/btcd"
   packages = [
     "btcec",
@@ -36,7 +46,7 @@
     "wire",
   ]
   pruneopts = "UT"
-  revision = "67e573d211ace594f1366b4ce9d39726c4b19bd0"
+  revision = "ed77733ec07dfc8a513741138419b8d9d3de9d2d"
 
 [[projects]]
   digest = "1:5be1c66caeb03381e4e7322eddfc0b06b26991ddba3ad39e009ccf67c20dfb18"
@@ -48,7 +58,7 @@
     "hdkeychain",
   ]
   pruneopts = "UT"
-  revision = "ab6388e0c60ae4834a1f57511e20c17b5f78be4b"
+  revision = "d4cc87b860166d00d6b5b9e0d3b3d71d6088d4d4"
 
 [[projects]]
   digest = "1:ffe9824d294da03b391f44e1ae8281281b4afc1bdaa9588c9097785e3af10cec"
@@ -67,7 +77,7 @@
   version = "v1.7.1"
 
 [[projects]]
-  digest = "1:08af77c41dc6a9ab5dd123ce76356fa4068d57287c060cdc934e1131973dd037"
+  digest = "1:b42be5a3601f833e0b9f2d6625d887ec1309764bfcac3d518f3db425dcd4ec5c"
   name = "github.com/ethereum/go-ethereum"
   packages = [
     ".",
@@ -81,7 +91,6 @@
     "core/types",
     "crypto",
     "crypto/secp256k1",
-    "crypto/sha3",
     "ethdb",
     "event",
     "log",
@@ -91,8 +100,8 @@
     "trie",
   ]
   pruneopts = "T"
-  revision = "8bbe72075e4e16442c4e28d999edee12e294329e"
-  version = "v1.8.17"
+  revision = "9dc5d1a915ac0e0bd8429d6ac41df50eec91de5f"
+  version = "v1.8.21"
 
 [[projects]]
   digest = "1:abeb38ade3f32a92943e5be54f55ed6d6e3b6602761d74b4aab4c9dd45c18abd"
@@ -473,13 +482,6 @@
   revision = "6b91fda63f2e36186f1c9d0e48578defb69c5d43"
 
 [[projects]]
-  digest = "1:605b6546f3f43745695298ec2d342d3e952b6d91cdf9f349bea9315f677d759f"
-  name = "github.com/tendermint/btcd"
-  packages = ["btcec"]
-  pruneopts = "UT"
-  revision = "e5840949ff4fff0c56f9b6a541e22b63581ea9df"
-
-[[projects]]
   digest = "1:ad9c4c1a4e7875330b1f62906f2830f043a23edb5db997e3a5ac5d3e6eadf80a"
   name = "github.com/tendermint/go-amino"
   packages = ["."]
@@ -488,18 +490,19 @@
   version = "v0.14.1"
 
 [[projects]]
-  digest = "1:9f8c4c93658315a795ffd3e0c943d39f78067dd8382b8d7bcfaf6686b92f3978"
+  digest = "1:1bb088f6291e5426e3874a60bca0e481a91a5633395d7e0c427ec3e49b626e7b"
   name = "github.com/tendermint/iavl"
   packages = ["."]
   pruneopts = "UT"
-  revision = "fa74114f764f9827c4ad5573f990ed25bf8c4bac"
+  revision = "ac7c35c12e8633a1e9fd0b52a00b900b40f32cd3"
 
 [[projects]]
-  digest = "1:4145bc05c76978a62928a83d0f93ea4461e824c3c70ba798061bc7670447b018"
+  digest = "1:c02760dca10a5727cb3553f26b7a3aa07ec952a6a9a605dc4c7f4c8965645def"
   name = "github.com/tendermint/tendermint"
   packages = [
     "abci/client",
     "abci/example/code",
+    "abci/example/counter",
     "abci/example/kvstore",
     "abci/server",
     "abci/types",
@@ -558,22 +561,19 @@
     "version",
   ]
   pruneopts = "UT"
-  revision = "b771798d48c27630fb37b74c8e229da5a8b2042c"
-  version = "v0.26.4"
+  revision = "e0f8936455029a40287a69d5b0e7baa4d5864da1"
+  version = "v0.30.1"
 
 [[projects]]
-  digest = "1:73e0d2644cf33beeafbfb79804143ac9738bed3c28a12fd5e61bd3b13ac95407"
+  digest = "1:98c7f8a39334cff11ba2402d7e940941b5fcb40e1dd93be6b633a0a6fbaf46e5"
   name = "github.com/tyler-smith/go-bip39"
-  packages = [
-    ".",
-    "wordlists",
-  ]
+  packages = ["."]
   pruneopts = "UT"
-  revision = "2af0a847066a4f2669040ccd44a79c8eca10806a"
-  version = "v1.0.0"
+  revision = "320452e9f0df352f7c65a459ab1a7ac987eec99a"
+  version = "v0.3.6"
 
 [[projects]]
-  digest = "1:0b81c90802d445bfa3ffd4a3496e89b2c7986910f1a6e964e451ec1c3c5e0a7a"
+  digest = "1:b6b4cdbdbba5574c5863abcc03f151100ec883e07c536ca6db202fd88ed73ece"
   name = "golang.org/x/crypto"
   packages = [
     "chacha20poly1305",
@@ -590,10 +590,10 @@
     "ripemd160",
     "salsa20/salsa",
     "scrypt",
+    "sha3",
   ]
   pruneopts = "UT"
-  revision = "3764759f34a542a3aef74d6b02e35be7ab893bba"
-  source = "github.com/tendermint/crypto"
+  revision = "a4c6cb3142f211c99e4bf4cd769535b29a9b616f"
 
 [[projects]]
   digest = "1:d36f55a999540d29b6ea3c2ea29d71c76b1d9853fdcd3e5c5cb4836f2ba118f1"

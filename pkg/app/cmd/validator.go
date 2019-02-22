@@ -23,7 +23,7 @@ func validatorCmd(ctx *app.Context) *cobra.Command {
 		RunE: func(cmd *cobra.Command, args []string) error {
 			viper.BindPFlags(cmd.Flags())
 
-			config := ctx.Config
+			cfg := ctx.Config
 			mnemonic := viper.GetString(flagMnemonic)
 			if !bip39.IsMnemonicValid(mnemonic) {
 				return errors.New("invalid mnemonic")
@@ -37,7 +37,7 @@ func validatorCmd(ctx *app.Context) *cobra.Command {
 			if err != nil {
 				return err
 			}
-			validator.GenFilePVWithECDSA(config.PrivValidatorFile(), prv)
+			validator.GenFilePVWithECDSA(cfg.PrivValidatorKeyFile(), cfg.PrivValidatorStateFile(), prv)
 			return nil
 		},
 	}
