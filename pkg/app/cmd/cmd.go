@@ -31,6 +31,7 @@ func AddServerCommands(
 
 	rootCmd.AddCommand(
 		initCmd(ctx, cdc, appInit),
+		createCmd(ctx),
 		testnetFilesCmd(ctx, cdc, appInit),
 		startCmd(ctx, appCreator),
 		UnsafeResetAllCmd(ctx),
