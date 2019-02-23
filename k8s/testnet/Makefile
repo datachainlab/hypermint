@@ -18,6 +18,11 @@ gen-config: build-image
 	@rm -f ./config/*.yaml
 	@bash ./gen_testnet.sh $(VALS_NUM)
 
+destory-pvc:
+	@for n in $$(kubectl get pvc -o go-template --template '{{range .items}}{{.metadata.labels.app}}{{"\n"}}{{end}}' | grep 'hm-validator'); do \
+		kubectl delete pvc -l app=$$n; \
+	done
+
 build-image:
 	sed -e "s/<VERSION>/${VERSION}/g" -e "s/<VALS_NUM>/$(VALS_NUM)/g" -e "s/<GENESIS_ADDR>/$(GENESIS_ADDR)/g" Dockerfile-test.tpl | docker build -t bluele/hypermint-testnet:${VERSION} -
 
