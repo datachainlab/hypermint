@@ -27,5 +27,5 @@ build-image:
 	sed -e "s/<VERSION>/${VERSION}/g" -e "s/<VALS_NUM>/$(VALS_NUM)/g" -e "s/<GENESIS_ADDR>/$(GENESIS_ADDR)/g" Dockerfile-test.tpl | docker build -t bluele/hypermint-testnet:${VERSION} -
 
 balance0:
-	$(eval port := $(shell kubectl get services/hm-validator-0 -o go-template='{{(index .spec.ports 1).nodePort}}'))
+	$(eval port := $(shell kubectl get services/hm-validator-0 -o go-template='{{- range .spec.ports }}{{- if (eq "rpc" .name) }}{{.nodePort}}{{- end}}{{- end}}'))
 	@$(BUILD_DIR)/hmcli balance --address=$(GENESIS_ADDR) --node=tcp://localhost:$(port)
