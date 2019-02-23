@@ -31,7 +31,7 @@ spec:
     spec:
       containers:
         - name: hm
-          image: bluele/hypermint-testnet:0.1.0
+          image: bluele/hypermint-testnet:<VERSION>
           env:
           - name: NODENO
             value: "<NODENO>"
@@ -52,7 +52,13 @@ spec:
                 peers+=("${NODEID}@hm-validator-${a}:26656")
               done
               peers=$(IFS=','; echo "${peers[*]}")
-
+              cat << EOF > /mytestnet/node${NODENO}/hmd/data/priv_validator_state.json
+              {
+                "height": "0",
+                "round": "0",
+                "step": 0
+              }
+              EOF
               /hmd start --home=/mytestnet/node${NODENO}/hmd \
               --log_level="*:info" \
               --p2p.persistent_peers="$peers" \

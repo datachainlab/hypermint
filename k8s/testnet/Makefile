@@ -14,7 +14,7 @@ create:
 destory:
 	kubectl delete $(RESOURCES_OPT)
 
-gen-config: build-image
+gen-config:
 	@rm -f ./config/*.yaml
 	@bash ./gen_testnet.sh $(VALS_NUM)
 
