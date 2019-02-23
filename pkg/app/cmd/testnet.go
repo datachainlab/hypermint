@@ -28,7 +28,7 @@ var (
 	startingIPAddress = "starting-ip-address"
 )
 
-const nodeDirPerm = 0755
+const nodeDirPerm = 0700
 
 // get cmd to initialize all files for tendermint testnet and application
 func testnetFilesCmd(ctx *app.Context, cdc *amino.Codec, appInit app.AppInit) *cobra.Command {
@@ -74,20 +74,14 @@ func testnetWithConfig(c *cfg.Config, cdc *amino.Codec, appInit app.AppInit) err
 		nodeDirName := fmt.Sprintf("%s%d", viper.GetString(nodeDirPrefix), i)
 		di := getDirsInfo(outDir, i)
 		c.SetRoot(di.NodeDir())
-
-		err := os.MkdirAll(di.ConfigDir(), nodeDirPerm)
-		if err != nil {
-			_ = os.RemoveAll(outDir)
-			return err
-		}
-
-		err = os.MkdirAll(di.ClientDir(), nodeDirPerm)
-		if err != nil {
-			_ = os.RemoveAll(outDir)
-			return err
-		}
-
 		c.Moniker = nodeDirName
+		cfg.EnsureRoot(di.NodeDir())
+
+		if err := os.MkdirAll(di.ClientDir(), nodeDirPerm); err != nil {
+			_ = os.RemoveAll(outDir)
+			return err
+		}
+
 		ip, err := getIP(i)
 		if err != nil {
 			return err
@@ -152,14 +146,9 @@ func testnetWithConfig(c *cfg.Config, cdc *amino.Codec, appInit app.AppInit) err
 		di := getDirsInfo(outDir, id)
 		c.Moniker = di.DirName()
 		c.SetRoot(di.NodeDir())
+		cfg.EnsureRoot(di.NodeDir())
 
-		err := os.MkdirAll(di.ConfigDir(), nodeDirPerm)
-		if err != nil {
-			_ = os.RemoveAll(outDir)
-			return err
-		}
-		err = os.MkdirAll(di.ClientDir(), nodeDirPerm)
-		if err != nil {
+		if err := os.MkdirAll(di.ClientDir(), nodeDirPerm); err != nil {
 			_ = os.RemoveAll(outDir)
 			return err
 		}
