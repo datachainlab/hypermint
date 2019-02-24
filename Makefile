@@ -8,6 +8,7 @@ HMCLI_HOME?=${HOME}/.hmcli
 
 MNEMONIC?="token dash time stand brisk fatal health honey frozen brown flight kitchen"
 HDW_PATH?=m/44'/60'/0'/0
+HDW_VALIDATOR_IDX?=0
 
 COMMIT_HASH:=$(shell git rev-parse --short HEAD)
 VERSION:=$(shell cat version)
@@ -41,7 +42,10 @@ init: clean init-validator
 	@echo export ADDR2='$(ADDR2)'
 
 init-validator:
-	@$(HMD) tendermint init-validator --mnemonic=$(MNEMONIC) --hdw_path="$(HDW_PATH)/0"
+	@$(HMD) tendermint init-validator --home=$(HMD_HOME) --mnemonic=$(MNEMONIC) --hdw_path="$(HDW_PATH)/$(HDW_VALIDATOR_IDX)"
+
+create-node:
+	@$(HMD) create --home=$(HMD_HOME) --mnemonic=$(MNEMONIC) --hdw_path="$(HDW_PATH)/$(HDW_VALIDATOR_IDX)" --genesis=$(GENESIS)
 
 test:
 	$(GO_TEST_CMD) ./pkg/...
