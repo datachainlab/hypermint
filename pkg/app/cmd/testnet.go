@@ -11,6 +11,7 @@ import (
 	amino "github.com/tendermint/go-amino"
 	cfg "github.com/tendermint/tendermint/config"
 	cmn "github.com/tendermint/tendermint/libs/common"
+	"github.com/tendermint/tendermint/p2p"
 	tmtime "github.com/tendermint/tendermint/types/time"
 
 	"github.com/bluele/hypermint/pkg/app"
@@ -150,6 +151,11 @@ func testnetWithConfig(c *cfg.Config, cdc *amino.Codec, appInit app.AppInit) err
 
 		if err := os.MkdirAll(di.ClientDir(), nodeDirPerm); err != nil {
 			_ = os.RemoveAll(outDir)
+			return err
+		}
+
+		_, err := p2p.LoadOrGenNodeKey(c.NodeKeyFile())
+		if err != nil {
 			return err
 		}
 
