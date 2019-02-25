@@ -26,7 +26,7 @@ func showNodeIDCmd(ctx *app.Context) *cobra.Command {
 		Short: "Show this node's ID",
 		RunE: func(cmd *cobra.Command, args []string) error {
 			cfg := ctx.Config
-			nodeKey, err := p2p.LoadOrGenNodeKey(cfg.NodeKeyFile())
+			nodeKey, err := p2p.LoadNodeKey(cfg.NodeKeyFile())
 			if err != nil {
 				return err
 			}
