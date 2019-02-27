@@ -5,17 +5,18 @@ import (
 	"os"
 	"path/filepath"
 
-	gcrypto "github.com/ethereum/go-ethereum/crypto"
+	"github.com/tendermint/tendermint/crypto/secp256k1"
+
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 	amino "github.com/tendermint/go-amino"
 	cfg "github.com/tendermint/tendermint/config"
 	cmn "github.com/tendermint/tendermint/libs/common"
-	"github.com/tendermint/tendermint/p2p"
 	tmtime "github.com/tendermint/tendermint/types/time"
 
 	"github.com/bluele/hypermint/pkg/app"
 	"github.com/bluele/hypermint/pkg/config"
+	"github.com/bluele/hypermint/pkg/node"
 	"github.com/bluele/hypermint/pkg/util"
 	"github.com/bluele/hypermint/pkg/validator"
 )
@@ -154,13 +155,8 @@ func testnetWithConfig(c *cfg.Config, cdc *amino.Codec, appInit app.AppInit) err
 			return err
 		}
 
-		_, err := p2p.LoadOrGenNodeKey(c.NodeKeyFile())
-		if err != nil {
-			return err
-		}
-
-		prv, err := gcrypto.GenerateKey()
-		if err != nil {
+		prv := secp256k1.GenPrivKey()
+		if _, err := node.GenNodeKeyByPrivKey(c.NodeKeyFile(), prv); err != nil {
 			return err
 		}
 		validator.GenFilePVWithECDSA(c.PrivValidatorKeyFile(), c.PrivValidatorStateFile(), prv)

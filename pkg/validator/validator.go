@@ -1,9 +1,6 @@
 package validator
 
 import (
-	"crypto/ecdsa"
-
-	gcrypto "github.com/ethereum/go-ethereum/crypto"
 	"github.com/tendermint/tendermint/crypto"
 	"github.com/tendermint/tendermint/crypto/secp256k1"
 	pvm "github.com/tendermint/tendermint/privval"
@@ -18,17 +15,8 @@ func GenFilePV(keyFilePath, stateFilePath string, prv crypto.PrivKey) *pvm.FileP
 	return privValidator
 }
 
-func GenFilePVWithECDSA(keyFilePath, stateFilePath string, prv *ecdsa.PrivateKey) *pvm.FilePV {
-	pb := gcrypto.FromECDSA(prv)
+func GenFilePVWithECDSA(keyFilePath, stateFilePath string, prv crypto.PrivKey) *pvm.FilePV {
 	var p secp256k1.PrivKeySecp256k1
-	copy(p[:], pb)
+	copy(p[:], prv.Bytes())
 	return GenFilePV(keyFilePath, stateFilePath, p)
-}
-
-func bytesToECDSAPrvKey(b []byte) *ecdsa.PrivateKey {
-	pv, err := gcrypto.ToECDSA(b)
-	if err != nil {
-		panic(err)
-	}
-	return pv
 }

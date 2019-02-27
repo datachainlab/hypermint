@@ -7,6 +7,7 @@ import (
 	bip39 "github.com/tyler-smith/go-bip39"
 
 	"github.com/bluele/hypermint/pkg/app"
+	"github.com/bluele/hypermint/pkg/util"
 	"github.com/bluele/hypermint/pkg/util/wallet"
 	"github.com/bluele/hypermint/pkg/validator"
 )
@@ -37,7 +38,7 @@ func validatorCmd(ctx *app.Context) *cobra.Command {
 			if err != nil {
 				return err
 			}
-			validator.GenFilePVWithECDSA(cfg.PrivValidatorKeyFile(), cfg.PrivValidatorStateFile(), prv)
+			validator.GenFilePVWithECDSA(cfg.PrivValidatorKeyFile(), cfg.PrivValidatorStateFile(), util.PrvKeyToCryptoKey(prv))
 			return nil
 		},
 	}

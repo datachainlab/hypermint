@@ -1,7 +1,6 @@
 package cmd
 
 import (
-	"crypto/ecdsa"
 	"fmt"
 	"os"
 	"path/filepath"
@@ -10,10 +9,11 @@ import (
 	"github.com/bluele/hypermint/pkg/util"
 	"github.com/bluele/hypermint/pkg/util/wallet"
 	"github.com/bluele/hypermint/pkg/validator"
-	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/pkg/errors"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
+	"github.com/tendermint/tendermint/crypto"
+	"github.com/tendermint/tendermint/crypto/secp256k1"
 	bip39 "github.com/tyler-smith/go-bip39"
 )
 
@@ -33,8 +33,7 @@ func createCmd(ctx *app.Context) *cobra.Command {
 				return fmt.Errorf("genesis path not found path=%v err=%v", genesisPath, err)
 			}
 
-			var prv *ecdsa.PrivateKey
-			var err error
+			var prv crypto.PrivKey
 			if mnemonic := viper.GetString(flagMnemonic); mnemonic != "" {
 				if !bip39.IsMnemonicValid(mnemonic) {
 					return errors.New("invalid mnemonic")
@@ -44,15 +43,13 @@ func createCmd(ctx *app.Context) *cobra.Command {
 					return err
 				}
 				seed := bip39.NewSeed(mnemonic, "")
-				prv, err = wallet.GetPrvKeyFromHDWallet(seed, hp)
+				key, err := wallet.GetPrvKeyFromHDWallet(seed, hp)
 				if err != nil {
 					return err
 				}
+				prv = util.PrvKeyToCryptoKey(key)
 			} else {
-				prv, err = crypto.GenerateKey()
-				if err != nil {
-					return err
-				}
+				prv = secp256k1.GenPrivKey()
 			}
 			validator.GenFilePVWithECDSA(config.PrivValidatorKeyFile(), config.PrivValidatorStateFile(), prv)
 			return util.CopyFile(genesisPath, filepath.Join(config.RootDir, "config/genesis.json"))
