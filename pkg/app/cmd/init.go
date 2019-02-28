@@ -16,18 +16,16 @@ import (
 	"github.com/spf13/viper"
 	amino "github.com/tendermint/go-amino"
 	cfg "github.com/tendermint/tendermint/config"
-	"github.com/tendermint/tendermint/crypto"
 	"github.com/tendermint/tendermint/crypto/secp256k1"
 	tmcli "github.com/tendermint/tendermint/libs/cli"
 	cmn "github.com/tendermint/tendermint/libs/common"
-	"github.com/tendermint/tendermint/p2p"
-	pvm "github.com/tendermint/tendermint/privval"
 	"github.com/tendermint/tendermint/types"
 	tmtypes "github.com/tendermint/tendermint/types"
 	tmtime "github.com/tendermint/tendermint/types/time"
 
 	"github.com/bluele/hypermint/pkg/app"
 	"github.com/bluele/hypermint/pkg/config"
+	"github.com/bluele/hypermint/pkg/node"
 	"github.com/bluele/hypermint/pkg/util"
 	"github.com/bluele/hypermint/pkg/validator"
 )
@@ -218,12 +216,12 @@ func processGenTxs(genTxsDir string, cdc *amino.Codec) (
 
 func initWithConfig(cdc *amino.Codec, appInit app.AppInit, c *cfg.Config, initConfig InitConfig) (
 	chainID string, nodeID string, appMessage json.RawMessage, err error) {
-	nodeKey, err := p2p.LoadOrGenNodeKey(c.NodeKeyFile())
+
+	nodeKey, err := node.LoadNodeKey(c.NodeKeyFile())
 	if err != nil {
 		return
 	}
 	nodeID = string(nodeKey.ID())
-	pubKey := readOrCreatePrivValidator(c)
 
 	if initConfig.ChainID == "" {
 		initConfig.ChainID = fmt.Sprintf("test-chain-%v", cmn.RandStr(6))
@@ -259,7 +257,7 @@ func initWithConfig(cdc *amino.Codec, appInit app.AppInit, c *cfg.Config, initCo
 		// Write updated config with moniker
 		// c.Moniker = genTxConfig.Name
 		// config.SaveConfig(c)
-		appGenTx, am, validator, err := appInit.AppGenTx(cdc, pubKey, genTxConfig)
+		appGenTx, am, validator, err := appInit.AppGenTx(cdc, nodeKey.PubKey(), genTxConfig)
 		appMessage = am
 		if err != nil {
 			return "", "", nil, err
@@ -282,21 +280,6 @@ func initWithConfig(cdc *amino.Codec, appInit app.AppInit, c *cfg.Config, initCo
 }
 
 //________________________________________________________________________________________
-
-// read of create the private key file for this config
-func readOrCreatePrivValidator(tmConfig *cfg.Config) crypto.PubKey {
-	// private validator
-	privValKeyFile := tmConfig.PrivValidatorKeyFile()
-	privValStateFile := tmConfig.PrivValidatorStateFile()
-
-	var privValidator *pvm.FilePV
-	if cmn.FileExists(privValKeyFile) {
-		privValidator = pvm.LoadFilePV(privValKeyFile, privValStateFile)
-	} else {
-		privValidator = validator.GenFilePV(privValKeyFile, privValStateFile, secp256k1.GenPrivKey())
-	}
-	return privValidator.GetPubKey()
-}
 
 // writeGenesisFile creates and writes the genesis configuration to disk. An
 // error is returned if building or writing the configuration to file fails.
@@ -374,14 +357,19 @@ func addrToIP(addr net.Addr) net.IP {
 
 func gentxWithConfig(cdc *amino.Codec, appInit app.AppInit, config *cfg.Config, genTxConfig config.GenTx) (
 	cliPrint json.RawMessage, genTxFile json.RawMessage, err error) {
-	nodeKey, err := p2p.LoadOrGenNodeKey(config.NodeKeyFile())
+
+	pv := validator.GenFilePV(
+		config.PrivValidatorKeyFile(),
+		config.PrivValidatorStateFile(),
+		secp256k1.GenPrivKey(),
+	)
+	nodeKey, err := node.GenNodeKeyByPrivKey(config.NodeKeyFile(), pv.Key.PrivKey)
 	if err != nil {
 		return
 	}
 	nodeID := string(nodeKey.ID())
-	pubKey := readOrCreatePrivValidator(config)
 
-	appGenTx, cliPrint, validator, err := appInit.AppGenTx(cdc, pubKey, genTxConfig)
+	appGenTx, cliPrint, validator, err := appInit.AppGenTx(cdc, pv.GetPubKey(), genTxConfig)
 	if err != nil {
 		return
 	}

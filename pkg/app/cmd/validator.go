@@ -7,6 +7,7 @@ import (
 	bip39 "github.com/tyler-smith/go-bip39"
 
 	"github.com/bluele/hypermint/pkg/app"
+	"github.com/bluele/hypermint/pkg/node"
 	"github.com/bluele/hypermint/pkg/util"
 	"github.com/bluele/hypermint/pkg/util/wallet"
 	"github.com/bluele/hypermint/pkg/validator"
@@ -34,11 +35,15 @@ func validatorCmd(ctx *app.Context) *cobra.Command {
 				return err
 			}
 			seed := bip39.NewSeed(mnemonic, "")
-			prv, err := wallet.GetPrvKeyFromHDWallet(seed, hp)
+			key, err := wallet.GetPrvKeyFromHDWallet(seed, hp)
 			if err != nil {
 				return err
 			}
-			validator.GenFilePVWithECDSA(cfg.PrivValidatorKeyFile(), cfg.PrivValidatorStateFile(), util.PrvKeyToCryptoKey(prv))
+			prv := util.PrvKeyToCryptoKey(key)
+			validator.GenFilePV(cfg.PrivValidatorKeyFile(), cfg.PrivValidatorStateFile(), prv)
+			if _, err := node.GenNodeKeyByPrivKey(cfg.NodeKeyFile(), prv); err != nil {
+				return err
+			}
 			return nil
 		},
 	}

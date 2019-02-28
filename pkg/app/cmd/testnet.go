@@ -159,7 +159,7 @@ func testnetWithConfig(c *cfg.Config, cdc *amino.Codec, appInit app.AppInit) err
 		if _, err := node.GenNodeKeyByPrivKey(c.NodeKeyFile(), prv); err != nil {
 			return err
 		}
-		validator.GenFilePVWithECDSA(c.PrivValidatorKeyFile(), c.PrivValidatorStateFile(), prv)
+		validator.GenFilePV(c.PrivValidatorKeyFile(), c.PrivValidatorStateFile(), prv)
 		if err := util.CopyFile(genesisFilePath, filepath.Join(c.RootDir, "config/genesis.json")); err != nil {
 			return err
 		}
