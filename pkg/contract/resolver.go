@@ -136,7 +136,9 @@ func (r *Resolver) ResolveFunc(module, field string) exec.FunctionImport {
 func readBytes(vm *exec.VirtualMachine, ptrIdx, sizeIdx int) []byte {
 	ptr := int(uint32(vm.GetCurrentFrame().Locals[ptrIdx]))
 	msgLen := int(uint32(vm.GetCurrentFrame().Locals[sizeIdx]))
-	return vm.Memory[ptr : ptr+msgLen]
+	b := make([]byte, msgLen)
+	copy(b, vm.Memory[ptr:ptr+msgLen])
+	return b
 }
 
 func readArgs(vm *exec.VirtualMachine, argc int, argvPtr uint32) ([]string, error) {
