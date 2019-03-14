@@ -4,22 +4,25 @@ import (
 	"errors"
 	"fmt"
 
-	"github.com/bluele/hypermint/pkg/abci/types"
+	"github.com/bluele/hypermint/pkg/db"
+
 	sdk "github.com/bluele/hypermint/pkg/abci/types"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/perlin-network/life/exec"
 )
 
 type Env struct {
-	Context    sdk.Context
+	Context  sdk.Context
+	Sender   common.Address
+	Args     []string
+	Response []byte
+
 	EnvManager *EnvManager
 	Contract   *Contract
 	VMProvider VMProvider
 
-	Response []byte
-
-	DB   types.KVStore
-	Args []string
+	DB    *db.VersionedDB
+	state db.State
 }
 
 type VMProvider func(*Env) (*VM, error)
@@ -40,8 +43,12 @@ type VM struct {
 	*exec.VirtualMachine
 }
 
-// TODO calc gas cost
-func (env *Env) Exec(ctx sdk.Context, entry string) ([]byte, error) {
+type Result struct {
+	Response []byte
+	RWSets   *db.RWSets
+}
+
+func (env *Env) Exec(ctx sdk.Context, entry string) (*Result, error) {
 	vmProvider := env.VMProvider
 	if vmProvider == nil {
 		vmProvider = DefaultVMProvider
@@ -62,7 +69,18 @@ func (env *Env) Exec(ctx sdk.Context, entry string) ([]byte, error) {
 	if ret == -1 {
 		return nil, errors.New("execute contract error")
 	}
-	return env.GetReponse(), nil
+	set, err := env.DB.Commit()
+	if err != nil {
+		return nil, err
+	}
+	return &Result{
+		Response: env.GetReponse(),
+		RWSets: &db.RWSets{
+			Address: env.Contract.Address(),
+			RWSet:   set,
+			Childs:  env.state.Childs,
+		},
+	}, nil
 }
 
 func (env *Env) SetResponse(v []byte) {
@@ -85,16 +103,18 @@ func NewEnvManager(key sdk.StoreKey, cm ContractMapper) *EnvManager {
 	}
 }
 
-func (em *EnvManager) Get(ctx sdk.Context, addr common.Address, args []string) (*Env, error) {
+func (em *EnvManager) Get(ctx sdk.Context, sender, addr common.Address, args []string) (*Env, error) {
 	c, err := em.cm.Get(ctx, addr)
 	if err != nil {
 		return nil, err
 	}
 	return &Env{
 		Context:    ctx,
+		Sender:     sender,
 		EnvManager: em,
 		Contract:   c,
-		DB:         ctx.KVStore(em.key).Prefix(addr.Bytes()),
-		Args:       args,
+		// FIXME set valid txIdx
+		DB:   db.NewVersionedDB(ctx.KVStore(em.key).Prefix(addr.Bytes()), db.Version{uint32(ctx.BlockHeight()), 0}),
+		Args: args,
 	}, nil
 }

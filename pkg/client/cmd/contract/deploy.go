@@ -7,6 +7,7 @@ import (
 
 	"github.com/bluele/hypermint/pkg/client"
 	"github.com/bluele/hypermint/pkg/client/helper"
+	"github.com/bluele/hypermint/pkg/contract"
 	"github.com/bluele/hypermint/pkg/transaction"
 	"github.com/bluele/hypermint/pkg/util"
 	"github.com/spf13/cobra"
@@ -62,7 +63,7 @@ var deployCmd = &cobra.Command{
 		if err := ctx.SignAndBroadcastTx(tx, from); err != nil {
 			return err
 		}
-		fmt.Printf("%v\n", tx.Address().Hex())
+		fmt.Printf("%v\n", contract.TxToContract(tx).Address().Hex())
 		return nil
 	},
 }

@@ -1,23 +1,29 @@
 package contract
 
 import (
+	"encoding/hex"
 	"fmt"
+
+	"github.com/ethereum/go-ethereum/common"
+	"github.com/kr/pretty"
+	"github.com/spf13/cobra"
+	"github.com/spf13/viper"
+	"github.com/tendermint/go-amino"
 
 	"github.com/bluele/hypermint/pkg/client"
 	"github.com/bluele/hypermint/pkg/client/helper"
+	"github.com/bluele/hypermint/pkg/db"
+	"github.com/bluele/hypermint/pkg/handler"
 	"github.com/bluele/hypermint/pkg/transaction"
 	"github.com/bluele/hypermint/pkg/util"
-
-	"github.com/ethereum/go-ethereum/common"
-	"github.com/spf13/cobra"
-	"github.com/spf13/viper"
 )
 
 const (
-	flagContract = "contract"
-	flagFunc     = "func"
-	flagSimulate = "simulate"
-	flagArgs     = "args"
+	flagContract   = "contract"
+	flagFunc       = "func"
+	flagSimulate   = "simulate"
+	flagRWSetsHash = "rwsh"
+	flagArgs       = "args"
 )
 
 func init() {
@@ -26,6 +32,7 @@ func init() {
 	callCmd.Flags().String(flagContract, "", "contract address")
 	callCmd.Flags().String(flagFunc, "", "function name")
 	callCmd.Flags().StringSlice(flagArgs, nil, "arguments")
+	callCmd.Flags().String(flagRWSetsHash, "", "RWSets hash")
 	callCmd.Flags().Uint(flagGas, 0, "gas for tx")
 	callCmd.Flags().Bool(flagSimulate, false, "execute as simulation")
 	util.CheckRequiredFlag(callCmd, helper.FlagAddress, flagGas)
@@ -51,10 +58,19 @@ var callCmd = &cobra.Command{
 		}
 
 		caddr := common.HexToAddress(viper.GetString(flagContract))
+
+		var rwh []byte
+		if hs := viper.GetString(flagRWSetsHash); hs != "" {
+			rwh, err = hex.DecodeString(hs)
+			if err != nil {
+				return err
+			}
+		}
 		tx := &transaction.ContractCallTx{
-			Address: caddr,
-			Func:    viper.GetString(flagFunc),
-			Args:    viper.GetStringSlice(flagArgs),
+			Address:    caddr,
+			Func:       viper.GetString(flagFunc),
+			Args:       viper.GetStringSlice(flagArgs),
+			RWSetsHash: rwh,
 			CommonTx: transaction.CommonTx{
 				From:  from,
 				Gas:   uint64(viper.GetInt(flagGas)),
@@ -62,11 +78,21 @@ var callCmd = &cobra.Command{
 			},
 		}
 		if viper.GetBool(flagSimulate) {
-			res, err := ctx.SignAndSimulateTx(tx, from)
+			r, err := ctx.SignAndSimulateTx(tx, from)
 			if err != nil {
 				return err
 			}
-			fmt.Println("result:", string(res))
+			res := new(handler.ContractCallTxResponse)
+			if err := amino.UnmarshalBinaryBare(r, res); err != nil {
+				return err
+			}
+			rs := new(db.RWSets)
+			if err := rs.FromBytes(res.RWSetsBytes); err != nil {
+				return err
+			}
+			pretty.Println(rs)
+			fmt.Printf("RWSetsHash: 0x%x\n", rs.Hash())
+			fmt.Println("Result:", string(res.Returned))
 			return nil
 		}
 

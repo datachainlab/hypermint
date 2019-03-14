@@ -3,6 +3,7 @@ package contract
 import (
 	"github.com/bluele/hypermint/pkg/transaction"
 	"github.com/ethereum/go-ethereum/common"
+	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/ethereum/go-ethereum/rlp"
 )
 
@@ -21,6 +22,10 @@ func (c *Contract) Decode(b []byte) error {
 
 func (c *Contract) Encode() ([]byte, error) {
 	return rlp.EncodeToBytes(c)
+}
+
+func (c *Contract) Address() common.Address {
+	return common.BytesToAddress(crypto.Keccak256(c.Code)[12:])
 }
 
 func TxToContract(tx *transaction.ContractDeployTx) *Contract {

@@ -28,14 +28,15 @@ func (cm *ContractManager) SaveContract(ctx types.Context, addr common.Address, 
 }
 
 func (cm *ContractManager) DeployContract(ctx types.Context, tx *transaction.ContractDeployTx) (common.Address, error) {
-	addr := tx.Address()
+	c := TxToContract(tx)
+	addr := c.Address()
 	_, err := cm.GetContract(ctx, addr)
 	if err == nil {
 		return addr, fmt.Errorf("already exists: %v", addr.Hex())
 	} else if err != ErrContractNotFound {
 		return addr, err
 	}
-	if err := cm.SaveContract(ctx, addr, TxToContract(tx)); err != nil {
+	if err := cm.SaveContract(ctx, addr, c); err != nil {
 		return addr, err
 	}
 	return addr, nil

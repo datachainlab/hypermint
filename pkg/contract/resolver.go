@@ -79,7 +79,11 @@ func (r *Resolver) ResolveFunc(module, field string) exec.FunctionImport {
 			return r.getF(func(vm *exec.VirtualMachine, ps *Process) int64 {
 				key := readBytes(vm, 0, 1)
 				value := readBytes(vm, 2, 3)
-				return ps.WriteState(key, value)
+				ret, err := ps.WriteState(key, value)
+				if err != nil {
+					return -1
+				}
+				return ret
 			})
 		case "__log":
 			return r.getF(func(vm *exec.VirtualMachine, _ *Process) int64 {
@@ -108,8 +112,7 @@ func (r *Resolver) ResolveFunc(module, field string) exec.FunctionImport {
 					log.Println("error: ", err)
 					return -1
 				}
-				log.Println("args:", args)
-				env, err := ps.EnvManager.Get(ps.Env.Context, addr, args)
+				env, err := ps.EnvManager.Get(ps.Env.Context, r.env.Sender, addr, args)
 				if err != nil {
 					log.Println("error: ", err)
 					return -1
@@ -119,11 +122,12 @@ func (r *Resolver) ResolveFunc(module, field string) exec.FunctionImport {
 					log.Println("error: ", err)
 					return -1
 				}
-				if err := ret.Set(res); err != nil {
+				if err := ret.Set(res.Response); err != nil {
 					log.Println("error: ", err)
 					return -1
 				}
-				return int64(len(res))
+				env.state.Add(res.RWSets)
+				return int64(len(res.Response))
 			})
 		default:
 			panic(fmt.Errorf("unknown field: %s", field))
