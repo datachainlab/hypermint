@@ -67,8 +67,9 @@ func NewChain(logger log.Logger, db db.DB, traceStore io.Writer) *Chain {
 	cm := contract.NewContractMapper(c.contractStore)
 	cmn := contract.NewContractManager(cm)
 	envm := contract.NewEnvManager(c.contractStore, cm)
+	txm := transaction.NewTxIndexMapper(c.txIndexStore)
 
-	c.SetHandler(handler.NewHandler(am, cmn, envm))
+	c.SetHandler(handler.NewHandler(txm, am, cmn, envm))
 	c.SetAnteHandler(handler.NewAnteHandler(am))
 	c.SetInitChainer(GetInitChainer(am))
 

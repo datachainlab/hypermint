@@ -13,8 +13,14 @@ import (
 	"github.com/bluele/hypermint/pkg/transaction"
 )
 
-func NewHandler(am account.AccountMapper, cm *contract.ContractManager, envm *contract.EnvManager) types.Handler {
-	return func(ctx types.Context, tx types.Tx) types.Result {
+func NewHandler(txm transaction.TxIndexMapper, am account.AccountMapper, cm *contract.ContractManager, envm *contract.EnvManager) types.Handler {
+	return func(ctx types.Context, tx types.Tx) (res types.Result) {
+		ctx = ctx.WithTxIndex(txm.Get(ctx))
+		defer func() {
+			if res.IsOK() {
+				txm.Incr(ctx)
+			}
+		}()
 		switch tx := tx.(type) {
 		case *transaction.TransferTx:
 			return handleTransferTx(ctx, am, tx)

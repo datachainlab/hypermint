@@ -113,8 +113,7 @@ func (em *EnvManager) Get(ctx sdk.Context, sender, addr common.Address, args []s
 		Sender:     sender,
 		EnvManager: em,
 		Contract:   c,
-		// FIXME set valid txIdx
-		DB:   db.NewVersionedDB(ctx.KVStore(em.key).Prefix(addr.Bytes()), db.Version{uint32(ctx.BlockHeight()), 0}),
-		Args: args,
+		DB:         db.NewVersionedDB(ctx.KVStore(em.key).Prefix(addr.Bytes()), db.Version{uint32(ctx.BlockHeight()), ctx.TxIndex()}),
+		Args:       args,
 	}, nil
 }
