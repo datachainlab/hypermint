@@ -4,11 +4,10 @@ import (
 	"fmt"
 	"testing"
 
-	"github.com/bluele/hypermint/pkg/abci/store"
 	"github.com/bluele/hypermint/pkg/abci/types"
+	"github.com/bluele/hypermint/pkg/testutil"
 	"github.com/stretchr/testify/assert"
 	abci "github.com/tendermint/tendermint/abci/types"
-	"github.com/tendermint/tendermint/libs/db"
 )
 
 func TestVersionedDB(t *testing.T) {
@@ -67,7 +66,7 @@ func TestVersionedDB(t *testing.T) {
 	for i, cs := range cases {
 		t.Run(fmt.Sprint(i), func(t *testing.T) {
 			assert := assert.New(t)
-			cms, err := GetTestCommitMultiStore(testStoreKey)
+			cms, err := testutil.GetTestCommitMultiStore(testStoreKey)
 			assert.NoError(err)
 			ctx := types.NewContext(cms, abci.Header{}, false, nil)
 
@@ -100,14 +99,4 @@ func TestVersionedDB(t *testing.T) {
 			assert.Equal(cs.expects, *set)
 		})
 	}
-}
-
-func GetTestCommitMultiStore(key types.StoreKey) (types.CommitMultiStore, error) {
-	memdb := db.NewMemDB()
-	cms := store.NewCommitMultiStore(memdb)
-	cms.MountStoreWithDB(key, types.StoreTypeIAVL, nil)
-	if err := cms.LoadLatestVersion(); err != nil {
-		return nil, err
-	}
-	return cms, nil
 }
