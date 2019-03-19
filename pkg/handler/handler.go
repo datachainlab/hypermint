@@ -1,7 +1,11 @@
 package handler
 
 import (
+	"bytes"
+	"fmt"
 	"reflect"
+
+	"github.com/tendermint/go-amino"
 
 	"github.com/bluele/hypermint/pkg/abci/types"
 	"github.com/bluele/hypermint/pkg/account"
@@ -9,8 +13,14 @@ import (
 	"github.com/bluele/hypermint/pkg/transaction"
 )
 
-func NewHandler(am account.AccountMapper, cm *contract.ContractManager, envm *contract.EnvManager) types.Handler {
-	return func(ctx types.Context, tx types.Tx) types.Result {
+func NewHandler(txm transaction.TxIndexMapper, am account.AccountMapper, cm *contract.ContractManager, envm *contract.EnvManager) types.Handler {
+	return func(ctx types.Context, tx types.Tx) (res types.Result) {
+		ctx = ctx.WithTxIndex(txm.Get(ctx))
+		defer func() {
+			if res.IsOK() {
+				txm.Incr(ctx)
+			}
+		}()
 		switch tx := tx.(type) {
 		case *transaction.TransferTx:
 			return handleTransferTx(ctx, am, tx)
@@ -45,7 +55,7 @@ func handleContractDeployTx(ctx types.Context, cm *contract.ContractManager, env
 }
 
 func handleContractCallTx(ctx types.Context, cm *contract.ContractManager, envm *contract.EnvManager, tx *transaction.ContractCallTx) types.Result {
-	env, err := envm.Get(ctx, tx.Address, tx.Args)
+	env, err := envm.Get(ctx, tx.From, tx.Address, tx.Args)
 	if err != nil {
 		return transaction.ErrInvalidCall(transaction.DefaultCodespace, err.Error()).Result()
 	}
@@ -53,7 +63,28 @@ func handleContractCallTx(ctx types.Context, cm *contract.ContractManager, envm 
 	if err != nil {
 		return transaction.ErrInvalidCall(transaction.DefaultCodespace, err.Error()).Result()
 	}
-	return types.Result{
-		Data: res,
+	if len(tx.RWSetsHash) != 0 && !bytes.Equal(tx.RWSetsHash, res.RWSets.Hash()) {
+		return transaction.ErrInvalidCall(transaction.DefaultCodespace, fmt.Sprintf("RWSetsHash mismatch %v %v", tx.RWSetsHash, res.RWSets.Hash())).Result()
 	}
+	b, err := res.RWSets.Bytes()
+	if err != nil {
+		return transaction.ErrInvalidCall(transaction.DefaultCodespace, err.Error()).Result()
+	}
+	rb, err := amino.MarshalBinaryBare(
+		ContractCallTxResponse{
+			Returned:    res.Response,
+			RWSetsBytes: b,
+		},
+	)
+	if err != nil {
+		return transaction.ErrInvalidCall(transaction.DefaultCodespace, err.Error()).Result()
+	}
+	return types.Result{
+		Data: rb,
+	}
+}
+
+type ContractCallTxResponse struct {
+	Returned    []byte
+	RWSetsBytes []byte
 }

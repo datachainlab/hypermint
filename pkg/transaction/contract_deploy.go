@@ -3,8 +3,6 @@ package transaction
 import (
 	"github.com/bluele/hypermint/pkg/abci/types"
 	"github.com/bluele/hypermint/pkg/util"
-	"github.com/ethereum/go-ethereum/common"
-	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/ethereum/go-ethereum/rlp"
 )
 
@@ -39,8 +37,4 @@ func (tx *ContractDeployTx) Bytes() []byte {
 		panic(err)
 	}
 	return append([]byte{CONTRACT_DEPLOY}, b...)
-}
-
-func (tx *ContractDeployTx) Address() common.Address {
-	return common.BytesToAddress(crypto.Keccak256(tx.Code)[12:])
 }

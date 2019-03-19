@@ -39,7 +39,7 @@ var (
 
 	MainStoreKey     = sdk.NewKVStoreKey("main")
 	ContractStoreKey = sdk.NewKVStoreKey("contract")
-	StorageStoreKey  = sdk.NewKVStoreKey("storage")
+	TxIndexStoreKey  = sdk.NewTransientStoreKey("tx_index")
 )
 
 type Chain struct {
@@ -51,6 +51,7 @@ type Chain struct {
 	// keys to access the substores
 	capKeyMainStore *sdk.KVStoreKey
 	contractStore   *sdk.KVStoreKey
+	txIndexStore    *sdk.TransientStoreKey
 }
 
 func NewChain(logger log.Logger, db db.DB, traceStore io.Writer) *Chain {
@@ -60,13 +61,15 @@ func NewChain(logger log.Logger, db db.DB, traceStore io.Writer) *Chain {
 		cdc:             cdc,
 		capKeyMainStore: MainStoreKey,
 		contractStore:   ContractStoreKey,
+		txIndexStore:    TxIndexStoreKey,
 	}
 	am := account.NewAccountMapper(c.capKeyMainStore)
 	cm := contract.NewContractMapper(c.contractStore)
 	cmn := contract.NewContractManager(cm)
 	envm := contract.NewEnvManager(c.contractStore, cm)
+	txm := transaction.NewTxIndexMapper(c.txIndexStore)
 
-	c.SetHandler(handler.NewHandler(am, cmn, envm))
+	c.SetHandler(handler.NewHandler(txm, am, cmn, envm))
 	c.SetAnteHandler(handler.NewAnteHandler(am))
 	c.SetInitChainer(GetInitChainer(am))
 
@@ -84,6 +87,7 @@ func (c *Chain) mountStores() error {
 	}
 
 	c.MountStoresIAVL(keys...)
+	c.MountStoresTransient(c.txIndexStore)
 
 	for _, key := range keys {
 		if err := c.LoadLatestVersion(key); err != nil {

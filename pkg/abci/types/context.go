@@ -140,6 +140,7 @@ const (
 	contextKeyVoteInfos
 	contextKeyGasMeter
 	contextKeyMinimumFees
+	contextKeyTxIndex
 )
 
 func (c Context) MultiStore() MultiStore {
@@ -167,6 +168,10 @@ func (c Context) VoteInfos() []abci.VoteInfo {
 func (c Context) GasMeter() GasMeter { return c.Value(contextKeyGasMeter).(GasMeter) }
 
 func (c Context) IsCheckTx() bool { return c.Value(contextKeyIsCheckTx).(bool) }
+
+func (c Context) TxIndex() uint32 {
+	return c.Value(contextKeyTxIndex).(uint32)
+}
 
 func (c Context) WithMultiStore(ms MultiStore) Context {
 	return c.withValue(contextKeyMultiStore, ms)
@@ -219,6 +224,10 @@ func (c Context) WithGasMeter(meter GasMeter) Context { return c.withValue(conte
 
 func (c Context) WithIsCheckTx(isCheckTx bool) Context {
 	return c.withValue(contextKeyIsCheckTx, isCheckTx)
+}
+
+func (c Context) WithTxIndex(idx uint32) Context {
+	return c.withValue(contextKeyTxIndex, idx)
 }
 
 // Cache the multistore and return a new cached context. The cached context is

@@ -6,13 +6,14 @@ import (
 	"os"
 
 	"github.com/bluele/hypermint/pkg/abci/store"
-	"github.com/bluele/hypermint/pkg/abci/types"
 	sdk "github.com/bluele/hypermint/pkg/abci/types"
 	"github.com/bluele/hypermint/pkg/app"
 	"github.com/bluele/hypermint/pkg/client/helper"
 	"github.com/bluele/hypermint/pkg/contract"
+	"github.com/bluele/hypermint/pkg/db"
 	"github.com/bluele/hypermint/pkg/util"
 	"github.com/ethereum/go-ethereum/common"
+	"github.com/kr/pretty"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 	abci "github.com/tendermint/tendermint/abci/types"
@@ -23,6 +24,7 @@ const (
 	flagWASMPath = "path"
 	flagArgs     = "args"
 	flagEntry    = "entry"
+	flagSimulate = "simulate"
 )
 
 func vmCmd(ctx *app.Context) *cobra.Command {
@@ -44,33 +46,41 @@ func vmCmd(ctx *app.Context) *cobra.Command {
 			if err != nil {
 				return err
 			}
-			db, err := dbm.NewGoLevelDB("hm", "/tmp")
+			gdb, err := dbm.NewGoLevelDB("hm", "/tmp")
 			if err != nil {
 				return err
 			}
-			defer db.Close()
-			cms := store.NewCommitMultiStore(db)
+			defer gdb.Close()
+			cms := store.NewCommitMultiStore(gdb)
 			var key = sdk.NewKVStoreKey("main")
 			cms.MountStoreWithDB(key, sdk.StoreTypeIAVL, nil)
 			if err := cms.LoadLatestVersion(); err != nil {
 				return err
 			}
-			kvs := cms.GetKVStore(key)
+			var kvs sdk.KVStore
+			if viper.GetBool(flagSimulate) {
+				kvs = cms.CacheMultiStore().GetKVStore(key)
+			} else {
+				kvs = cms.GetKVStore(key)
+			}
 			env := &contract.Env{
+				Sender: from,
 				Contract: &contract.Contract{
 					Owner: from,
 					Code:  b,
 				},
-				DB:   kvs,
+				DB:   db.NewVersionedDB(kvs, db.Version{1, 1}),
 				Args: viper.GetStringSlice(flagArgs),
 			}
-			c := types.NewContext(cms, abci.Header{}, false, nil)
+			c := sdk.NewContext(cms, abci.Header{}, false, nil)
 			res, err := env.Exec(c, viper.GetString(flagEntry))
 			if err != nil {
 				return err
 			}
 			cms.Commit()
-			fmt.Println("response: ", string(res))
+			pretty.Println(res.RWSets)
+			fmt.Printf("RWSetsHash is '0x%x'\n", res.RWSets.Hash())
+			fmt.Println("response:", string(res.Response))
 			return nil
 		},
 	}
@@ -78,6 +88,7 @@ func vmCmd(ctx *app.Context) *cobra.Command {
 	cmd.Flags().StringSlice(flagArgs, nil, "arguments")
 	cmd.Flags().String(flagEntry, "app_main", "")
 	cmd.Flags().String(helper.FlagAddress, "", "address")
+	cmd.Flags().Bool(flagSimulate, false, "is simluation")
 	util.CheckRequiredFlag(cmd, flagWASMPath)
 	return cmd
 }

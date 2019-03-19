@@ -3,6 +3,8 @@ package contract
 import (
 	"fmt"
 
+	"github.com/bluele/hypermint/pkg/db"
+
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/perlin-network/life/exec"
 )
@@ -10,6 +12,7 @@ import (
 type Process struct {
 	vm *exec.VirtualMachine
 	*Env
+	rwm db.RWSetMap
 }
 
 func NewProcess(vm *exec.VirtualMachine, env *Env) *Process {
@@ -48,18 +51,20 @@ func (p *Process) GetArg(idx int, ret Value) (int, error) {
 
 // ReadState returns read size and error or nil
 func (p *Process) ReadState(key []byte, ret Value) (int, error) {
-	v := p.DB.Get(key)
-	if v == nil {
-		return 0, fmt.Errorf("key not found")
+	v, err := p.DB.Get(key)
+	if err != nil {
+		return -1, err
 	}
 	return len(v), ret.Set(v)
 }
 
-func (p *Process) WriteState(key, v []byte) int64 {
-	p.DB.Set(key, v)
-	return 0
+func (p *Process) WriteState(key, value []byte) (int64, error) {
+	if err := p.DB.Set(key, value); err != nil {
+		return -1, err
+	}
+	return 0, nil
 }
 
 func (p *Process) GetSender() common.Address {
-	return p.Env.Contract.Owner
+	return p.Env.Sender
 }

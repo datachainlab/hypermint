@@ -14,9 +14,10 @@ const (
 )
 
 type ContractCallTx struct {
-	Address common.Address
-	Func    string // function name
-	Args    []string
+	Address    common.Address
+	Func       string // function name
+	Args       []string
+	RWSetsHash []byte
 	CommonTx
 }
 
