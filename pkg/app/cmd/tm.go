@@ -43,7 +43,7 @@ func showValidatorCmd(ctx *app.Context) *cobra.Command {
 		Short: "Show this node's tendermint validator info",
 		RunE: func(cmd *cobra.Command, args []string) error {
 			cfg := ctx.Config
-			privValidator := pvm.LoadOrGenFilePV(cfg.PrivValidatorKeyFile(), cfg.PrivValidatorStateFile())
+			privValidator := pvm.LoadFilePV(cfg.PrivValidatorKeyFile(), cfg.PrivValidatorStateFile())
 			valPubKey := privValidator.Key.PubKey
 
 			if viper.GetBool(FlagJson) {
@@ -70,7 +70,7 @@ func showAddressCmd(ctx *app.Context) *cobra.Command {
 		Short: "Shows this node's tendermint validator address",
 		RunE: func(cmd *cobra.Command, args []string) error {
 			cfg := ctx.Config
-			privValidator := pvm.LoadOrGenFilePV(cfg.PrivValidatorKeyFile(), cfg.PrivValidatorStateFile())
+			privValidator := pvm.LoadFilePV(cfg.PrivValidatorKeyFile(), cfg.PrivValidatorStateFile())
 			valAddr := privValidator.Key.Address
 
 			if viper.GetBool(FlagJson) {

@@ -1,6 +1,7 @@
 package cmd
 
 import (
+	hnode "github.com/bluele/hypermint/pkg/node"
 	"github.com/pkg/errors"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
@@ -8,7 +9,6 @@ import (
 	tcmd "github.com/tendermint/tendermint/cmd/tendermint/commands"
 	cmn "github.com/tendermint/tendermint/libs/common"
 	"github.com/tendermint/tendermint/node"
-	"github.com/tendermint/tendermint/p2p"
 	pvm "github.com/tendermint/tendermint/privval"
 	"github.com/tendermint/tendermint/proxy"
 
@@ -96,11 +96,11 @@ func startInProcess(ctx *app.Context, appCreator app.AppCreator) (*node.Node, er
 	if err != nil {
 		return nil, err
 	}
-	nodeKey, err := p2p.LoadOrGenNodeKey(cfg.NodeKeyFile())
+	nodeKey, err := hnode.LoadNodeKey(cfg.NodeKeyFile())
 	if err != nil {
 		return nil, err
 	}
-	pv := pvm.LoadOrGenFilePV(cfg.PrivValidatorKeyFile(), cfg.PrivValidatorStateFile())
+	pv := pvm.LoadFilePV(cfg.PrivValidatorKeyFile(), cfg.PrivValidatorStateFile())
 
 	// create & start tendermint node
 	tmNode, err := node.NewNode(
