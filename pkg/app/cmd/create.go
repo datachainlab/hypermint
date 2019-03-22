@@ -6,6 +6,7 @@ import (
 	"path/filepath"
 
 	"github.com/bluele/hypermint/pkg/app"
+	"github.com/bluele/hypermint/pkg/node"
 	"github.com/bluele/hypermint/pkg/util"
 	"github.com/bluele/hypermint/pkg/util/wallet"
 	"github.com/bluele/hypermint/pkg/validator"
@@ -50,6 +51,9 @@ func createCmd(ctx *app.Context) *cobra.Command {
 				prv = util.PrvKeyToCryptoKey(key)
 			} else {
 				prv = secp256k1.GenPrivKey()
+			}
+			if _, err := node.GenNodeKeyByPrivKey(config.NodeKeyFile(), prv); err != nil {
+				return err
 			}
 			validator.GenFilePV(config.PrivValidatorKeyFile(), config.PrivValidatorStateFile(), prv)
 			return util.CopyFile(genesisPath, filepath.Join(config.RootDir, "config/genesis.json"))
