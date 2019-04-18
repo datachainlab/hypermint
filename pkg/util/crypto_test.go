@@ -2,7 +2,6 @@ package util
 
 import (
 	"errors"
-	"fmt"
 	"testing"
 
 	"github.com/ethereum/go-ethereum/crypto"
@@ -11,33 +10,29 @@ import (
 )
 
 func TestEcrecover(t *testing.T) {
-	for i := 0; i < 100; i++ {
-		t.Run(fmt.Sprint(i), func(t *testing.T) {
-			assert := assert.New(t)
-			msgHash := crypto.Keccak256(common.RandBytes(32))
-			privateKey, err := crypto.GenerateKey()
-			assert.NoError(err)
+	assert := assert.New(t)
+	msgHash := crypto.Keccak256(common.RandBytes(32))
+	privateKey, err := crypto.GenerateKey()
+	assert.NoError(err)
 
-			sig, err := crypto.Sign(msgHash, privateKey)
-			assert.NoError(err)
+	sig, err := crypto.Sign(msgHash, privateKey)
+	assert.NoError(err)
 
-			epub := crypto.FromECDSAPub(&privateKey.PublicKey)
+	epub := crypto.FromECDSAPub(&privateKey.PublicKey)
 
-			v, r, s, err := splitSigParams(sig)
-			assert.NoError(err)
+	v, r, s, err := splitSigParams(sig)
+	assert.NoError(err)
 
-			apub, err := Ecrecover(msgHash, v, r, s)
-			assert.NoError(err)
-			assert.Equal(len(epub), len(apub))
-			assert.Equal(epub, apub)
+	apub, err := Ecrecover(msgHash, v, r, s)
+	assert.NoError(err)
+	assert.Equal(len(epub), len(apub))
+	assert.Equal(epub, apub)
 
-			addr, err := EcrecoverAddress(msgHash, v, r, s)
-			assert.NoError(err)
+	addr, err := EcrecoverAddress(msgHash, v, r, s)
+	assert.NoError(err)
 
-			eaddr := crypto.PubkeyToAddress(privateKey.PublicKey)
-			assert.Equal(eaddr, addr)
-		})
-	}
+	eaddr := crypto.PubkeyToAddress(privateKey.PublicKey)
+	assert.Equal(eaddr, addr)
 }
 
 func splitSigParams(sig []byte) (v []byte, r []byte, s []byte, err error) {

@@ -192,8 +192,8 @@ func readBytes(vm *exec.VirtualMachine, ptrIdx, sizeIdx int) []byte {
 	return b
 }
 
-func readArgs(vm *exec.VirtualMachine, argc int, argvPtr uint32) ([]string, error) {
-	var args []string
+func readArgs(vm *exec.VirtualMachine, argc int, argvPtr uint32) (Args, error) {
+	var args Args
 
 	buf := bytes.NewBuffer(nil)
 	cur := argvPtr
@@ -202,7 +202,7 @@ func readArgs(vm *exec.VirtualMachine, argc int, argvPtr uint32) ([]string, erro
 		b := vm.Memory[cur]
 		cur++
 		if b == 0 {
-			args = append(args, buf.String())
+			args.PushBytes(buf.Bytes())
 			buf.Reset()
 			num++
 			continue

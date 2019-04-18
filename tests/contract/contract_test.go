@@ -41,13 +41,14 @@ func TestContract(t *testing.T) {
 	kvs := cms.GetKVStore(key)
 
 	from := crypto.PubkeyToAddress(prv.PublicKey)
-	var args []string
+	var args contract.Args
 
 	msgHash := crypto.Keccak256(common.RandBytes(32))
 	sig, err := crypto.Sign(msgHash, prv)
 	assert.NoError(err)
 
-	args = append(append(args, string(msgHash)), string(sig))
+	args.PushBytes(msgHash)
+	args.PushBytes(sig)
 
 	env := &contract.Env{
 		Sender: from,

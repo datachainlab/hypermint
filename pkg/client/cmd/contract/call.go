@@ -41,7 +41,7 @@ func init() {
 var callCmd = &cobra.Command{
 	Use:   "call",
 	Short: "call contract",
-	RunE: func(cmd *cobra.Command, args []string) error {
+	RunE: func(cmd *cobra.Command, _ []string) error {
 		viper.BindPFlags(cmd.Flags())
 		ctx, err := client.NewClientContextFromViper()
 		if err != nil {
@@ -66,10 +66,14 @@ var callCmd = &cobra.Command{
 				return err
 			}
 		}
+		var args [][]byte
+		for _, arg := range viper.GetStringSlice(flagArgs) {
+			args = append(args, []byte(arg))
+		}
 		tx := &transaction.ContractCallTx{
 			Address:    caddr,
 			Func:       viper.GetString(flagFunc),
-			Args:       viper.GetStringSlice(flagArgs),
+			Args:       args,
 			RWSetsHash: rwh,
 			CommonTx: transaction.CommonTx{
 				From:  from,

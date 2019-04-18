@@ -42,10 +42,10 @@ func (bv *BytesValue) Set(b []byte) error {
 
 // GetArg returns read size and error or nil
 func (p *Process) GetArg(idx int, ret Value) (int, error) {
-	if len(p.Env.Args) <= idx {
-		return 0, fmt.Errorf("not found idx: %v %v", len(p.Env.Args), idx)
+	if p.Env.Args.Len() <= idx {
+		return 0, fmt.Errorf("not found idx: %v %v", p.Env.Args.Len(), idx)
 	}
-	arg := []byte(p.Env.Args[idx])
+	arg := p.Env.Args.Get(idx)
 	return len(arg), ret.Set(arg)
 }
 

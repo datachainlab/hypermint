@@ -64,7 +64,7 @@ func vmCmd(ctx *app.Context) *cobra.Command {
 					Code:  b,
 				},
 				DB:   db.NewVersionedDB(kvs, db.Version{1, 1}),
-				Args: viper.GetStringSlice(flagArgs),
+				Args: contract.NewArgsFromStrings(viper.GetStringSlice(flagArgs)),
 			}
 			c := sdk.NewContext(cms, abci.Header{}, false, nil)
 			res, err := env.Exec(c, viper.GetString(flagEntry))
