@@ -37,7 +37,7 @@ func (bv *BytesValue) Set(b []byte) error {
 		copy(bv.mem[bv.ptr:], b)
 		return nil
 	}
-	return fmt.Errorf("error: %v >= %v", len(b), int(bv.size))
+	return fmt.Errorf("allocation error: %v >= %v", len(b), int(bv.size))
 }
 
 // GetArg returns read size and error or nil

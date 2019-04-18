@@ -3,7 +3,6 @@ package cmd
 import (
 	"fmt"
 	"io/ioutil"
-	"os"
 
 	"github.com/bluele/hypermint/pkg/abci/store"
 	sdk "github.com/bluele/hypermint/pkg/abci/types"
@@ -37,12 +36,7 @@ func vmCmd(ctx *app.Context) *cobra.Command {
 			from := common.HexToAddress(addr)
 
 			path := viper.GetString(flagWASMPath)
-			f, err := os.Open(path)
-			if err != nil {
-				return err
-			}
-			defer f.Close()
-			b, err := ioutil.ReadAll(f)
+			b, err := ioutil.ReadFile(path)
 			if err != nil {
 				return err
 			}

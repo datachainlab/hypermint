@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"log"
 
+	"github.com/bluele/hypermint/pkg/util"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/perlin-network/life/exec"
 )
@@ -128,6 +129,52 @@ func (r *Resolver) ResolveFunc(module, field string) exec.FunctionImport {
 				}
 				env.state.Add(res.RWSets)
 				return int64(len(res.Response))
+			})
+		case "__ecrecover":
+			return r.getF(func(vm *exec.VirtualMachine, ps *Process) int64 {
+				h := readBytes(vm, 0, 1)
+				v := readBytes(vm, 2, 3)
+				r := readBytes(vm, 4, 5)
+				s := readBytes(vm, 6, 7)
+				cf := vm.GetCurrentFrame()
+				ret := &BytesValue{
+					mem:  vm.Memory,
+					ptr:  uint32(cf.Locals[8]),
+					size: uint32(cf.Locals[9]),
+				}
+				pub, err := util.Ecrecover(h, v, r, s)
+				if err != nil {
+					log.Println("error: ", err)
+					return -1
+				}
+				if err := ret.Set(pub[:]); err != nil {
+					log.Println("error: ", err)
+					return -1
+				}
+				return 0
+			})
+		case "__ecrecover_address":
+			return r.getF(func(vm *exec.VirtualMachine, ps *Process) int64 {
+				h := readBytes(vm, 0, 1)
+				v := readBytes(vm, 2, 3)
+				r := readBytes(vm, 4, 5)
+				s := readBytes(vm, 6, 7)
+				cf := vm.GetCurrentFrame()
+				ret := &BytesValue{
+					mem:  vm.Memory,
+					ptr:  uint32(cf.Locals[8]),
+					size: uint32(cf.Locals[9]),
+				}
+				addr, err := util.EcrecoverAddress(h, v, r, s)
+				if err != nil {
+					log.Println("error: ", err)
+					return -1
+				}
+				if err := ret.Set(addr[:]); err != nil {
+					log.Println("error: ", err)
+					return -1
+				}
+				return 0
 			})
 		default:
 			panic(fmt.Errorf("unknown field: %s", field))

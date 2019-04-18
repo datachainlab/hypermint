@@ -1,7 +1,6 @@
 package contract
 
 import (
-	"errors"
 	"fmt"
 
 	"github.com/bluele/hypermint/pkg/db"
@@ -66,8 +65,8 @@ func (env *Env) Exec(ctx sdk.Context, entry string) (*Result, error) {
 		vm.PrintStackTrace()
 		return nil, err
 	}
-	if ret == -1 {
-		return nil, errors.New("execute contract error")
+	if ret != 0 {
+		return nil, fmt.Errorf("execute contract error(exit code: %v)", ret)
 	}
 	set, err := env.DB.Commit()
 	if err != nil {
