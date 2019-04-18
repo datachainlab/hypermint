@@ -50,6 +50,9 @@ create-node:
 test:
 	$(GO_TEST_CMD) ./pkg/...
 
+test-e2e:
+	$(MAKE) -C ./tests/contract test
+
 build-image:
 	docker build . -t bluele/hypermint:${VERSION}
 

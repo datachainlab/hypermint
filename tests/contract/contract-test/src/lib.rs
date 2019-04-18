@@ -2,9 +2,9 @@ extern crate hmc;
 
 fn call_check_signature() -> Result<i64, String> {
     let sender = hmc::get_sender()?;
-    let msgHash = hmc::get_arg(0)?;
+    let msg_hash = hmc::get_arg(0)?;
     let sig = hmc::get_arg(1)?;
-    let addr = hmc::ecrecover_address(&msgHash, &sig[64..65], &sig[0..32], &sig[32..64])?;
+    let addr = hmc::ecrecover_address(&msg_hash, &sig[64..65], &sig[0..32], &sig[32..64])?;
 
     if sender == addr {
         Ok(0)
