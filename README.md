@@ -1,5 +1,7 @@
 # hypermint
 
+[![CircleCI](https://circleci.com/gh/bluele/hypermint.svg?style=svg)](https://circleci.com/gh/bluele/hypermint)
+
 hypermint = wasm + tendermint
 
 This is a very experimental project.
