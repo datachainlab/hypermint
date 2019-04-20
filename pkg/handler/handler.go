@@ -55,7 +55,7 @@ func handleContractDeployTx(ctx types.Context, cm *contract.ContractManager, env
 }
 
 func handleContractCallTx(ctx types.Context, cm *contract.ContractManager, envm *contract.EnvManager, tx *transaction.ContractCallTx) types.Result {
-	env, err := envm.Get(ctx, tx.From, tx.Address, tx.Args)
+	env, err := envm.Get(ctx, tx.From, tx.Address, contract.NewArgs(tx.Args))
 	if err != nil {
 		return transaction.ErrInvalidCall(transaction.DefaultCodespace, err.Error()).Result()
 	}
