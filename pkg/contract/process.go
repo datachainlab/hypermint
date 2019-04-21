@@ -8,7 +8,7 @@ import (
 	"github.com/perlin-network/life/exec"
 )
 
-var defaultLogger = logger.GetDefaultLogger("*:debug")
+var defaultLogger = logger.GetDefaultLogger("*:debug").With("module", "process")
 
 type Process interface {
 	Sender() common.Address
@@ -26,10 +26,14 @@ type process struct {
 	logger logger.Logger
 }
 
-func NewProcess(vm *exec.VirtualMachine, env *Env) Process {
+func NewProcess(vm *exec.VirtualMachine, env *Env, logger logger.Logger) Process {
+	if logger == nil {
+		logger = defaultLogger
+	}
 	return &process{
-		vm:  vm,
-		Env: env,
+		vm:     vm,
+		Env:    env,
+		logger: logger,
 	}
 }
 
