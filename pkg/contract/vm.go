@@ -40,7 +40,7 @@ func (a *Args) PushBytes(b []byte) {
 	a.values = append(a.values, b)
 }
 
-func (a *Args) Get(idx int) []byte {
+func (a Args) Get(idx int) []byte {
 	return a.values[idx]
 }
 

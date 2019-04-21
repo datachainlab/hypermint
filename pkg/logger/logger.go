@@ -10,20 +10,22 @@ import (
 	"github.com/tendermint/tendermint/libs/log"
 )
 
-var logger log.Logger
+type Logger = log.Logger
+
+var logger Logger
 
 // this method is goroutine unsafe
-func SetLogger(lg log.Logger) {
+func SetLogger(lg Logger) {
 	if logger == nil {
 		logger = lg
 	}
 }
 
-func GetLogger() log.Logger {
+func GetLogger() Logger {
 	return logger
 }
 
-func GetDefaultLogger(lv string) log.Logger {
+func GetDefaultLogger(lv string) Logger {
 	logger := log.NewTMLogger(log.NewSyncWriter(os.Stdout))
 	logger, err := tmflags.ParseLogLevel(lv, logger, cfg.DefaultLogLevel())
 	if err != nil {
@@ -47,6 +49,6 @@ func Error(msg string, keyvals ...interface{}) {
 	logger.Error(msg, keyvals...)
 }
 
-func With(keyvals ...interface{}) log.Logger {
+func With(keyvals ...interface{}) Logger {
 	return logger.With(keyvals...)
 }

@@ -10,6 +10,13 @@ var (
 	ErrKeyNotFound = errors.New("key not found")
 )
 
+var _ StateDB = new(VersionedDB)
+
+type StateDB interface {
+	Set(k, v []byte) error
+	Get(k []byte) ([]byte, error)
+}
+
 type Version struct {
 	Height uint32
 	TxIdx  uint32
