@@ -5,8 +5,6 @@ import (
 	"fmt"
 	"log"
 
-	"github.com/bluele/hypermint/pkg/util"
-	"github.com/ethereum/go-ethereum/common"
 	"github.com/perlin-network/life/exec"
 )
 
@@ -18,9 +16,9 @@ func NewResolver(env *Env) *Resolver {
 	return &Resolver{env: env}
 }
 
-func (r *Resolver) getF(cb func(*exec.VirtualMachine, *Process) int64) exec.FunctionImport {
+func (r *Resolver) getF(cb func(*exec.VirtualMachine, Process) int64) exec.FunctionImport {
 	return func(vm *exec.VirtualMachine) int64 {
-		ps := NewProcess(vm, r.env)
+		ps := NewProcess(vm, r.env, r.env.Logger)
 		return cb(vm, ps)
 	}
 }
@@ -31,150 +29,75 @@ func (r *Resolver) ResolveFunc(module, field string) exec.FunctionImport {
 	case "env":
 		switch field {
 		case "__get_sender":
-			return r.getF(func(vm *exec.VirtualMachine, ps *Process) int64 {
+			return r.getF(func(vm *exec.VirtualMachine, ps Process) int64 {
 				cf := vm.GetCurrentFrame()
-				sender := ps.GetSender()
-				ret := &BytesValue{
-					mem:  vm.Memory,
-					ptr:  uint32(cf.Locals[0]),
-					size: uint32(cf.Locals[1]),
-				}
-				if err := ret.Set(sender[:]); err != nil {
-					log.Println("error: ", err)
-					return -1
-				}
-				return 0
+				w := NewWriter(vm.Memory, cf.Locals[0], cf.Locals[1])
+				return int64(GetSender(ps, w))
 			})
 		case "__get_arg":
-			return r.getF(func(vm *exec.VirtualMachine, ps *Process) int64 {
+			return r.getF(func(vm *exec.VirtualMachine, ps Process) int64 {
 				cf := vm.GetCurrentFrame()
-				idx := cf.Locals[0]
-				ret := &BytesValue{
-					mem:  vm.Memory,
-					ptr:  uint32(cf.Locals[1]),
-					size: uint32(cf.Locals[2]),
-				}
-				size, err := ps.GetArg(int(idx), ret)
-				if err != nil {
-					log.Println("error: ", err)
-					return -1
-				}
-				return int64(size)
+				idx := int(cf.Locals[0])
+				w := NewWriter(vm.Memory, cf.Locals[1], cf.Locals[2])
+				return int64(GetArg(ps, idx, w))
 			})
 		case "__read_state":
-			return r.getF(func(vm *exec.VirtualMachine, ps *Process) int64 {
+			return r.getF(func(vm *exec.VirtualMachine, ps Process) int64 {
 				cf := vm.GetCurrentFrame()
-				key := readBytes(vm, 0, 1)
-				ret := &BytesValue{
-					mem:  vm.Memory,
-					ptr:  uint32(cf.Locals[2]),
-					size: uint32(cf.Locals[3]),
-				}
-				size, err := ps.ReadState(key, ret)
-				if err != nil {
-					return -1
-				}
-				return int64(size)
+				key := NewReader(vm.Memory, cf.Locals[0], cf.Locals[1])
+				buf := NewWriter(vm.Memory, cf.Locals[2], cf.Locals[3])
+				return int64(ReadState(ps, key, buf))
 			})
 		case "__write_state":
-			return r.getF(func(vm *exec.VirtualMachine, ps *Process) int64 {
-				key := readBytes(vm, 0, 1)
-				value := readBytes(vm, 2, 3)
-				ret, err := ps.WriteState(key, value)
-				if err != nil {
-					return -1
-				}
-				return ret
+			return r.getF(func(vm *exec.VirtualMachine, ps Process) int64 {
+				cf := vm.GetCurrentFrame()
+				key := NewReader(vm.Memory, cf.Locals[0], cf.Locals[1])
+				val := NewReader(vm.Memory, cf.Locals[2], cf.Locals[3])
+				return int64(WriteState(ps, key, val))
 			})
 		case "__log":
-			return r.getF(func(vm *exec.VirtualMachine, _ *Process) int64 {
-				msg := readBytes(vm, 0, 1)
-				log.Printf("__log: %v(%v)", string(msg), msg)
-				return 0
+			return r.getF(func(vm *exec.VirtualMachine, ps Process) int64 {
+				cf := vm.GetCurrentFrame()
+				msg := NewReader(vm.Memory, cf.Locals[0], cf.Locals[1])
+				return int64(Log(ps, msg))
 			})
 		case "__set_response":
-			return r.getF(func(vm *exec.VirtualMachine, ps *Process) int64 {
-				value := readBytes(vm, 0, 1)
-				ps.SetResponse(value)
-				return 0
+			return r.getF(func(vm *exec.VirtualMachine, ps Process) int64 {
+				cf := vm.GetCurrentFrame()
+				return int64(SetResponse(ps, NewReader(vm.Memory, cf.Locals[0], cf.Locals[1])))
 			})
 		case "__call_contract":
-			return r.getF(func(vm *exec.VirtualMachine, ps *Process) int64 {
-				addr := common.BytesToAddress(readBytes(vm, 0, 1))
-				entry := string(readBytes(vm, 2, 3))
+			return r.getF(func(vm *exec.VirtualMachine, ps Process) int64 {
 				cf := vm.GetCurrentFrame()
-				ret := &BytesValue{
-					mem:  vm.Memory,
-					ptr:  uint32(cf.Locals[4]),
-					size: uint32(cf.Locals[5]),
-				}
+				addr := NewReader(vm.Memory, cf.Locals[0], cf.Locals[1])
+				entry := NewReader(vm.Memory, cf.Locals[2], cf.Locals[3])
+				ret := NewWriter(vm.Memory, cf.Locals[4], cf.Locals[5])
 				args, err := readArgs(vm, int(cf.Locals[6]), uint32(cf.Locals[7]))
 				if err != nil {
 					log.Println("error: ", err)
 					return -1
 				}
-				env, err := ps.EnvManager.Get(ps.Env.Context, r.env.Sender, addr, args)
-				if err != nil {
-					log.Println("error: ", err)
-					return -1
-				}
-				res, err := env.Exec(ps.Env.Context, entry)
-				if err != nil {
-					log.Println("error: ", err)
-					return -1
-				}
-				if err := ret.Set(res.Response); err != nil {
-					log.Println("error: ", err)
-					return -1
-				}
-				env.state.Add(res.RWSets)
-				return int64(len(res.Response))
+				return int64(CallContract(ps, addr, entry, args, ret))
 			})
 		case "__ecrecover":
-			return r.getF(func(vm *exec.VirtualMachine, ps *Process) int64 {
-				h := readBytes(vm, 0, 1)
-				v := readBytes(vm, 2, 3)
-				r := readBytes(vm, 4, 5)
-				s := readBytes(vm, 6, 7)
+			return r.getF(func(vm *exec.VirtualMachine, ps Process) int64 {
 				cf := vm.GetCurrentFrame()
-				ret := &BytesValue{
-					mem:  vm.Memory,
-					ptr:  uint32(cf.Locals[8]),
-					size: uint32(cf.Locals[9]),
-				}
-				pub, err := util.Ecrecover(h, v, r, s)
-				if err != nil {
-					log.Println("error: ", err)
-					return -1
-				}
-				if err := ret.Set(pub[:]); err != nil {
-					log.Println("error: ", err)
-					return -1
-				}
-				return 0
+				h := NewReader(vm.Memory, cf.Locals[0], cf.Locals[1])
+				v := NewReader(vm.Memory, cf.Locals[2], cf.Locals[3])
+				r := NewReader(vm.Memory, cf.Locals[4], cf.Locals[5])
+				s := NewReader(vm.Memory, cf.Locals[6], cf.Locals[7])
+				ret := NewWriter(vm.Memory, cf.Locals[8], cf.Locals[9])
+				return int64(ECRecover(ps, h, v, r, s, ret))
 			})
 		case "__ecrecover_address":
-			return r.getF(func(vm *exec.VirtualMachine, ps *Process) int64 {
-				h := readBytes(vm, 0, 1)
-				v := readBytes(vm, 2, 3)
-				r := readBytes(vm, 4, 5)
-				s := readBytes(vm, 6, 7)
+			return r.getF(func(vm *exec.VirtualMachine, ps Process) int64 {
 				cf := vm.GetCurrentFrame()
-				ret := &BytesValue{
-					mem:  vm.Memory,
-					ptr:  uint32(cf.Locals[8]),
-					size: uint32(cf.Locals[9]),
-				}
-				addr, err := util.EcrecoverAddress(h, v, r, s)
-				if err != nil {
-					log.Println("error: ", err)
-					return -1
-				}
-				if err := ret.Set(addr[:]); err != nil {
-					log.Println("error: ", err)
-					return -1
-				}
-				return 0
+				h := NewReader(vm.Memory, cf.Locals[0], cf.Locals[1])
+				v := NewReader(vm.Memory, cf.Locals[2], cf.Locals[3])
+				r := NewReader(vm.Memory, cf.Locals[4], cf.Locals[5])
+				s := NewReader(vm.Memory, cf.Locals[6], cf.Locals[7])
+				ret := NewWriter(vm.Memory, cf.Locals[8], cf.Locals[9])
+				return int64(ECRecoverAddress(ps, h, v, r, s, ret))
 			})
 		default:
 			panic(fmt.Errorf("unknown field: %s", field))
@@ -182,14 +105,6 @@ func (r *Resolver) ResolveFunc(module, field string) exec.FunctionImport {
 	default:
 		panic(fmt.Errorf("unknown module: %s", module))
 	}
-}
-
-func readBytes(vm *exec.VirtualMachine, ptrIdx, sizeIdx int) []byte {
-	ptr := int(uint32(vm.GetCurrentFrame().Locals[ptrIdx]))
-	msgLen := int(uint32(vm.GetCurrentFrame().Locals[sizeIdx]))
-	b := make([]byte, msgLen)
-	copy(b, vm.Memory[ptr:ptr+msgLen])
-	return b
 }
 
 func readArgs(vm *exec.VirtualMachine, argc int, argvPtr uint32) (Args, error) {

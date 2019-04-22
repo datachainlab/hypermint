@@ -4,6 +4,7 @@ import (
 	"fmt"
 
 	"github.com/bluele/hypermint/pkg/db"
+	"github.com/bluele/hypermint/pkg/logger"
 
 	sdk "github.com/bluele/hypermint/pkg/abci/types"
 	"github.com/ethereum/go-ethereum/common"
@@ -12,9 +13,10 @@ import (
 
 type Env struct {
 	Context  sdk.Context
+	Logger   logger.Logger
 	Sender   common.Address
 	Args     Args
-	Response []byte
+	response []byte
 
 	EnvManager *EnvManager
 	Contract   *Contract
@@ -40,7 +42,7 @@ func (a *Args) PushBytes(b []byte) {
 	a.values = append(a.values, b)
 }
 
-func (a *Args) Get(idx int) []byte {
+func (a Args) Get(idx int) []byte {
 	return a.values[idx]
 }
 
@@ -115,11 +117,11 @@ func (env *Env) Exec(ctx sdk.Context, entry string) (*Result, error) {
 }
 
 func (env *Env) SetResponse(v []byte) {
-	env.Response = v
+	env.response = v
 }
 
 func (env *Env) GetReponse() []byte {
-	return env.Response
+	return env.response
 }
 
 type EnvManager struct {

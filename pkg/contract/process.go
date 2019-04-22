@@ -1,70 +1,70 @@
 package contract
 
 import (
-	"fmt"
-
 	"github.com/bluele/hypermint/pkg/db"
+	"github.com/bluele/hypermint/pkg/logger"
 
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/perlin-network/life/exec"
 )
 
-type Process struct {
+var defaultLogger = logger.GetDefaultLogger("*:debug").With("module", "process")
+
+type Process interface {
+	Sender() common.Address
+	Args() Args
+	State() db.StateDB
+	SetResponse([]byte)
+	Call(addr common.Address, entry []byte, args Args) ([]byte, error)
+	Logger() logger.Logger
+}
+
+type process struct {
 	vm *exec.VirtualMachine
 	*Env
-	rwm db.RWSetMap
+	rwm    db.RWSetMap
+	logger logger.Logger
 }
 
-func NewProcess(vm *exec.VirtualMachine, env *Env) *Process {
-	return &Process{
-		vm:  vm,
-		Env: env,
+func NewProcess(vm *exec.VirtualMachine, env *Env, logger logger.Logger) Process {
+	if logger == nil {
+		logger = defaultLogger
+	}
+	return &process{
+		vm:     vm,
+		Env:    env,
+		logger: logger,
 	}
 }
 
-type Value interface {
-	Set([]byte) error
-}
-
-type BytesValue struct {
-	mem  []byte
-	ptr  uint32
-	size uint32
-}
-
-func (bv *BytesValue) Set(b []byte) error {
-	if len(b) <= int(bv.size) {
-		copy(bv.mem[bv.ptr:], b)
-		return nil
-	}
-	return fmt.Errorf("allocation error: %v >= %v", len(b), int(bv.size))
-}
-
-// GetArg returns read size and error or nil
-func (p *Process) GetArg(idx int, ret Value) (int, error) {
-	if p.Env.Args.Len() <= idx {
-		return 0, fmt.Errorf("not found idx: %v %v", p.Env.Args.Len(), idx)
-	}
-	arg := p.Env.Args.Get(idx)
-	return len(arg), ret.Set(arg)
-}
-
-// ReadState returns read size and error or nil
-func (p *Process) ReadState(key []byte, ret Value) (int, error) {
-	v, err := p.DB.Get(key)
-	if err != nil {
-		return -1, err
-	}
-	return len(v), ret.Set(v)
-}
-
-func (p *Process) WriteState(key, value []byte) (int64, error) {
-	if err := p.DB.Set(key, value); err != nil {
-		return -1, err
-	}
-	return 0, nil
-}
-
-func (p *Process) GetSender() common.Address {
+func (p process) Sender() common.Address {
 	return p.Env.Sender
+}
+
+func (p process) Args() Args {
+	return p.Env.Args
+}
+
+func (p process) State() db.StateDB {
+	return p.DB
+}
+
+func (p *process) Call(addr common.Address, entry []byte, args Args) ([]byte, error) {
+	env, err := p.EnvManager.Get(p.Env.Context, p.Env.Sender, addr, args)
+	if err != nil {
+		return nil, err
+	}
+	res, err := env.Exec(p.Env.Context, string(entry))
+	if err != nil {
+		return nil, err
+	}
+	p.state.Add(res.RWSets)
+	return res.Response, nil
+}
+
+func (p *process) Logger() logger.Logger {
+	if p.logger != nil {
+		return p.logger
+	}
+	return defaultLogger
 }

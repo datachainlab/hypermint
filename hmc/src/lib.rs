@@ -18,8 +18,8 @@ extern "C" {
     fn __log(msg: *const u8, len: usize) -> i64;
 
     fn __read_state(
-        msg: *const u8,
-        len: usize,
+        key_ptr: *const u8,
+        key_len: usize,
         value_buf_ptr: *mut u8,
         value_buf_len: usize,
     ) -> i64;
@@ -76,8 +76,8 @@ pub fn ecrecover(h: &[u8], v: &[u8], r: &[u8], s: &[u8]) -> Result<[u8; 65], Str
             buf.len(),
         )
     } {
-        0 => Ok(buf),
-        _ => Err(format!("fail to ecrecover")),
+        -1 => Err(format!("fail to ecrecover")),
+        _ => Ok(buf),
     }
 }
 
@@ -106,8 +106,8 @@ pub fn ecrecover_address(h: &[u8], v: &[u8], r: &[u8], s: &[u8]) -> Result<[u8; 
             buf.len(),
         )
     } {
-        0 => Ok(buf),
-        _ => Err(format!("fail to ecrecover")),
+        -1 => Err(format!("fail to ecrecover")),
+        _ => Ok(buf),
     }
 }
 
