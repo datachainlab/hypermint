@@ -38,7 +38,11 @@ func startCmd(ctx *app.Context, appCreator app.AppCreator) *cobra.Command {
 			ctx.Logger.Info("Starting ABCI with Tendermint")
 
 			_, err := startInProcess(ctx, appCreator)
-			return err
+			if err != nil {
+				return err
+			}
+			// Run forever.
+			select {}
 		},
 	}
 
@@ -77,7 +81,7 @@ func startStandAlone(ctx *app.Context, appCreator app.AppCreator) error {
 	}
 
 	// wait forever
-	cmn.TrapSignal(func() {
+	cmn.TrapSignal(ctx.Logger, func() {
 		// cleanup
 		err = svr.Stop()
 		if err != nil {
@@ -123,7 +127,7 @@ func startInProcess(ctx *app.Context, appCreator app.AppCreator) (*node.Node, er
 	}
 
 	// Sleep forever and then...
-	cmn.TrapSignal(func() {
+	cmn.TrapSignal(ctx.Logger, func() {
 		tmNode.Stop()
 	})
 

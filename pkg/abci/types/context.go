@@ -207,7 +207,7 @@ func (c Context) WithConsensusParams(params *abci.ConsensusParams) Context {
 
 	// TODO: Do we need to handle invalid MaxGas values?
 	return c.withValue(contextKeyConsensusParams, params).
-		WithGasMeter(NewGasMeter(uint64(params.BlockSize.MaxGas)))
+		WithGasMeter(NewGasMeter(uint64(params.Block.MaxGas)))
 }
 
 func (c Context) WithChainID(chainID string) Context { return c.withValue(contextKeyChainID, chainID) }
