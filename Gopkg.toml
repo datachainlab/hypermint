@@ -39,15 +39,15 @@
 
 [[override]]
   name = "github.com/tendermint/tendermint"
-  version = "=0.30.1"
+  version = "=0.31.5"
 
 [[override]]
   name = "github.com/btcsuite/btcutil"
-  revision = "d4cc87b860166d00d6b5b9e0d3b3d71d6088d4d4"
+  revision = "ab6388e0c60ae4834a1f57511e20c17b5f78be4b"
 
 [[override]]
   name = "github.com/tendermint/iavl"
-  revision = "ac7c35c12e8633a1e9fd0b52a00b900b40f32cd3"
+  version = "=v0.12.1"
 
 [[override]]
   name = "github.com/golang/protobuf"
@@ -56,10 +56,6 @@
 [[override]]
   name = "github.com/tendermint/go-amino"
   version = "~0.14.1"
-
-[[override]]
-  name = "golang.org/x/crypto"
-  revision = "a4c6cb3142f211c99e4bf4cd769535b29a9b616f"
 
 [[constraint]]
   name = "github.com/btcsuite/btcd"
@@ -73,7 +69,3 @@
 [prune]
   go-tests = true
   unused-packages = true
-
-[[prune.project]]
-  name = "github.com/ethereum/go-ethereum"
-  unused-packages = false

@@ -5,6 +5,7 @@ import (
 	"github.com/tendermint/tendermint/abci/server"
 	abci "github.com/tendermint/tendermint/abci/types"
 	cmn "github.com/tendermint/tendermint/libs/common"
+	"github.com/tendermint/tendermint/libs/log"
 )
 
 // nolint - Mostly for testing
@@ -38,7 +39,7 @@ func RunForever(app abci.Application) {
 	}
 
 	// Wait forever
-	cmn.TrapSignal(func() {
+	cmn.TrapSignal(log.NewNopLogger(), func() {
 		// Cleanup
 		err := srv.Stop()
 		if err != nil {
