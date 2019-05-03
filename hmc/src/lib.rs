@@ -3,7 +3,7 @@ use std::str;
 const BUF_SIZE: usize = 128;
 
 extern "C" {
-    fn __get_arg(idx: usize, value_buf_ptr: *mut u8, value_buf_len: usize) -> i64;
+    fn __get_arg(idx: usize, offset: usize, value_buf_ptr: *mut u8, value_buf_len: usize) -> i64;
     fn __get_sender(value_buf_ptr: *mut u8, value_buf_len: usize) -> i64;
     fn __call_contract(
         addr: *const u8,
@@ -115,21 +115,30 @@ pub fn ecrecover_address(h: &[u8], v: &[u8], r: &[u8], s: &[u8]) -> Result<[u8; 
 }
 
 pub fn get_arg(idx: usize) -> Result<Vec<u8>, String> {
-    let mut buf = [0u8; 128];
-    match unsafe { __get_arg(idx, buf.as_mut_ptr(), buf.len()) } {
-        -1 => Err(format!("argument {} not found", idx)),
-        size => Ok(buf[0..size as usize].to_vec()),
+    let mut buf = [0u8; BUF_SIZE];
+    let mut offset = 0;
+    let mut val: Vec<u8> = Vec::new();
+    loop {
+        match unsafe { __get_arg(idx, offset, buf.as_mut_ptr(), buf.len()) } {
+            -1 => return Err("read_state: key not found".to_string()),
+            0 => break,
+            n => {
+                val.extend_from_slice(&buf[0..n as usize]);
+                if n < BUF_SIZE as i64 {
+                    break;
+                }
+                offset += n as usize;
+            }
+        }
     }
+    Ok(val)
 }
 
 pub fn get_arg_str(idx: usize) -> Result<String, String> {
-    let mut buf = [0u8; 128];
-    match unsafe { __get_arg(idx, buf.as_mut_ptr(), buf.len()) } {
-        -1 => Err(format!("argument {} not found", idx)),
-        size => match str::from_utf8(&buf[0..size as usize]) {
-            Ok(v) => Ok(v.to_string()),
-            Err(e) => Err(format!("Invalid UTF-8 sequence: {}", e)),
-        },
+    let v = get_arg(idx)?;
+    match str::from_utf8(&v) {
+        Ok(v) => Ok(v.to_string()),
+        Err(e) => Err(format!("Invalid UTF-8 sequence: {}", e)),
     }
 }
 

@@ -38,8 +38,9 @@ func (r *Resolver) ResolveFunc(module, field string) exec.FunctionImport {
 			return r.getF(func(vm *exec.VirtualMachine, ps Process) int64 {
 				cf := vm.GetCurrentFrame()
 				idx := int(cf.Locals[0])
-				w := NewWriter(vm.Memory, cf.Locals[1], cf.Locals[2])
-				return int64(GetArg(ps, idx, w))
+				offset := int(cf.Locals[1])
+				w := NewWriter(vm.Memory, cf.Locals[2], cf.Locals[3])
+				return int64(GetArg(ps, idx, offset, w))
 			})
 		case "__read_state":
 			return r.getF(func(vm *exec.VirtualMachine, ps Process) int64 {

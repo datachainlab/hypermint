@@ -47,9 +47,20 @@ func NewReader(mem []byte, pos, len int64) Reader {
 	return &value{mem: mem, pos: pos, len: len}
 }
 
-func GetArg(ps Process, idx int, w Writer) int {
-	arg := ps.Args().Get(idx)
-	return w.Write([]byte(arg))
+func writeBuf(ps Process, buf Writer, offset int, v []byte) int {
+	if offset < 0 {
+		ps.Logger().Debug("offset must be positive", "offset", offset)
+		return -1
+	} else if len(v) <= offset {
+		ps.Logger().Debug("offset is over value length", "offset", offset, "length", len(v))
+		return 0
+	}
+	return buf.Write(v[offset:min(offset+buf.Len(), len(v))])
+}
+
+func GetArg(ps Process, idx, offset int, buf Writer) int {
+	v := ps.Args().Get(idx)
+	return writeBuf(ps, buf, offset, v)
 }
 
 func Log(ps Process, msg Reader) int {
@@ -68,14 +79,7 @@ func ReadState(ps Process, key Reader, offset int, buf Writer) int {
 		ps.Logger().Debug("fail to execute ReadState", "err", err)
 		return -1
 	}
-	if offset < 0 {
-		ps.Logger().Debug("offset must be positive", "offset", offset)
-		return -1
-	} else if len(v) <= offset {
-		ps.Logger().Debug("offset is over value length", "offset", offset, "length", len(v))
-		return 0
-	}
-	return buf.Write(v[offset:min(offset+buf.Len(), len(v))])
+	return writeBuf(ps, buf, offset, v)
 }
 
 func WriteState(ps Process, key, val Reader) int {
