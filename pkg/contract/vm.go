@@ -99,7 +99,7 @@ func (env *Env) Exec(ctx sdk.Context, entry string) (*Result, error) {
 		vm.PrintStackTrace()
 		return nil, err
 	}
-	if ret != 0 {
+	if ret < 0 {
 		return nil, fmt.Errorf("execute contract error(exit code: %v)", ret)
 	}
 	set, err := env.DB.Commit()

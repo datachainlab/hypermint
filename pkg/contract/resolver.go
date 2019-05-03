@@ -45,8 +45,9 @@ func (r *Resolver) ResolveFunc(module, field string) exec.FunctionImport {
 			return r.getF(func(vm *exec.VirtualMachine, ps Process) int64 {
 				cf := vm.GetCurrentFrame()
 				key := NewReader(vm.Memory, cf.Locals[0], cf.Locals[1])
-				buf := NewWriter(vm.Memory, cf.Locals[2], cf.Locals[3])
-				return int64(ReadState(ps, key, buf))
+				offset := int(cf.Locals[2])
+				buf := NewWriter(vm.Memory, cf.Locals[3], cf.Locals[4])
+				return int64(ReadState(ps, key, offset, buf))
 			})
 		case "__write_state":
 			return r.getF(func(vm *exec.VirtualMachine, ps Process) int64 {

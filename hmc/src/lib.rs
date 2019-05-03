@@ -1,5 +1,7 @@
 use std::str;
 
+const BUF_SIZE: usize = 128;
+
 extern "C" {
     fn __get_arg(idx: usize, value_buf_ptr: *mut u8, value_buf_len: usize) -> i64;
     fn __get_sender(value_buf_ptr: *mut u8, value_buf_len: usize) -> i64;
@@ -20,6 +22,7 @@ extern "C" {
     fn __read_state(
         key_ptr: *const u8,
         key_len: usize,
+        offset: usize,
         value_buf_ptr: *mut u8,
         value_buf_len: usize,
     ) -> i64;
@@ -177,21 +180,38 @@ pub fn log(b: &[u8]) -> i64 {
 }
 
 pub fn read_state(key: &[u8]) -> Result<Vec<u8>, String> {
-    let mut val_buf = [0u8; 128];
-    match unsafe { __read_state(key.as_ptr(), key.len(), val_buf.as_mut_ptr(), val_buf.len()) } {
-        -1 => Err("key not found".to_string()),
-        size => Ok((&val_buf[0..size as usize]).to_vec()),
+    let mut val_buf = [0u8; BUF_SIZE];
+    let mut offset = 0;
+    let mut val: Vec<u8> = Vec::new();
+    loop {
+        match unsafe {
+            __read_state(
+                key.as_ptr(),
+                key.len(),
+                offset,
+                val_buf.as_mut_ptr(),
+                val_buf.len(),
+            )
+        } {
+            -1 => return Err("read_state: key not found".to_string()),
+            0 => break,
+            n => {
+                val.extend_from_slice(&val_buf[0..n as usize]);
+                if n < BUF_SIZE as i64 {
+                    break;
+                }
+                offset += n as usize;
+            }
+        }
     }
+    Ok(val)
 }
 
 pub fn read_state_str(key: &[u8]) -> Result<String, String> {
-    let mut val_buf = [0u8; 128];
-    match unsafe { __read_state(key.as_ptr(), key.len(), val_buf.as_mut_ptr(), val_buf.len()) } {
-        -1 => Err("key not found".to_string()),
-        size => match str::from_utf8(&val_buf[0..size as usize]) {
-            Ok(v) => Ok(v.to_string()),
-            Err(e) => Err(format!("Invalid UTF-8 sequence: {}", e)),
-        },
+    let v = read_state(key)?;
+    match str::from_utf8(&v) {
+        Ok(v) => Ok(v.to_string()),
+        Err(e) => Err(format!("Invalid UTF-8 sequence: {}", e)),
     }
 }
 

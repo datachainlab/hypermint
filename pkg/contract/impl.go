@@ -6,10 +6,12 @@ import (
 )
 
 type Writer interface {
+	Len() int
 	Write([]byte) int
 }
 
 type Reader interface {
+	Len() int
 	Read() []byte
 }
 
@@ -17,6 +19,10 @@ type value struct {
 	mem []byte
 	pos int64
 	len int64
+}
+
+func (v *value) Len() int {
+	return int(v.len)
 }
 
 func (v *value) Write(b []byte) int {
@@ -56,13 +62,20 @@ func GetSender(ps Process, w Writer) int {
 	return w.Write(s[:])
 }
 
-func ReadState(ps Process, key Reader, buf Writer) int {
+func ReadState(ps Process, key Reader, offset int, buf Writer) int {
 	v, err := ps.State().Get(key.Read())
 	if err != nil {
 		ps.Logger().Debug("fail to execute ReadState", "err", err)
 		return -1
 	}
-	return buf.Write(v)
+	if offset < 0 {
+		ps.Logger().Debug("offset must be positive", "offset", offset)
+		return -1
+	} else if len(v) <= offset {
+		ps.Logger().Debug("offset is over value length", "offset", offset, "length", len(v))
+		return 0
+	}
+	return buf.Write(v[offset:min(offset+buf.Len(), len(v))])
 }
 
 func WriteState(ps Process, key, val Reader) int {
@@ -104,4 +117,17 @@ func ECRecoverAddress(ps Process, h, v, r, s Reader, ret Writer) int {
 		return -1
 	}
 	return ret.Write(addr[:])
+}
+
+func min(vs ...int) int {
+	if len(vs) == 0 {
+		panic("length of vs should be greater than 0")
+	}
+	min := vs[0]
+	for _, v := range vs {
+		if v < min {
+			min = v
+		}
+	}
+	return min
 }
