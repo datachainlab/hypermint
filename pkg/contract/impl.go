@@ -59,8 +59,7 @@ func writeBuf(ps Process, buf Writer, offset int, v []byte) int {
 }
 
 func GetArg(ps Process, idx, offset int, buf Writer) int {
-	v := ps.Args().Get(idx)
-	return writeBuf(ps, buf, offset, v)
+	return writeBuf(ps, buf, offset, ps.Args().Get(idx))
 }
 
 func Log(ps Process, msg Reader) int {
@@ -96,13 +95,27 @@ func SetResponse(ps Process, val Reader) int {
 	return 0
 }
 
-func CallContract(ps Process, addr, entry Reader, args Args, ret Writer) int {
-	res, err := ps.Call(common.BytesToAddress(addr.Read()), entry.Read(), args)
+func CallContract(ps Process, addr, entry Reader, argb Reader) int {
+	args, err := DeserializeArgs(argb.Read())
+	if err != nil {
+		ps.Logger().Error("invalid argument format", "err", err)
+		return -1
+	}
+	id, err := ps.Call(common.BytesToAddress(addr.Read()), entry.Read(), args)
 	if err != nil {
 		ps.Logger().Debug("fail to execute CallContract", "err", err)
 		return -1
 	}
-	return ret.Write(res)
+	return id
+}
+
+func Read(ps Process, id, offset int, buf Writer) int {
+	v, err := ps.Read(id)
+	if err != nil {
+		ps.Logger().Error("id not found", "id", id, "err", err)
+		return -1
+	}
+	return writeBuf(ps, buf, offset, v)
 }
 
 func ECRecover(ps Process, h, v, r, s Reader, ret Writer) int {
