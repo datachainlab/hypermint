@@ -285,12 +285,12 @@ mod tests {
 
     fn deserialize_args(bs: &Vec<u8>) -> Result<Vec<Vec<u8>>, String> {
         let mut args: Vec<Vec<u8>> = vec![];
-        let mut num_bs: [u8; 4] = Default::default();
+        let mut num_bs = [0u8; 4];
         num_bs.copy_from_slice(&bs[0..4]);
         let num = u32::from_be_bytes(num_bs);
         let mut offset: usize = 4;
         for _ in 0..num {
-            let mut b: [u8; 4] = Default::default();
+            let mut b = [0u8; 4];
             b.copy_from_slice(&bs[offset..offset + 4]);
             let size = u32::from_be_bytes(b) as usize;
             let mut arg: Vec<u8> = vec![];

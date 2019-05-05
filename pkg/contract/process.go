@@ -24,6 +24,7 @@ type Process interface {
 	ValueTable() ValueTable
 }
 
+// ValueTable manages values that external contract returns.
 type ValueTable interface {
 	Get(id int) ([]byte, error)
 	Put(v []byte) (int, error)
@@ -37,6 +38,7 @@ type process struct {
 	vt     ValueTable
 }
 
+// NewProcess create a new process
 func NewProcess(vm *exec.VirtualMachine, env *Env, logger logger.Logger, vt ValueTable) Process {
 	if logger == nil {
 		logger = defaultLogger
@@ -112,6 +114,8 @@ func (vt valueT) Put(v []byte) (int, error) {
 	return cid, nil
 }
 
+// DeserializeArgs returns args
+// bytes format is <elem_num: 4byte>|<elem1_size: 4byte>|<elem1_data>|<elem2_size: 4byte>|<elem2_data>|...
 func DeserializeArgs(b []byte) (Args, error) {
 	var args Args
 	argc := int(binary.BigEndian.Uint32(b[0:4]))
