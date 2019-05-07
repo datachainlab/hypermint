@@ -6,10 +6,12 @@ import (
 )
 
 type Writer interface {
+	Len() int
 	Write([]byte) int
 }
 
 type Reader interface {
+	Len() int
 	Read() []byte
 }
 
@@ -17,6 +19,10 @@ type value struct {
 	mem []byte
 	pos int64
 	len int64
+}
+
+func (v *value) Len() int {
+	return int(v.len)
 }
 
 func (v *value) Write(b []byte) int {
@@ -41,9 +47,19 @@ func NewReader(mem []byte, pos, len int64) Reader {
 	return &value{mem: mem, pos: pos, len: len}
 }
 
-func GetArg(ps Process, idx int, w Writer) int {
-	arg := ps.Args().Get(idx)
-	return w.Write([]byte(arg))
+func writeBuf(ps Process, buf Writer, offset int, v []byte) int {
+	if offset < 0 {
+		ps.Logger().Debug("offset must be positive", "offset", offset)
+		return -1
+	} else if len(v) <= offset {
+		ps.Logger().Debug("offset is over value length", "offset", offset, "length", len(v))
+		return 0
+	}
+	return buf.Write(v[offset:min(offset+buf.Len(), len(v))])
+}
+
+func GetArg(ps Process, idx, offset int, buf Writer) int {
+	return writeBuf(ps, buf, offset, ps.Args().Get(idx))
 }
 
 func Log(ps Process, msg Reader) int {
@@ -56,13 +72,13 @@ func GetSender(ps Process, w Writer) int {
 	return w.Write(s[:])
 }
 
-func ReadState(ps Process, key Reader, buf Writer) int {
+func ReadState(ps Process, key Reader, offset int, buf Writer) int {
 	v, err := ps.State().Get(key.Read())
 	if err != nil {
 		ps.Logger().Debug("fail to execute ReadState", "err", err)
 		return -1
 	}
-	return buf.Write(v)
+	return writeBuf(ps, buf, offset, v)
 }
 
 func WriteState(ps Process, key, val Reader) int {
@@ -79,13 +95,27 @@ func SetResponse(ps Process, val Reader) int {
 	return 0
 }
 
-func CallContract(ps Process, addr, entry Reader, args Args, ret Writer) int {
-	res, err := ps.Call(common.BytesToAddress(addr.Read()), entry.Read(), args)
+func CallContract(ps Process, addr, entry Reader, argb Reader) int {
+	args, err := DeserializeArgs(argb.Read())
+	if err != nil {
+		ps.Logger().Error("invalid argument format", "err", err)
+		return -1
+	}
+	id, err := ps.Call(common.BytesToAddress(addr.Read()), entry.Read(), args)
 	if err != nil {
 		ps.Logger().Debug("fail to execute CallContract", "err", err)
 		return -1
 	}
-	return ret.Write(res)
+	return id
+}
+
+func Read(ps Process, id, offset int, buf Writer) int {
+	v, err := ps.Read(id)
+	if err != nil {
+		ps.Logger().Error("id not found", "id", id, "err", err)
+		return -1
+	}
+	return writeBuf(ps, buf, offset, v)
 }
 
 func ECRecover(ps Process, h, v, r, s Reader, ret Writer) int {
@@ -104,4 +134,17 @@ func ECRecoverAddress(ps Process, h, v, r, s Reader, ret Writer) int {
 		return -1
 	}
 	return ret.Write(addr[:])
+}
+
+func min(vs ...int) int {
+	if len(vs) == 0 {
+		panic("length of vs should be greater than 0")
+	}
+	min := vs[0]
+	for _, v := range vs {
+		if v < min {
+			min = v
+		}
+	}
+	return min
 }

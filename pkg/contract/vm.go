@@ -77,6 +77,7 @@ type VM struct {
 }
 
 type Result struct {
+	Code     int32
 	Response []byte
 	RWSets   *db.RWSets
 }
@@ -99,14 +100,16 @@ func (env *Env) Exec(ctx sdk.Context, entry string) (*Result, error) {
 		vm.PrintStackTrace()
 		return nil, err
 	}
-	if ret != 0 {
-		return nil, fmt.Errorf("execute contract error(exit code: %v)", ret)
+	code := int32(ret)
+	if code < 0 {
+		return &Result{Code: code}, fmt.Errorf("execute contract error(exit code: %v)", code)
 	}
 	set, err := env.DB.Commit()
 	if err != nil {
 		return nil, err
 	}
 	return &Result{
+		Code:     code,
 		Response: env.GetReponse(),
 		RWSets: &db.RWSets{
 			Address: env.Contract.Address(),

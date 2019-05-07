@@ -3,7 +3,7 @@ extern crate hmc;
 static TOTAL: i64 = 10000;
 
 #[no_mangle]
-pub fn get_balance() -> i64 {
+pub fn get_balance() -> i32 {
     let sender = hmc::get_sender().unwrap();
     match hmc::read_state(&sender) {
         Ok(v) => {
@@ -30,7 +30,7 @@ fn get_balance_from_addr(addr: &[u8]) -> i64 {
 }
 
 #[no_mangle]
-pub fn transfer() -> i64 {
+pub fn transfer() -> i32 {
     let to = hmc::hex_to_bytes(hmc::get_arg_str(0).unwrap().as_ref());
     let amount = hmc::get_arg_str(1).unwrap().parse::<i64>().unwrap();
     let sender = hmc::get_sender().unwrap();

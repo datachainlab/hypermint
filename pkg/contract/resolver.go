@@ -1,24 +1,23 @@
 package contract
 
 import (
-	"bytes"
 	"fmt"
-	"log"
 
 	"github.com/perlin-network/life/exec"
 )
 
 type Resolver struct {
 	env *Env
+	vt  ValueTable
 }
 
 func NewResolver(env *Env) *Resolver {
-	return &Resolver{env: env}
+	return &Resolver{env: env, vt: make(valueT)}
 }
 
-func (r *Resolver) getF(cb func(*exec.VirtualMachine, Process) int64) exec.FunctionImport {
+func (r *Resolver) withProcess(cb func(*exec.VirtualMachine, Process) int64) exec.FunctionImport {
 	return func(vm *exec.VirtualMachine) int64 {
-		ps := NewProcess(vm, r.env, r.env.Logger)
+		ps := NewProcess(vm, r.env, r.env.Logger, r.vt)
 		return cb(vm, ps)
 	}
 }
@@ -29,58 +28,63 @@ func (r *Resolver) ResolveFunc(module, field string) exec.FunctionImport {
 	case "env":
 		switch field {
 		case "__get_sender":
-			return r.getF(func(vm *exec.VirtualMachine, ps Process) int64 {
+			return r.withProcess(func(vm *exec.VirtualMachine, ps Process) int64 {
 				cf := vm.GetCurrentFrame()
 				w := NewWriter(vm.Memory, cf.Locals[0], cf.Locals[1])
 				return int64(GetSender(ps, w))
 			})
 		case "__get_arg":
-			return r.getF(func(vm *exec.VirtualMachine, ps Process) int64 {
+			return r.withProcess(func(vm *exec.VirtualMachine, ps Process) int64 {
 				cf := vm.GetCurrentFrame()
 				idx := int(cf.Locals[0])
-				w := NewWriter(vm.Memory, cf.Locals[1], cf.Locals[2])
-				return int64(GetArg(ps, idx, w))
+				offset := int(cf.Locals[1])
+				w := NewWriter(vm.Memory, cf.Locals[2], cf.Locals[3])
+				return int64(GetArg(ps, idx, offset, w))
 			})
 		case "__read_state":
-			return r.getF(func(vm *exec.VirtualMachine, ps Process) int64 {
+			return r.withProcess(func(vm *exec.VirtualMachine, ps Process) int64 {
 				cf := vm.GetCurrentFrame()
 				key := NewReader(vm.Memory, cf.Locals[0], cf.Locals[1])
-				buf := NewWriter(vm.Memory, cf.Locals[2], cf.Locals[3])
-				return int64(ReadState(ps, key, buf))
+				offset := int(cf.Locals[2])
+				buf := NewWriter(vm.Memory, cf.Locals[3], cf.Locals[4])
+				return int64(ReadState(ps, key, offset, buf))
 			})
 		case "__write_state":
-			return r.getF(func(vm *exec.VirtualMachine, ps Process) int64 {
+			return r.withProcess(func(vm *exec.VirtualMachine, ps Process) int64 {
 				cf := vm.GetCurrentFrame()
 				key := NewReader(vm.Memory, cf.Locals[0], cf.Locals[1])
 				val := NewReader(vm.Memory, cf.Locals[2], cf.Locals[3])
 				return int64(WriteState(ps, key, val))
 			})
 		case "__log":
-			return r.getF(func(vm *exec.VirtualMachine, ps Process) int64 {
+			return r.withProcess(func(vm *exec.VirtualMachine, ps Process) int64 {
 				cf := vm.GetCurrentFrame()
 				msg := NewReader(vm.Memory, cf.Locals[0], cf.Locals[1])
 				return int64(Log(ps, msg))
 			})
 		case "__set_response":
-			return r.getF(func(vm *exec.VirtualMachine, ps Process) int64 {
+			return r.withProcess(func(vm *exec.VirtualMachine, ps Process) int64 {
 				cf := vm.GetCurrentFrame()
 				return int64(SetResponse(ps, NewReader(vm.Memory, cf.Locals[0], cf.Locals[1])))
 			})
 		case "__call_contract":
-			return r.getF(func(vm *exec.VirtualMachine, ps Process) int64 {
+			return r.withProcess(func(vm *exec.VirtualMachine, ps Process) int64 {
 				cf := vm.GetCurrentFrame()
 				addr := NewReader(vm.Memory, cf.Locals[0], cf.Locals[1])
 				entry := NewReader(vm.Memory, cf.Locals[2], cf.Locals[3])
-				ret := NewWriter(vm.Memory, cf.Locals[4], cf.Locals[5])
-				args, err := readArgs(vm, int(cf.Locals[6]), uint32(cf.Locals[7]))
-				if err != nil {
-					log.Println("error: ", err)
-					return -1
-				}
-				return int64(CallContract(ps, addr, entry, args, ret))
+				argb := NewReader(vm.Memory, cf.Locals[4], cf.Locals[5])
+				return int64(CallContract(ps, addr, entry, argb))
+			})
+		case "__read":
+			return r.withProcess(func(vm *exec.VirtualMachine, ps Process) int64 {
+				cf := vm.GetCurrentFrame()
+				id := int(cf.Locals[0])
+				offset := int(cf.Locals[1])
+				buf := NewWriter(vm.Memory, cf.Locals[2], cf.Locals[3])
+				return int64(Read(ps, id, offset, buf))
 			})
 		case "__ecrecover":
-			return r.getF(func(vm *exec.VirtualMachine, ps Process) int64 {
+			return r.withProcess(func(vm *exec.VirtualMachine, ps Process) int64 {
 				cf := vm.GetCurrentFrame()
 				h := NewReader(vm.Memory, cf.Locals[0], cf.Locals[1])
 				v := NewReader(vm.Memory, cf.Locals[2], cf.Locals[3])
@@ -90,7 +94,7 @@ func (r *Resolver) ResolveFunc(module, field string) exec.FunctionImport {
 				return int64(ECRecover(ps, h, v, r, s, ret))
 			})
 		case "__ecrecover_address":
-			return r.getF(func(vm *exec.VirtualMachine, ps Process) int64 {
+			return r.withProcess(func(vm *exec.VirtualMachine, ps Process) int64 {
 				cf := vm.GetCurrentFrame()
 				h := NewReader(vm.Memory, cf.Locals[0], cf.Locals[1])
 				v := NewReader(vm.Memory, cf.Locals[2], cf.Locals[3])
@@ -105,27 +109,6 @@ func (r *Resolver) ResolveFunc(module, field string) exec.FunctionImport {
 	default:
 		panic(fmt.Errorf("unknown module: %s", module))
 	}
-}
-
-func readArgs(vm *exec.VirtualMachine, argc int, argvPtr uint32) (Args, error) {
-	var args Args
-
-	buf := bytes.NewBuffer(nil)
-	cur := argvPtr
-	num := 0
-	for num < argc {
-		b := vm.Memory[cur]
-		cur++
-		if b == 0 {
-			args.PushBytes(buf.Bytes())
-			buf.Reset()
-			num++
-			continue
-		}
-		buf.WriteByte(b)
-	}
-
-	return args, nil
 }
 
 // ResolveGlobal defines a set of global variables for use within a WebAssembly module.

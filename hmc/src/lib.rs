@@ -1,29 +1,30 @@
 use std::str;
 
+const BUF_SIZE: usize = 128;
+
 extern "C" {
-    fn __get_arg(idx: usize, value_buf_ptr: *mut u8, value_buf_len: usize) -> i64;
-    fn __get_sender(value_buf_ptr: *mut u8, value_buf_len: usize) -> i64;
+    fn __get_arg(idx: usize, offset: usize, value_buf_ptr: *mut u8, value_buf_len: usize) -> i32;
+    fn __get_sender(value_buf_ptr: *mut u8, value_buf_len: usize) -> i32;
+    fn __read(id: usize, offset: usize, value_buf_ptr: *mut u8, value_buf_len: usize) -> i32;
     fn __call_contract(
         addr: *const u8,
         addr_size: usize,
         entry: *const u8,
         entry_size: usize,
-        value_buf_ptr: *mut u8,
-        value_buf_len: usize,
-        argc: usize,
-        argv: *const u8,
-    ) -> i64;
+        args: *const u8,
+    ) -> i32;
 
-    fn __set_response(msg: *const u8, len: usize) -> i64;
-    fn __log(msg: *const u8, len: usize) -> i64;
+    fn __set_response(msg: *const u8, len: usize) -> i32;
+    fn __log(msg: *const u8, len: usize) -> i32;
 
     fn __read_state(
         key_ptr: *const u8,
         key_len: usize,
+        offset: usize,
         value_buf_ptr: *mut u8,
         value_buf_len: usize,
-    ) -> i64;
-    fn __write_state(msg1: *const u8, len1: usize, msg2: *const u8, len2: usize) -> i64;
+    ) -> i32;
+    fn __write_state(key: *const u8, key_len: usize, value: *const u8, value_len: usize) -> i32;
 
     fn __ecrecover(
         h: *const u8,
@@ -36,7 +37,7 @@ extern "C" {
         s_len: usize,
         ret: *mut u8,
         ret_len: usize,
-    ) -> i64;
+    ) -> i32;
     fn __ecrecover_address(
         h: *const u8,
         h_len: usize,
@@ -48,7 +49,7 @@ extern "C" {
         s_len: usize,
         ret: *mut u8,
         ret_len: usize,
-    ) -> i64;
+    ) -> i32;
 }
 
 pub fn ecrecover(h: &[u8], v: &[u8], r: &[u8], s: &[u8]) -> Result<[u8; 65], String> {
@@ -112,21 +113,30 @@ pub fn ecrecover_address(h: &[u8], v: &[u8], r: &[u8], s: &[u8]) -> Result<[u8; 
 }
 
 pub fn get_arg(idx: usize) -> Result<Vec<u8>, String> {
-    let mut buf = [0u8; 128];
-    match unsafe { __get_arg(idx, buf.as_mut_ptr(), buf.len()) } {
-        -1 => Err(format!("argument {} not found", idx)),
-        size => Ok(buf[0..size as usize].to_vec()),
+    let mut buf = [0u8; BUF_SIZE];
+    let mut offset = 0;
+    let mut val: Vec<u8> = Vec::new();
+    loop {
+        match unsafe { __get_arg(idx, offset, buf.as_mut_ptr(), buf.len()) } {
+            -1 => return Err("read_state: key not found".to_string()),
+            0 => break,
+            n => {
+                val.extend_from_slice(&buf[0..n as usize]);
+                if n < BUF_SIZE as i32 {
+                    break;
+                }
+                offset += n as usize;
+            }
+        }
     }
+    Ok(val)
 }
 
 pub fn get_arg_str(idx: usize) -> Result<String, String> {
-    let mut buf = [0u8; 128];
-    match unsafe { __get_arg(idx, buf.as_mut_ptr(), buf.len()) } {
-        -1 => Err(format!("argument {} not found", idx)),
-        size => match str::from_utf8(&buf[0..size as usize]) {
-            Ok(v) => Ok(v.to_string()),
-            Err(e) => Err(format!("Invalid UTF-8 sequence: {}", e)),
-        },
+    let v = get_arg(idx)?;
+    match str::from_utf8(&v) {
+        Ok(v) => Ok(v.to_string()),
+        Err(e) => Err(format!("Invalid UTF-8 sequence: {}", e)),
     }
 }
 
@@ -143,55 +153,88 @@ pub fn get_sender_str() -> Result<String, String> {
     Ok(format!("{:X?}", sender))
 }
 
-pub fn call_contract(addr: &[u8], entry: &[u8], args: Vec<&str>) -> Result<Vec<u8>, String> {
-    let mut val_buf = [0u8; 128];
-    let size = args.len();
-
-    let mut bs: Vec<u8> = vec![];
-    for arg in args {
-        for b in arg.as_bytes() {
-            bs.push(*b);
-        }
-        bs.push(0u8);
-    }
-
-    match unsafe {
+pub fn call_contract(addr: &[u8], entry: &[u8], args: Vec<&[u8]>) -> Result<Vec<u8>, String> {
+    let id = match unsafe {
         __call_contract(
             addr.as_ptr(),
             addr.len(),
             entry.as_ptr(),
             entry.len(),
-            val_buf.as_mut_ptr(),
-            val_buf.len(),
-            size,
-            bs.as_ptr(),
+            serialize_args(&args).as_ptr(),
         )
     } {
-        -1 => Err("failed to call contract".to_string()),
-        size => Ok((&val_buf[0..size as usize]).to_vec()),
+        -1 => return Err("failed to call contract".to_string()),
+        id => id as usize,
+    };
+
+    let mut buf = [0u8; BUF_SIZE];
+    let mut offset = 0;
+    let mut val: Vec<u8> = Vec::new();
+
+    loop {
+        match unsafe { __read(id, offset, buf.as_mut_ptr(), buf.len()) } {
+            -1 => return Err("read_state: key not found".to_string()),
+            0 => break,
+            n => {
+                val.extend_from_slice(&buf[0..n as usize]);
+                if n < BUF_SIZE as i32 {
+                    break;
+                }
+                offset += n as usize;
+            }
+        }
     }
+    Ok(val)
 }
 
-pub fn log(b: &[u8]) -> i64 {
+// format: <elem_num: 4byte>|<elem1_size: 4byte>|<elem1_data>|<elem2_size: 4byte>|<elem2_data>|...
+fn serialize_args(args: &Vec<&[u8]>) -> Vec<u8> {
+    let mut bs: Vec<u8> = vec![];
+    bs.extend_from_slice(&(args.len() as u32).to_be_bytes());
+    for arg in args {
+        bs.extend_from_slice(&(arg.len() as u32).to_be_bytes());
+        bs.extend_from_slice(arg);
+    }
+    bs
+}
+
+pub fn log(b: &[u8]) -> i32 {
     unsafe { __log(b.as_ptr(), b.len()) }
 }
 
 pub fn read_state(key: &[u8]) -> Result<Vec<u8>, String> {
-    let mut val_buf = [0u8; 128];
-    match unsafe { __read_state(key.as_ptr(), key.len(), val_buf.as_mut_ptr(), val_buf.len()) } {
-        -1 => Err("key not found".to_string()),
-        size => Ok((&val_buf[0..size as usize]).to_vec()),
+    let mut val_buf = [0u8; BUF_SIZE];
+    let mut offset = 0;
+    let mut val: Vec<u8> = Vec::new();
+    loop {
+        match unsafe {
+            __read_state(
+                key.as_ptr(),
+                key.len(),
+                offset,
+                val_buf.as_mut_ptr(),
+                val_buf.len(),
+            )
+        } {
+            -1 => return Err("read_state: key not found".to_string()),
+            0 => break,
+            n => {
+                val.extend_from_slice(&val_buf[0..n as usize]);
+                if n < BUF_SIZE as i32 {
+                    break;
+                }
+                offset += n as usize;
+            }
+        }
     }
+    Ok(val)
 }
 
 pub fn read_state_str(key: &[u8]) -> Result<String, String> {
-    let mut val_buf = [0u8; 128];
-    match unsafe { __read_state(key.as_ptr(), key.len(), val_buf.as_mut_ptr(), val_buf.len()) } {
-        -1 => Err("key not found".to_string()),
-        size => match str::from_utf8(&val_buf[0..size as usize]) {
-            Ok(v) => Ok(v.to_string()),
-            Err(e) => Err(format!("Invalid UTF-8 sequence: {}", e)),
-        },
+    let v = read_state(key)?;
+    match str::from_utf8(&v) {
+        Ok(v) => Ok(v.to_string()),
+        Err(e) => Err(format!("Invalid UTF-8 sequence: {}", e)),
     }
 }
 
@@ -204,7 +247,7 @@ pub fn write_state(key: &[u8], value: &[u8]) {
     }
 }
 
-pub fn return_value(v: &[u8]) -> i64 {
+pub fn return_value(v: &[u8]) -> i32 {
     unsafe { __set_response(v.as_ptr(), v.len()) }
 }
 
@@ -234,4 +277,47 @@ pub fn hex_to_bytes(hex_asm: &str) -> Vec<u8> {
         bytes.push(h << 4 | l)
     }
     bytes
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    fn deserialize_args(bs: &Vec<u8>) -> Result<Vec<Vec<u8>>, String> {
+        let mut args: Vec<Vec<u8>> = vec![];
+        let mut num_bs = [0u8; 4];
+        num_bs.copy_from_slice(&bs[0..4]);
+        let num = u32::from_be_bytes(num_bs);
+        let mut offset: usize = 4;
+        for _ in 0..num {
+            let mut b = [0u8; 4];
+            b.copy_from_slice(&bs[offset..offset + 4]);
+            let size = u32::from_be_bytes(b) as usize;
+            let mut arg: Vec<u8> = vec![];
+            arg.extend_from_slice(&bs[offset + 4..offset + 4 + size]);
+            offset += 4 + size;
+            args.push(arg);
+        }
+        Ok(args)
+    }
+
+    fn vec_str_to_vec_u8(vs: Vec<&str>) -> Vec<&[u8]> {
+        let mut ret: Vec<&[u8]> = vec![];
+        for v in vs.iter() {
+            ret.push(v.as_bytes());
+        }
+        ret
+    }
+
+    #[test]
+    fn encoding_test() {
+        let raw = vec!["first", "second", "third"];
+        let args = vec_str_to_vec_u8(raw);
+        let s = serialize_args(&args);
+        let a = deserialize_args(&s).unwrap();
+
+        for (n, m) in args.iter().zip(a.iter()) {
+            assert_eq!(m, n);
+        }
+    }
 }
