@@ -50,7 +50,7 @@ create-node:
 test:
 	$(GO_TEST_CMD) ./pkg/...
 
-test-e2e:
+e2e-test:
 	$(MAKE) -C ./tests/contract test
 
 build-image:
