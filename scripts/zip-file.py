@@ -21,7 +21,7 @@ def zip_asset(file,destination,arcname,version,goos,goarch):
 
 if __name__ == "__main__":
   parser = argparse.ArgumentParser()
-  parser.add_argument("--file", default="build/app_{0}_{1}".format(os.environ.get('GOOS'),os.environ.get('GOARCH')), help="File to zip")
+  parser.add_argument("--prefix", nargs='+', help="prefix strings for targets")
   parser.add_argument("--destination", default="release", help="Destination folder for files")
   parser.add_argument("--version", default=os.environ.get('VERSION'), help="Version number for binary, e.g.: v1.0.0")
   parser.add_argument("--goos", default=os.environ.get('GOOS'), help="GOOS parameter")
@@ -35,6 +35,7 @@ if __name__ == "__main__":
   if args.goarch is None:
     raise parser.error("argument --goarch is required")
 
-  file = zip_asset(args.file,args.destination,"app",args.version,args.goos,args.goarch)
-  print(file)
-
+  for prefix in args.prefix:
+    fname = "build/{0}_{1}_{2}".format(prefix, args.goos,args.goarch)
+    file = zip_asset(fname,args.destination,prefix,args.version,args.goos,args.goarch)
+    print(file)

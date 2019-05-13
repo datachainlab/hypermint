@@ -77,13 +77,15 @@ jobs:
       - run:
           name: "dep"
           command: |
+            go get -u github.com/golang/dep/cmd/dep
             go get -u github.com/tcnksm/ghr
+            dep ensure -v -vendor-only=true
       - run:
           name: "build"
           command: |
             export VERSION=$(cat version)
-            export GOOS=linux   GOARCH=amd64 && make build && python -u scripts/zip-file.py
-            export GOOS=darwin  GOARCH=amd64 && make build && python -u scripts/zip-file.py
+            export GOOS=linux  GOARCH=amd64 && make release-build && python -u scripts/zip-file.py --prefix hmd hmcli
+            export GOOS=darwin GOARCH=amd64 && make release-build && python -u scripts/zip-file.py --prefix hmd hmcli
       - run:
           name: "publish"
           command: |
