@@ -1,0 +1,11 @@
+[package]
+name = "hmc"
+version = "0.1.0"
+authors = ["Jun Kimura <junkxdev@gmail.com>"]
+edition = "2018"
+
+[dependencies]
+
+[lib]
+name = "hmc"
+crate-type = ["cdylib", "lib"]

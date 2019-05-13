@@ -1,0 +1,122 @@
+version: 2
+
+release_config: &release_config
+  working_directory: /go/src/github.com/bluele/hypermint
+  docker:
+    - image: golang:1.12.4-stretch
+  environment:
+    BUILD_DIR: ./build
+    RELEASE_DIR: ./release
+
+jobs:
+  build:
+    working_directory: /go/src/github.com/bluele/hypermint
+    docker:
+      - image: golang:1.12.4-stretch
+    steps:
+      - checkout
+      - run:
+          name: "resolve dependencies"
+          command: |
+            go get -u github.com/golang/dep/cmd/dep
+            dep ensure -v -vendor-only=true
+      - run:
+          name: "build"
+          command: |
+            make build
+      - run:
+          name: "test"
+          command: |
+            make test
+
+  contract-test:
+    working_directory: /go/src/github.com/bluele/hypermint
+    docker:
+      - image: rust:1.34.1-stretch
+    steps:
+      - checkout
+      - run:
+          name: "test"
+          command: |
+            cd hmc && cargo test
+
+  e2e-test:
+    working_directory: /go/src/github.com/bluele/hypermint
+    docker:
+      - image: bluele/go-rust:0.1.0
+    steps:
+      - checkout
+      - run:
+          name: "resolve dependencies"
+          command: |
+            go get -u github.com/golang/dep/cmd/dep
+            dep ensure -v -vendor-only=true
+      - run:
+          name: "test"
+          command: |
+            make e2e-test
+
+  pre-release:
+    <<: *release_config
+    steps:
+      - checkout
+      - run:
+          name: "check if branch name is valid"
+          command: |
+            export VERSION=$(cat version)
+            echo "VERSION is $VERSION"
+            echo "CIRCLE_BRANCH is $CIRCLE_BRANCH"
+            if [ "release-${VERSION}" != "${CIRCLE_BRANCH}" ]; then
+              exit 1
+            fi
+
+  release:
+    <<: *release_config
+    steps:
+      - checkout
+      - run:
+          name: "dep"
+          command: |
+            go get -u github.com/tcnksm/ghr
+      - run:
+          name: "build"
+          command: |
+            export VERSION=$(cat version)
+            export GOOS=linux   GOARCH=amd64 && make build && python -u scripts/zip-file.py
+            export GOOS=darwin  GOARCH=amd64 && make build && python -u scripts/zip-file.py
+      - run:
+          name: "publish"
+          command: |
+            export VERSION=$(cat version)
+            ghr -n ${VERSION} ${VERSION} ${RELEASE_DIR}
+
+workflows:
+  version: 2
+  build:
+    jobs:
+      - build:
+          filters:
+            tags:
+              only: /.*/
+      - contract-test:
+          filters:
+            tags:
+              only: /.*/
+      - e2e-test:
+          filters:
+            tags:
+              only: /.*/
+          requires:
+            - build
+  pre-release:
+    jobs:
+      - pre-release:
+          filters:
+            branches:
+              only: /release-v[0-9]+\.[0-9]+\.[0-9]+/
+  release:
+    jobs:
+      - release:
+          filters:
+            branches:
+              only: master

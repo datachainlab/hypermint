@@ -16,3 +16,6 @@
 vendor/
 build/
 
+target/
+*.wasm
+
