@@ -66,31 +66,23 @@ jobs:
             export VERSION=$(cat version)
             echo "VERSION is $VERSION"
             echo "CIRCLE_BRANCH is $CIRCLE_BRANCH"
-            if [ "release-${VERSION}" != "${CIRCLE_BRANCH}" ]; then
+            if [ "release/${VERSION}" != "${CIRCLE_BRANCH}" ]; then
               exit 1
             fi
 
   release:
     <<: *release_config
     steps:
+      - add_ssh_keys:
+          fingerprints:
+            - "2f:29:92:8a:ae:d0:d4:80:ed:3b:6b:6e:1f:e6:94:44"
       - checkout
       - run:
-          name: "dep"
-          command: |
-            go get -u github.com/golang/dep/cmd/dep
-            go get -u github.com/tcnksm/ghr
-            dep ensure -v -vendor-only=true
-      - run:
-          name: "build"
+          name: "publish a version tag"
           command: |
             export VERSION=$(cat version)
-            export GOOS=linux  GOARCH=amd64 && make release-build && python -u scripts/zip-file.py --prefix hmd hmcli
-            export GOOS=darwin GOARCH=amd64 && make release-build && python -u scripts/zip-file.py --prefix hmd hmcli
-      - run:
-          name: "publish"
-          command: |
-            export VERSION=$(cat version)
-            ghr -n ${VERSION} ${VERSION} ${RELEASE_DIR}
+            git tag $(cat version)
+            git push origin $(cat version)
 
 workflows:
   version: 2
@@ -115,7 +107,7 @@ workflows:
       - pre-release:
           filters:
             branches:
-              only: /release-v[0-9]+\.[0-9]+\.[0-9]+/
+              only: /release\/v[0-9]+\.[0-9]+\.[0-9]+/
   release:
     jobs:
       - release:
