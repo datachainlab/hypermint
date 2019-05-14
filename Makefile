@@ -28,6 +28,10 @@ server:
 cli:
 	$(GO_BUILD_CMD) -o $(HMCLI) ./cmd/hmcli
 
+release-build:
+	$(GO_BUILD_CMD) -o $(HMD)_$(GOOS)_$(GOARCH)   ./cmd/hmd
+	$(GO_BUILD_CMD) -o $(HMCLI)_$(GOOS)_$(GOARCH) ./cmd/hmcli
+
 start:
 	$(HMD) start --log_level="main:error" --home=$(HMD_HOME)
 
