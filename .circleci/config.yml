@@ -6,7 +6,6 @@ release_config: &release_config
     - image: golang:1.12.4-stretch
   environment:
     BUILD_DIR: ./build
-    RELEASE_DIR: ./release
 
 jobs:
   build:
@@ -86,7 +85,7 @@ jobs:
 
 workflows:
   version: 2
-  build:
+  test-suite:
     jobs:
       - build:
           filters:
