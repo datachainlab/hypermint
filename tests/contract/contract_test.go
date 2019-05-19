@@ -85,6 +85,25 @@ func (ts *ContractTestSuite) TestKeccak256() {
 	assert.Equal(h, res.Response)
 }
 
+func (ts *ContractTestSuite) TestSha256() {
+	assert := ts.Assert()
+	cms := ts.cmsProvider()
+
+	msg := common.RandBytes(32)
+	args := contract.NewArgs([][]byte{msg})
+
+	env := &contract.Env{
+		Sender:   crypto.PubkeyToAddress(ts.owner.PublicKey),
+		Contract: &ts.contract,
+		DB:       db.NewVersionedDB(cms.GetKVStore(ts.mainKey), db.Version{1, 1}),
+		Args:     args,
+	}
+	res, err := env.Exec(sdk.NewContext(cms, abci.Header{}, false, nil), "test_sha256")
+	assert.NoError(err)
+	h := util.Sha256(msg)
+	assert.Equal(h, res.Response)
+}
+
 func (ts *ContractTestSuite) TestECRecover() {
 	msg := common.RandBytes(32)
 	var makeMsgHash = func(idx uint8) []byte {
