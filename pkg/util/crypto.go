@@ -3,6 +3,7 @@ package util
 import (
 	"crypto/ecdsa"
 	"crypto/elliptic"
+	"crypto/sha256"
 	"fmt"
 
 	"github.com/ethereum/go-ethereum/common"
@@ -38,6 +39,11 @@ func Keccak256(msg []byte) ([]byte, error) {
 		return nil, err
 	}
 	return h.Sum(nil), nil
+}
+
+func Sha256(msg []byte) []byte {
+	h := sha256.Sum256(msg)
+	return h[:]
 }
 
 // Ecrecover returns the uncompressed public key that created the given signature.

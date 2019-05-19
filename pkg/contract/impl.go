@@ -127,6 +127,11 @@ func Keccak256(ps Process, msg Reader, ret Writer) int {
 	return writeBuf(ps, ret, 0, b)
 }
 
+func Sha256(ps Process, msg Reader, ret Writer) int {
+	b := util.Sha256(msg.Read())
+	return writeBuf(ps, ret, 0, b)
+}
+
 func ECRecover(ps Process, h, v, r, s Reader, ret Writer) int {
 	pub, err := util.Ecrecover(h.Read(), v.Read(), r.Read(), s.Read())
 	if err != nil {
