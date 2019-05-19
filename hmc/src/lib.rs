@@ -26,6 +26,13 @@ extern "C" {
     ) -> i32;
     fn __write_state(key: *const u8, key_len: usize, value: *const u8, value_len: usize) -> i32;
 
+    fn __keccak256(
+        msg: *const u8,
+        msg_len: usize,
+        value_buf_ptr: *mut u8,
+        value_buf_len: usize,
+    ) -> i32;
+
     fn __ecrecover(
         h: *const u8,
         h_len: usize,
@@ -50,6 +57,14 @@ extern "C" {
         ret: *mut u8,
         ret_len: usize,
     ) -> i32;
+}
+
+pub fn keccak256(msg: &[u8]) -> Result<[u8; 32], String> {
+    let mut buf = [0u8; 32];
+    match unsafe { __keccak256(msg.as_ptr(), msg.len(), buf.as_mut_ptr(), buf.len()) } {
+        -1 => Err(format!("fail to keccak256")),
+        _ => Ok(buf),
+    }
 }
 
 pub fn ecrecover(h: &[u8], v: &[u8], r: &[u8], s: &[u8]) -> Result<[u8; 65], String> {
