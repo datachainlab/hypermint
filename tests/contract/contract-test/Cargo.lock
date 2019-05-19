@@ -4,10 +4,10 @@
 name = "contract-test"
 version = "0.1.0"
 dependencies = [
- "hmc 0.1.0",
+ "hmc 0.1.1",
 ]
 
 [[package]]
 name = "hmc"
-version = "0.1.0"
+version = "0.1.1"
 

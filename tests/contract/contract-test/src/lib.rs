@@ -45,7 +45,6 @@ pub fn test_read_uncommitted_state() -> i32 {
     }
 }
 
-
 #[no_mangle]
 pub fn test_write_state() -> i32 {
     let b = [0u8; 255];
@@ -58,6 +57,13 @@ pub fn test_read_state() -> i32 {
     let b = [0u8; 255];
     hmc::write_state("key".as_bytes(), &b);
     0
+}
+
+#[no_mangle]
+pub fn test_keccak256() -> i32 {
+    let msg = hmc::get_arg(0).unwrap();
+    let h = hmc::keccak256(&msg).unwrap();
+    hmc::return_value(&h)
 }
 
 #[no_mangle]
