@@ -5,3 +5,6 @@ build-image:
 
 upload-image:
 	docker push bluele/go-rust:$(VERSION)
+
+fmt:
+	cd contract/contract-test && cargo fmt

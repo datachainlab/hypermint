@@ -67,6 +67,13 @@ pub fn test_keccak256() -> i32 {
 }
 
 #[no_mangle]
+pub fn test_sha256() -> i32 {
+    let msg = hmc::get_arg(0).unwrap();
+    let h = hmc::sha256(&msg).unwrap();
+    hmc::return_value(&h)
+}
+
+#[no_mangle]
 pub fn init() -> i32 {
     0
 }
