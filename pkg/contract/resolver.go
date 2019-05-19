@@ -83,6 +83,13 @@ func (r *Resolver) ResolveFunc(module, field string) exec.FunctionImport {
 				buf := NewWriter(vm.Memory, cf.Locals[2], cf.Locals[3])
 				return int64(Read(ps, id, offset, buf))
 			})
+		case "__keccak256":
+			return r.withProcess(func(vm *exec.VirtualMachine, ps Process) int64 {
+				cf := vm.GetCurrentFrame()
+				msg := NewReader(vm.Memory, cf.Locals[0], cf.Locals[1])
+				buf := NewWriter(vm.Memory, cf.Locals[2], cf.Locals[3])
+				return int64(Keccak256(ps, msg, buf))
+			})
 		case "__ecrecover":
 			return r.withProcess(func(vm *exec.VirtualMachine, ps Process) int64 {
 				cf := vm.GetCurrentFrame()

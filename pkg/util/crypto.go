@@ -9,6 +9,7 @@ import (
 	gcrypto "github.com/ethereum/go-ethereum/crypto"
 	"github.com/tendermint/tendermint/crypto"
 	"github.com/tendermint/tendermint/crypto/secp256k1"
+	"golang.org/x/crypto/sha3"
 )
 
 func PrvKeyToCryptoKey(prv *ecdsa.PrivateKey) crypto.PrivKey {
@@ -28,6 +29,15 @@ func validateEcrecoverParams(hash, v, r, s []byte) error {
 		return fmt.Errorf("length of hash should be 32, got %v", len(hash))
 	}
 	return nil
+}
+
+func Keccak256(msg []byte) ([]byte, error) {
+	h := sha3.NewLegacyKeccak256()
+	_, err := h.Write(msg)
+	if err != nil {
+		return nil, err
+	}
+	return h.Sum(nil), nil
 }
 
 // Ecrecover returns the uncompressed public key that created the given signature.
