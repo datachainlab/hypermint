@@ -10,6 +10,7 @@ import (
 	sdk "github.com/bluele/hypermint/pkg/abci/types"
 	"github.com/bluele/hypermint/pkg/contract"
 	"github.com/bluele/hypermint/pkg/db"
+	"github.com/bluele/hypermint/pkg/util"
 	"github.com/bluele/hypermint/pkg/util/wallet"
 	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/stretchr/testify/assert"
@@ -62,6 +63,26 @@ func (ts *ContractTestSuite) GetPrvkey(index uint32) (*ecdsa.PrivateKey, error) 
 		return nil, err
 	}
 	return wallet.GetPrvKeyFromHDWallet(bip39.NewSeed(testMnemonic, ""), hp)
+}
+
+func (ts *ContractTestSuite) TestKeccak256() {
+	assert := ts.Assert()
+	cms := ts.cmsProvider()
+
+	msg := common.RandBytes(32)
+	args := contract.NewArgs([][]byte{msg})
+
+	env := &contract.Env{
+		Sender:   crypto.PubkeyToAddress(ts.owner.PublicKey),
+		Contract: &ts.contract,
+		DB:       db.NewVersionedDB(cms.GetKVStore(ts.mainKey), db.Version{1, 1}),
+		Args:     args,
+	}
+	res, err := env.Exec(sdk.NewContext(cms, abci.Header{}, false, nil), "test_keccak256")
+	assert.NoError(err)
+	h, err := util.Keccak256(msg)
+	assert.NoError(err)
+	assert.Equal(h, res.Response)
 }
 
 func (ts *ContractTestSuite) TestECRecover() {

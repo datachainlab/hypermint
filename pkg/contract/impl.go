@@ -118,6 +118,15 @@ func Read(ps Process, id, offset int, buf Writer) int {
 	return writeBuf(ps, buf, offset, v)
 }
 
+func Keccak256(ps Process, msg Reader, ret Writer) int {
+	b, err := util.Keccak256(msg.Read())
+	if err != nil {
+		ps.Logger().Error("Keccak256 error", "err", err)
+		return -1
+	}
+	return writeBuf(ps, ret, 0, b)
+}
+
 func ECRecover(ps Process, h, v, r, s Reader, ret Writer) int {
 	pub, err := util.Ecrecover(h.Read(), v.Read(), r.Read(), s.Read())
 	if err != nil {
