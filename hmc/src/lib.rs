@@ -33,6 +33,13 @@ extern "C" {
         value_buf_len: usize,
     ) -> i32;
 
+    fn __sha256(
+        msg: *const u8,
+        msg_len: usize,
+        value_buf_ptr: *mut u8,
+        value_buf_len: usize,
+    ) -> i32;
+
     fn __ecrecover(
         h: *const u8,
         h_len: usize,
@@ -62,7 +69,15 @@ extern "C" {
 pub fn keccak256(msg: &[u8]) -> Result<[u8; 32], String> {
     let mut buf = [0u8; 32];
     match unsafe { __keccak256(msg.as_ptr(), msg.len(), buf.as_mut_ptr(), buf.len()) } {
-        -1 => Err(format!("fail to keccak256")),
+        -1 => Err(format!("fail to call keccak256")),
+        _ => Ok(buf),
+    }
+}
+
+pub fn sha256(msg: &[u8]) -> Result<[u8; 32], String> {
+    let mut buf = [0u8; 32];
+    match unsafe { __sha256(msg.as_ptr(), msg.len(), buf.as_mut_ptr(), buf.len()) } {
+        -1 => Err(format!("fail to call sha256")),
         _ => Ok(buf),
     }
 }
