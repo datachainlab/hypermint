@@ -9,8 +9,7 @@ This is a very experimental project.
 ## Build
 
 ```
-$ dep ensure
-$ make build
+$ GO111MODULE=on make build
 ```
 
 ## Getting started
