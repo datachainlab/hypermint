@@ -12,13 +12,10 @@ jobs:
     working_directory: /go/src/github.com/bluele/hypermint
     docker:
       - image: golang:1.12.4-stretch
+    environment:
+      GO111MODULE: "on"
     steps:
       - checkout
-      - run:
-          name: "resolve dependencies"
-          command: |
-            go get -u github.com/golang/dep/cmd/dep
-            dep ensure -v -vendor-only=true
       - run:
           name: "build"
           command: |
@@ -43,13 +40,10 @@ jobs:
     working_directory: /go/src/github.com/bluele/hypermint
     docker:
       - image: bluele/go-rust:0.1.0
+    environment:
+      GO111MODULE: "on"
     steps:
       - checkout
-      - run:
-          name: "resolve dependencies"
-          command: |
-            go get -u github.com/golang/dep/cmd/dep
-            dep ensure -v -vendor-only=true
       - run:
           name: "test"
           command: |
