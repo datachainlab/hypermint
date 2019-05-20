@@ -64,6 +64,12 @@ extern "C" {
         ret: *mut u8,
         ret_len: usize,
     ) -> i32;
+    fn __emit_event(
+        ev: *const u8,
+        ev_len: usize,
+        data: *const u8,
+        data_len: usize,
+    ) -> i32;
 }
 
 pub fn keccak256(msg: &[u8]) -> Result<[u8; 32], String> {
@@ -79,6 +85,15 @@ pub fn sha256(msg: &[u8]) -> Result<[u8; 32], String> {
     match unsafe { __sha256(msg.as_ptr(), msg.len(), buf.as_mut_ptr(), buf.len()) } {
         -1 => Err(format!("fail to call sha256")),
         _ => Ok(buf),
+    }
+}
+
+pub fn emit_event(name: &str, data: &[u8]) -> Result<(), String> {
+    match unsafe {
+        __emit_event(name.as_ptr(), name.len(), data.as_ptr(), data.len())
+    } {
+        -1 => Err(format!("fail to emit event")),
+        _ => Ok(())
     }
 }
 
