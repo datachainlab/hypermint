@@ -75,27 +75,41 @@ func handleContractCallTx(ctx types.Context, cm *contract.ContractManager, envm 
 		ContractCallTxResponse{
 			Returned:    res.Response,
 			RWSetsBytes: b,
+			Events:      res.Events,
 		},
 	)
 	if err != nil {
 		return transaction.ErrInvalidCall(transaction.DefaultCodespace, err.Error()).Result()
 	}
+	tags := EventsToTags(res.Events)
+	tags = append(tags, makeTag("contract.address", []byte(tx.Address.Hex())))
 	return types.Result{
 		Data: rb,
-		Tags: EventsToTags(res.Events),
+		Tags: tags,
 	}
 }
 
 type ContractCallTxResponse struct {
 	Returned    []byte
 	RWSetsBytes []byte
+	Events      []*contract.Event
 }
 
 func EventsToTags(evs []*contract.Event) common.KVPairs {
 	var pairs common.KVPairs
 	for _, ev := range evs {
-		pairs = append(pairs, common.KVPair{Key: ev.Name, Value: ev.Data})
+		key := []byte("event.name")
+		pairs = append(pairs, common.KVPair{Key: key, Value: ev.Name})
+		dataKey := []byte("event.data")
+		pairs = append(pairs, common.KVPair{Key: dataKey, Value: ev.Data})
 	}
 	pairs.Sort()
 	return pairs
+}
+
+func makeTag(key string, value []byte) common.KVPair {
+	return common.KVPair{
+		Key:   []byte(key),
+		Value: value,
+	}
 }
