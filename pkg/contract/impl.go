@@ -150,6 +150,16 @@ func ECRecoverAddress(ps Process, h, v, r, s Reader, ret Writer) int {
 	return ret.Write(addr[:])
 }
 
+func EmitEvent(ps Process, name, value Reader) int {
+	ev := &Event{Name: name.Read(), Value: value.Read()}
+	if err := validateEvent(ev); err != nil {
+		ps.Logger().Debug("invalid event", "err", err)
+		return -1
+	}
+	ps.EmitEvent(ev)
+	return 0
+}
+
 func min(vs ...int) int {
 	if len(vs) == 0 {
 		panic("length of vs should be greater than 0")
