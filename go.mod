@@ -60,6 +60,10 @@ require (
 	github.com/tendermint/tendermint v0.31.5
 	github.com/tyler-smith/go-bip39 v0.3.6
 	golang.org/x/crypto v0.0.0-20190513172903-22d7a77e9e5f
+	golang.org/x/net v0.0.0-20190514140710-3ec191127204 // indirect
+	golang.org/x/sync v0.0.0-20190423024810-112230192c58 // indirect
+	golang.org/x/sys v0.0.0-20190516110030-61b9204099cb // indirect
+	golang.org/x/text v0.3.2 // indirect
 	google.golang.org/genproto v0.0.0-20181004005441-af9cb2a35e7f // indirect
 	google.golang.org/grpc v1.13.0 // indirect
 )
