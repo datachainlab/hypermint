@@ -31,11 +31,6 @@ type ValueTable interface {
 	Put(v []byte) (int, error)
 }
 
-type Event struct {
-	Name  []byte
-	Value []byte
-}
-
 type process struct {
 	vm     *exec.VirtualMachine
 	env    *Env

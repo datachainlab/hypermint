@@ -7,6 +7,15 @@ import (
 	"github.com/tendermint/tendermint/libs/common"
 )
 
+type Event struct {
+	Name  []byte
+	Value []byte
+}
+
+func (ev Event) String() string {
+	return fmt.Sprintf("%v{0x%X}", string(ev.Name), ev.Value)
+}
+
 func EventsToTags(evs []*Event) (common.KVPairs, error) {
 	var pairs common.KVPairs
 	for _, ev := range evs {
