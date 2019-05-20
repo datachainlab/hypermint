@@ -204,6 +204,30 @@ func (ts *ContractTestSuite) TestReadWriteState() {
 	}
 }
 
+func (ts *ContractTestSuite) TestEmitEvent() {
+	assert := ts.Assert()
+	cms := ts.cmsProvider()
+	msg0 := common.RandBytes(32)
+	msg1 := common.RandBytes(32)
+	args := contract.NewArgs([][]byte{msg0, msg1})
+
+	env := &contract.Env{
+		Sender:   crypto.PubkeyToAddress(ts.owner.PublicKey),
+		Contract: &ts.contract,
+		DB:       db.NewVersionedDB(cms.GetKVStore(ts.mainKey), db.Version{1, 1}),
+		Args:     args,
+	}
+	res, err := env.Exec(sdk.NewContext(cms, abci.Header{}, false, nil), "test_emit_event")
+	assert.NoError(err)
+	assert.Equal(2, len(res.Events))
+
+	assert.Equal([]byte("test-event-name-0"), res.Events[0].Name)
+	assert.Equal(msg0, res.Events[0].Data)
+
+	assert.Equal([]byte("test-event-name-1"), res.Events[1].Name)
+	assert.Equal(msg1, res.Events[1].Data)
+}
+
 func TestContractTestSuite(t *testing.T) {
 	suite.Run(t, new(ContractTestSuite))
 }

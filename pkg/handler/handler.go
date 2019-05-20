@@ -11,6 +11,7 @@ import (
 	"github.com/bluele/hypermint/pkg/account"
 	"github.com/bluele/hypermint/pkg/contract"
 	"github.com/bluele/hypermint/pkg/transaction"
+	"github.com/tendermint/tendermint/libs/common"
 )
 
 func NewHandler(txm transaction.TxIndexMapper, am account.AccountMapper, cm *contract.ContractManager, envm *contract.EnvManager) types.Handler {
@@ -81,10 +82,20 @@ func handleContractCallTx(ctx types.Context, cm *contract.ContractManager, envm 
 	}
 	return types.Result{
 		Data: rb,
+		Tags: EventsToTags(res.Events),
 	}
 }
 
 type ContractCallTxResponse struct {
 	Returned    []byte
 	RWSetsBytes []byte
+}
+
+func EventsToTags(evs []*contract.Event) common.KVPairs {
+	var pairs common.KVPairs
+	for _, ev := range evs {
+		pairs = append(pairs, common.KVPair{Key: ev.Name, Value: ev.Data})
+	}
+	pairs.Sort()
+	return pairs
 }

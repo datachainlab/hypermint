@@ -117,6 +117,13 @@ func (r *Resolver) ResolveFunc(module, field string) exec.FunctionImport {
 				ret := NewWriter(vm.Memory, cf.Locals[8], cf.Locals[9])
 				return int64(ECRecoverAddress(ps, h, v, r, s, ret))
 			})
+		case "__emit_event":
+			return r.withProcess(func(vm *exec.VirtualMachine, ps Process) int64 {
+				cf := vm.GetCurrentFrame()
+				name := NewReader(vm.Memory, cf.Locals[0], cf.Locals[1])
+				data := NewReader(vm.Memory, cf.Locals[2], cf.Locals[3])
+				return int64(EmitEvent(ps, name, data))
+			})
 		default:
 			panic(fmt.Errorf("unknown field: %s", field))
 		}
