@@ -118,6 +118,20 @@ func Read(ps Process, id, offset int, buf Writer) int {
 	return writeBuf(ps, buf, offset, v)
 }
 
+func Keccak256(ps Process, msg Reader, ret Writer) int {
+	b, err := util.Keccak256(msg.Read())
+	if err != nil {
+		ps.Logger().Error("Keccak256 error", "err", err)
+		return -1
+	}
+	return writeBuf(ps, ret, 0, b)
+}
+
+func Sha256(ps Process, msg Reader, ret Writer) int {
+	b := util.Sha256(msg.Read())
+	return writeBuf(ps, ret, 0, b)
+}
+
 func ECRecover(ps Process, h, v, r, s Reader, ret Writer) int {
 	pub, err := util.Ecrecover(h.Read(), v.Read(), r.Read(), s.Read())
 	if err != nil {
@@ -134,6 +148,16 @@ func ECRecoverAddress(ps Process, h, v, r, s Reader, ret Writer) int {
 		return -1
 	}
 	return ret.Write(addr[:])
+}
+
+func EmitEvent(ps Process, name, value Reader) int {
+	ev := &Event{Name: name.Read(), Value: value.Read()}
+	if err := validateEvent(ev); err != nil {
+		ps.Logger().Debug("invalid event", "err", err)
+		return -1
+	}
+	ps.EmitEvent(ev)
+	return 0
 }
 
 func min(vs ...int) int {

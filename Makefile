@@ -32,6 +32,10 @@ release-build:
 	$(GO_BUILD_CMD) -o $(HMD)_$(GOOS)_$(GOARCH)   ./cmd/hmd
 	$(GO_BUILD_CMD) -o $(HMCLI)_$(GOOS)_$(GOARCH) ./cmd/hmcli
 
+fmt:
+	cd ./hmc && cargo fmt
+	$(MAKE) -C ./tests fmt
+
 start:
 	$(HMD) start --log_level="main:error" --home=$(HMD_HOME)
 

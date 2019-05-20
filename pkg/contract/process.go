@@ -22,6 +22,7 @@ type Process interface {
 	Call(addr common.Address, entry []byte, args Args) (int, error)
 	Read(id int) ([]byte, error)
 	ValueTable() ValueTable
+	EmitEvent(ev *Event)
 }
 
 // ValueTable manages values that external contract returns.
@@ -93,6 +94,10 @@ func (p *process) Logger() logger.Logger {
 
 func (p process) ValueTable() ValueTable {
 	return p.vt
+}
+
+func (p *process) EmitEvent(ev *Event) {
+	p.env.events = append(p.env.events, ev)
 }
 
 type valueT map[int][]byte

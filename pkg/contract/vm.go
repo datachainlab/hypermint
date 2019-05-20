@@ -22,8 +22,9 @@ type Env struct {
 	Contract   *Contract
 	VMProvider VMProvider
 
-	DB    *db.VersionedDB
-	state db.State
+	DB     *db.VersionedDB
+	state  db.State
+	events []*Event
 }
 
 type Args struct {
@@ -80,6 +81,7 @@ type Result struct {
 	Code     int32
 	Response []byte
 	RWSets   *db.RWSets
+	Events   []*Event
 }
 
 func (env *Env) Exec(ctx sdk.Context, entry string) (*Result, error) {
@@ -116,6 +118,7 @@ func (env *Env) Exec(ctx sdk.Context, entry string) (*Result, error) {
 			RWSet:   set,
 			Childs:  env.state.Childs,
 		},
+		Events: env.events,
 	}, nil
 }
 

@@ -45,6 +45,7 @@ pub fn transfer() -> i32 {
     hmc::write_state(&sender, format!("{}", from_balance-amount).as_bytes());
     let to_amount = format!("{}", to_balance+amount);
     hmc::write_state(&to, to_amount.as_bytes());
+    hmc::emit_event("Transfer", format!("from={:X?} to={:X?} amount={}", sender, to, amount).as_bytes()).unwrap();
 
     return hmc::return_value(to_amount.as_bytes());
 }

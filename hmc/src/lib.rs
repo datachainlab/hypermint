@@ -26,6 +26,20 @@ extern "C" {
     ) -> i32;
     fn __write_state(key: *const u8, key_len: usize, value: *const u8, value_len: usize) -> i32;
 
+    fn __keccak256(
+        msg: *const u8,
+        msg_len: usize,
+        value_buf_ptr: *mut u8,
+        value_buf_len: usize,
+    ) -> i32;
+
+    fn __sha256(
+        msg: *const u8,
+        msg_len: usize,
+        value_buf_ptr: *mut u8,
+        value_buf_len: usize,
+    ) -> i32;
+
     fn __ecrecover(
         h: *const u8,
         h_len: usize,
@@ -50,6 +64,37 @@ extern "C" {
         ret: *mut u8,
         ret_len: usize,
     ) -> i32;
+    fn __emit_event(
+        ev: *const u8,
+        ev_len: usize,
+        data: *const u8,
+        data_len: usize,
+    ) -> i32;
+}
+
+pub fn keccak256(msg: &[u8]) -> Result<[u8; 32], String> {
+    let mut buf = [0u8; 32];
+    match unsafe { __keccak256(msg.as_ptr(), msg.len(), buf.as_mut_ptr(), buf.len()) } {
+        -1 => Err(format!("fail to call keccak256")),
+        _ => Ok(buf),
+    }
+}
+
+pub fn sha256(msg: &[u8]) -> Result<[u8; 32], String> {
+    let mut buf = [0u8; 32];
+    match unsafe { __sha256(msg.as_ptr(), msg.len(), buf.as_mut_ptr(), buf.len()) } {
+        -1 => Err(format!("fail to call sha256")),
+        _ => Ok(buf),
+    }
+}
+
+pub fn emit_event(name: &str, value: &[u8]) -> Result<(), String> {
+    match unsafe {
+        __emit_event(name.as_ptr(), name.len(), value.as_ptr(), value.len())
+    } {
+        -1 => Err(format!("fail to emit event")),
+        _ => Ok(())
+    }
 }
 
 pub fn ecrecover(h: &[u8], v: &[u8], r: &[u8], s: &[u8]) -> Result<[u8; 65], String> {

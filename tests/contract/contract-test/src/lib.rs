@@ -45,7 +45,6 @@ pub fn test_read_uncommitted_state() -> i32 {
     }
 }
 
-
 #[no_mangle]
 pub fn test_write_state() -> i32 {
     let b = [0u8; 255];
@@ -57,6 +56,32 @@ pub fn test_write_state() -> i32 {
 pub fn test_read_state() -> i32 {
     let b = [0u8; 255];
     hmc::write_state("key".as_bytes(), &b);
+    0
+}
+
+#[no_mangle]
+pub fn test_keccak256() -> i32 {
+    let msg = hmc::get_arg(0).unwrap();
+    let h = hmc::keccak256(&msg).unwrap();
+    hmc::return_value(&h)
+}
+
+#[no_mangle]
+pub fn test_sha256() -> i32 {
+    let msg = hmc::get_arg(0).unwrap();
+    let h = hmc::sha256(&msg).unwrap();
+    hmc::return_value(&h)
+}
+
+#[no_mangle]
+pub fn test_emit_event() -> i32 {
+    let msg0 = hmc::get_arg(0).unwrap();
+    let msg1 = hmc::get_arg(1).unwrap();
+    let name0 = "test-event-name-0";
+    let name1 = "test-event-name-1";
+
+    hmc::emit_event(&name0, &msg0).unwrap();
+    hmc::emit_event(&name1, &msg1).unwrap();
     0
 }
 

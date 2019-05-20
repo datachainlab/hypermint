@@ -83,6 +83,20 @@ func (r *Resolver) ResolveFunc(module, field string) exec.FunctionImport {
 				buf := NewWriter(vm.Memory, cf.Locals[2], cf.Locals[3])
 				return int64(Read(ps, id, offset, buf))
 			})
+		case "__keccak256":
+			return r.withProcess(func(vm *exec.VirtualMachine, ps Process) int64 {
+				cf := vm.GetCurrentFrame()
+				msg := NewReader(vm.Memory, cf.Locals[0], cf.Locals[1])
+				buf := NewWriter(vm.Memory, cf.Locals[2], cf.Locals[3])
+				return int64(Keccak256(ps, msg, buf))
+			})
+		case "__sha256":
+			return r.withProcess(func(vm *exec.VirtualMachine, ps Process) int64 {
+				cf := vm.GetCurrentFrame()
+				msg := NewReader(vm.Memory, cf.Locals[0], cf.Locals[1])
+				buf := NewWriter(vm.Memory, cf.Locals[2], cf.Locals[3])
+				return int64(Sha256(ps, msg, buf))
+			})
 		case "__ecrecover":
 			return r.withProcess(func(vm *exec.VirtualMachine, ps Process) int64 {
 				cf := vm.GetCurrentFrame()
@@ -102,6 +116,13 @@ func (r *Resolver) ResolveFunc(module, field string) exec.FunctionImport {
 				s := NewReader(vm.Memory, cf.Locals[6], cf.Locals[7])
 				ret := NewWriter(vm.Memory, cf.Locals[8], cf.Locals[9])
 				return int64(ECRecoverAddress(ps, h, v, r, s, ret))
+			})
+		case "__emit_event":
+			return r.withProcess(func(vm *exec.VirtualMachine, ps Process) int64 {
+				cf := vm.GetCurrentFrame()
+				name := NewReader(vm.Memory, cf.Locals[0], cf.Locals[1])
+				value := NewReader(vm.Memory, cf.Locals[2], cf.Locals[3])
+				return int64(EmitEvent(ps, name, value))
 			})
 		default:
 			panic(fmt.Errorf("unknown field: %s", field))
