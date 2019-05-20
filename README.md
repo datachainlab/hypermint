@@ -2,9 +2,13 @@
 
 [![CircleCI](https://circleci.com/gh/bluele/hypermint.svg?style=svg)](https://circleci.com/gh/bluele/hypermint)
 
-hypermint = wasm + tendermint
+hypermint is a Tendermint-based blockchain that support WebAssembly smart contract.
 
-This is a very experimental project.
+## Features
+
+- Tendermint consensus
+- WebAssembly smart contract
+- Transaction supports [Read-Write set semantics](https://hyperledger-fabric.readthedocs.io/en/release-1.4/readwrite.html)
 
 ## Build
 
@@ -35,6 +39,8 @@ Next, run a blockchain node:
 ```
 $ make start
 ```
+
+If you want to deploy hypermint node on k8s, see [here](https://github.com/bluele/hypermint/tree/develop/k8s/testnet).
 
 ### Smart contract
 
