@@ -88,9 +88,9 @@ pub fn sha256(msg: &[u8]) -> Result<[u8; 32], String> {
     }
 }
 
-pub fn emit_event(name: &str, data: &[u8]) -> Result<(), String> {
+pub fn emit_event(name: &str, value: &[u8]) -> Result<(), String> {
     match unsafe {
-        __emit_event(name.as_ptr(), name.len(), data.as_ptr(), data.len())
+        __emit_event(name.as_ptr(), name.len(), value.as_ptr(), value.len())
     } {
         -1 => Err(format!("fail to emit event")),
         _ => Ok(())

@@ -222,10 +222,10 @@ func (ts *ContractTestSuite) TestEmitEvent() {
 	assert.Equal(2, len(res.Events))
 
 	assert.Equal([]byte("test-event-name-0"), res.Events[0].Name)
-	assert.Equal(msg0, res.Events[0].Data)
+	assert.Equal(msg0, res.Events[0].Value)
 
 	assert.Equal([]byte("test-event-name-1"), res.Events[1].Name)
-	assert.Equal(msg1, res.Events[1].Data)
+	assert.Equal(msg1, res.Events[1].Value)
 }
 
 func TestContractTestSuite(t *testing.T) {

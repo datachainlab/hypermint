@@ -22,7 +22,7 @@ type Process interface {
 	Call(addr common.Address, entry []byte, args Args) (int, error)
 	Read(id int) ([]byte, error)
 	ValueTable() ValueTable
-	EmitEvent(name, data []byte)
+	EmitEvent(ev *Event)
 }
 
 // ValueTable manages values that external contract returns.
@@ -32,8 +32,8 @@ type ValueTable interface {
 }
 
 type Event struct {
-	Name []byte
-	Data []byte
+	Name  []byte
+	Value []byte
 }
 
 type process struct {
@@ -101,8 +101,8 @@ func (p process) ValueTable() ValueTable {
 	return p.vt
 }
 
-func (p *process) EmitEvent(name, data []byte) {
-	p.env.events = append(p.env.events, &Event{Name: name, Data: data})
+func (p *process) EmitEvent(ev *Event) {
+	p.env.events = append(p.env.events, ev)
 }
 
 type valueT map[int][]byte

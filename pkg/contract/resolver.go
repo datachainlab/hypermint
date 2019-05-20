@@ -121,8 +121,8 @@ func (r *Resolver) ResolveFunc(module, field string) exec.FunctionImport {
 			return r.withProcess(func(vm *exec.VirtualMachine, ps Process) int64 {
 				cf := vm.GetCurrentFrame()
 				name := NewReader(vm.Memory, cf.Locals[0], cf.Locals[1])
-				data := NewReader(vm.Memory, cf.Locals[2], cf.Locals[3])
-				return int64(EmitEvent(ps, name, data))
+				value := NewReader(vm.Memory, cf.Locals[2], cf.Locals[3])
+				return int64(EmitEvent(ps, name, value))
 			})
 		default:
 			panic(fmt.Errorf("unknown field: %s", field))
