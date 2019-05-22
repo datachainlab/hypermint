@@ -47,7 +47,7 @@ func NewReader(mem []byte, pos, len int64) Reader {
 	return &value{mem: mem, pos: pos, len: len}
 }
 
-func writeBuf(ps Process, buf Writer, offset int, v []byte) int {
+func WriteBuf(ps Process, buf Writer, offset int, v []byte) int {
 	if offset < 0 {
 		ps.Logger().Debug("offset must be positive", "offset", offset)
 		return -1
@@ -59,7 +59,7 @@ func writeBuf(ps Process, buf Writer, offset int, v []byte) int {
 }
 
 func GetArg(ps Process, idx, offset int, buf Writer) int {
-	return writeBuf(ps, buf, offset, ps.Args().Get(idx))
+	return WriteBuf(ps, buf, offset, ps.Args().Get(idx))
 }
 
 func Log(ps Process, msg Reader) int {
@@ -78,7 +78,7 @@ func ReadState(ps Process, key Reader, offset int, buf Writer) int {
 		ps.Logger().Debug("fail to execute ReadState", "err", err)
 		return -1
 	}
-	return writeBuf(ps, buf, offset, v)
+	return WriteBuf(ps, buf, offset, v)
 }
 
 func WriteState(ps Process, key, val Reader) int {
@@ -115,7 +115,7 @@ func Read(ps Process, id, offset int, buf Writer) int {
 		ps.Logger().Error("id not found", "id", id, "err", err)
 		return -1
 	}
-	return writeBuf(ps, buf, offset, v)
+	return WriteBuf(ps, buf, offset, v)
 }
 
 func Keccak256(ps Process, msg Reader, ret Writer) int {
@@ -124,12 +124,12 @@ func Keccak256(ps Process, msg Reader, ret Writer) int {
 		ps.Logger().Error("Keccak256 error", "err", err)
 		return -1
 	}
-	return writeBuf(ps, ret, 0, b)
+	return WriteBuf(ps, ret, 0, b)
 }
 
 func Sha256(ps Process, msg Reader, ret Writer) int {
 	b := util.Sha256(msg.Read())
-	return writeBuf(ps, ret, 0, b)
+	return WriteBuf(ps, ret, 0, b)
 }
 
 func ECRecover(ps Process, h, v, r, s Reader, ret Writer) int {
