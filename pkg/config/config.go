@@ -41,6 +41,7 @@ func CreateConfig(moniker, root string) (*cfg.Config, error) {
 	c.P2P.RecvRate = 5120000
 	c.P2P.SendRate = 5120000
 	c.Consensus.TimeoutCommit = 5000 * time.Millisecond
+	c.TxIndex.IndexTags = "contract.address,event.data,event.name"
 	return c, unmarshalWithViper(viper.GetViper(), c)
 }
 
