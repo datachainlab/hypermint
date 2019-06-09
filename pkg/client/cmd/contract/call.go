@@ -76,6 +76,7 @@ var callCmd = &cobra.Command{
 			Args:       args,
 			RWSetsHash: rwh,
 			Common: transaction.CommonTx{
+				Code:  transaction.CONTRACT_CALL,
 				From:  from,
 				Gas:   uint64(viper.GetInt(flagGas)),
 				Nonce: nonce,

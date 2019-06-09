@@ -58,7 +58,8 @@ create-node:
 test:
 	$(GO_TEST_CMD) ./pkg/...
 
-e2e-test:
+integration-test:
+	$(GO_TEST_CMD) ./tests/transaction/...
 	$(MAKE) -C ./tests/contract test
 
 build-image:
