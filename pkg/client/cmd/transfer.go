@@ -54,7 +54,7 @@ var transferCmd = &cobra.Command{
 			return err
 		}
 		tx := &transaction.TransferTx{
-			CommonTx: transaction.CommonTx{
+			Common: transaction.CommonTx{
 				From:  from,
 				Gas:   uint64(viper.GetInt(flagGas)),
 				Nonce: nonce,

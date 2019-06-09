@@ -7,8 +7,17 @@ import (
 )
 
 type ContractDeployTx struct {
-	Code []byte
-	CommonTx
+	Common CommonTx
+	Code   []byte
+}
+
+func DecodeContractDeployTx(b []byte) (*ContractDeployTx, error) {
+	tx := new(ContractDeployTx)
+	return tx, rlp.DecodeBytes(b, tx)
+}
+
+func (tx *ContractDeployTx) SetSignature(sig []byte) {
+	tx.Common.SetSignature(sig)
 }
 
 func (tx *ContractDeployTx) Decode(b []byte) error {
@@ -16,18 +25,18 @@ func (tx *ContractDeployTx) Decode(b []byte) error {
 }
 
 func (tx *ContractDeployTx) ValidateBasic() types.Error {
-	if err := tx.CommonTx.ValidateBasic(); err != nil {
+	if err := tx.Common.ValidateBasic(); err != nil {
 		return err
 	}
 	if tx.Code == nil {
 		return ErrInvalidDeploy(DefaultCodespace, "tx.Code == nil")
 	}
-	return tx.VerifySignature(tx.GetSignBytes())
+	return tx.Common.VerifySignature(tx.GetSignBytes())
 }
 
 func (tx *ContractDeployTx) GetSignBytes() []byte {
 	ntx := *tx
-	ntx.Signature = nil
+	ntx.SetSignature(nil)
 	return util.TxHash(ntx.Bytes())
 }
 
@@ -36,5 +45,5 @@ func (tx *ContractDeployTx) Bytes() []byte {
 	if err != nil {
 		panic(err)
 	}
-	return append([]byte{CONTRACT_DEPLOY}, b...)
+	return b
 }

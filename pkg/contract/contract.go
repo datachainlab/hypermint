@@ -30,7 +30,7 @@ func (c *Contract) Address() common.Address {
 
 func TxToContract(tx *transaction.ContractDeployTx) *Contract {
 	return &Contract{
-		Owner: tx.From,
+		Owner: tx.Common.From,
 		Code:  tx.Code,
 	}
 }

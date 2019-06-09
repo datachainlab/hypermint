@@ -1,7 +1,15 @@
 package transaction
 
-import "github.com/bluele/hypermint/pkg/abci/types"
+import (
+	"bytes"
+	"errors"
+	"fmt"
 
+	"github.com/bluele/hypermint/pkg/abci/types"
+	"github.com/ethereum/go-ethereum/rlp"
+)
+
+// Transaction code
 const (
 	TRANSFER uint8 = 1 + iota
 	CONTRACT_DEPLOY
@@ -15,30 +23,39 @@ type Transaction interface {
 	Bytes() []byte
 }
 
-func Decode(b []byte) (types.Tx, types.Error) {
-	if len(b) <= 1 {
-		return nil, types.ErrTxDecode("tx must have leading tx type")
+// FetchCodeValue returns code from rlp bytes
+func FetchCodeValue(bs []byte) (byte, error) {
+	r := bytes.NewReader(bs)
+	s := rlp.NewStream(r, uint64(len(bs)))
+	if _, err := s.List(); err != nil {
+		return 0, err
 	}
-	switch b[0] {
+	var code byte
+	return code, s.Decode(&code)
+}
+
+// DecodeTx function is called by tendermint when node receives tx
+func DecodeTx(bs []byte) (types.Tx, types.Error) {
+	tx, err := decodeTx(bs)
+	if err != nil {
+		return nil, types.ErrTxDecode(err.Error())
+	}
+	return tx, nil
+}
+
+func decodeTx(bs []byte) (types.Tx, error) {
+	code, err := FetchCodeValue(bs)
+	if err != nil {
+		return nil, errors.New("fail to fetch tx code")
+	}
+	switch code {
 	case TRANSFER:
-		tx := new(TransferTx)
-		if err := tx.Decode(b[1:]); err != nil {
-			return nil, types.ErrTxDecode("rlp Decode error:" + err.Error())
-		}
-		return tx, nil
-	case CONTRACT_DEPLOY:
-		tx := new(ContractDeployTx)
-		if err := tx.Decode(b[1:]); err != nil {
-			return nil, types.ErrTxDecode("rlp Decode error:" + err.Error())
-		}
-		return tx, nil
+		return DecodeTransferTx(bs)
 	case CONTRACT_CALL:
-		tx := new(ContractCallTx)
-		if err := tx.Decode(b[1:]); err != nil {
-			return nil, types.ErrTxDecode("rlp Decode error:" + err.Error())
-		}
-		return tx, nil
+		return DecodeContractCallTx(bs)
+	case CONTRACT_DEPLOY:
+		return DecodeContractDeployTx(bs)
 	default:
-		return nil, types.ErrTxDecode("unknown tx type")
+		return nil, fmt.Errorf("unknown code '%v'", code)
 	}
 }

@@ -10,17 +10,22 @@ import (
 var emptyAddr common.Address
 
 type TransferTx struct {
+	Common CommonTx
 	To     common.Address
 	Amount uint64
-	CommonTx
 }
 
-func (tx *TransferTx) Decode(b []byte) error {
-	return rlp.DecodeBytes(b, tx)
+func DecodeTransferTx(b []byte) (*TransferTx, error) {
+	tx := new(TransferTx)
+	return tx, rlp.DecodeBytes(b, tx)
+}
+
+func (tx *TransferTx) SetSignature(sig []byte) {
+	tx.Common.SetSignature(sig)
 }
 
 func (tx *TransferTx) ValidateBasic() types.Error {
-	if err := tx.CommonTx.ValidateBasic(); err != nil {
+	if err := tx.Common.ValidateBasic(); err != nil {
 		return err
 	}
 	if tx.Amount == 0 {
@@ -29,17 +34,13 @@ func (tx *TransferTx) ValidateBasic() types.Error {
 	if isEmptyAddr(tx.To) {
 		return ErrInvalidTransfer(DefaultCodespace, "tx.To == empty")
 	}
-	return tx.VerifySignature(tx.GetSignBytes())
+	return tx.Common.VerifySignature(tx.GetSignBytes())
 }
 
 func (tx *TransferTx) GetSignBytes() []byte {
 	ntx := *tx
-	ntx.Signature = nil
-	b, err := rlp.EncodeToBytes(ntx)
-	if err != nil {
-		panic(err)
-	}
-	return util.TxHash(b)
+	ntx.SetSignature(nil)
+	return util.TxHash(ntx.Bytes())
 }
 
 func (tx *TransferTx) Bytes() []byte {
@@ -47,7 +48,7 @@ func (tx *TransferTx) Bytes() []byte {
 	if err != nil {
 		panic(err)
 	}
-	return append([]byte{TRANSFER}, b...)
+	return b
 }
 
 func isEmptyAddr(addr common.Address) bool {
