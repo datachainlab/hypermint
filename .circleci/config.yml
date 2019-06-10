@@ -36,7 +36,7 @@ jobs:
           command: |
             cd hmc && cargo test
 
-  e2e-test:
+  integration-test:
     working_directory: /go/src/github.com/bluele/hypermint
     docker:
       - image: bluele/go-rust:0.1.0
@@ -47,7 +47,7 @@ jobs:
       - run:
           name: "test"
           command: |
-            make e2e-test
+            make integration-test
 
   pre-release:
     <<: *release_config
@@ -89,7 +89,7 @@ workflows:
           filters:
             tags:
               only: /.*/
-      - e2e-test:
+      - integration-test:
           filters:
             tags:
               only: /.*/
