@@ -134,7 +134,7 @@ func testnetWithConfig(c *cfg.Config, cdc *amino.Codec, appInit app.AppInit) err
 		c.SetRoot(di.NodeDir())
 
 		// Run `init` and generate genesis.json and config.toml
-		_, _, _, err := initWithConfig(cdc, appInit, c, initConfig)
+		_, _, _, err := InitWithConfig(cdc, appInit, c, initConfig)
 		if err != nil {
 			return err
 		}

@@ -129,7 +129,7 @@ func initCmd(ctx *app.Context, cdc *amino.Codec, appInit app.AppInit) *cobra.Com
 				tmtime.Now(),
 			}
 
-			chainID, nodeID, appMessage, err := initWithConfig(cdc, appInit, config, initConfig)
+			chainID, nodeID, appMessage, err := InitWithConfig(cdc, appInit, config, initConfig)
 			if err != nil {
 				return err
 			}
@@ -214,7 +214,7 @@ func processGenTxs(genTxsDir string, cdc *amino.Codec) (
 	return
 }
 
-func initWithConfig(cdc *amino.Codec, appInit app.AppInit, c *cfg.Config, initConfig InitConfig) (
+func InitWithConfig(cdc *amino.Codec, appInit app.AppInit, c *cfg.Config, initConfig InitConfig) (
 	chainID string, nodeID string, appMessage json.RawMessage, err error) {
 
 	nodeKey, err := node.LoadNodeKey(c.NodeKeyFile())

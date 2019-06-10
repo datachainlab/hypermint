@@ -75,7 +75,8 @@ var callCmd = &cobra.Command{
 			Func:       viper.GetString(flagFunc),
 			Args:       args,
 			RWSetsHash: rwh,
-			CommonTx: transaction.CommonTx{
+			Common: transaction.CommonTx{
+				Code:  transaction.CONTRACT_CALL,
 				From:  from,
 				Gas:   uint64(viper.GetInt(flagGas)),
 				Nonce: nonce,

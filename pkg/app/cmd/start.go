@@ -20,7 +20,6 @@ const (
 	flagAddress        = "address"
 	flagTraceStore     = "trace-store"
 	flagPruning        = "pruning"
-	flagBlkNumPerTerm  = "term_block_num"
 )
 
 // startCmd runs the service passed in, either stand-alone or in-process with
@@ -37,7 +36,7 @@ func startCmd(ctx *app.Context, appCreator app.AppCreator) *cobra.Command {
 
 			ctx.Logger.Info("Starting ABCI with Tendermint")
 
-			_, err := startInProcess(ctx, appCreator)
+			_, err := StartInProcess(ctx, appCreator)
 			if err != nil {
 				return err
 			}
@@ -51,7 +50,6 @@ func startCmd(ctx *app.Context, appCreator app.AppCreator) *cobra.Command {
 	cmd.Flags().String(flagAddress, "tcp://0.0.0.0:26658", "Listen address")
 	cmd.Flags().String(flagTraceStore, "", "Enable KVStore tracing to an output file")
 	cmd.Flags().String(flagPruning, "syncable", "Pruning strategy: syncable, nothing, everything")
-	cmd.Flags().Uint(flagBlkNumPerTerm, 100, "The number of block in term")
 
 	// add support for all Tendermint-specific command line options
 	tcmd.AddNodeFlags(cmd)
@@ -91,7 +89,7 @@ func startStandAlone(ctx *app.Context, appCreator app.AppCreator) error {
 	return nil
 }
 
-func startInProcess(ctx *app.Context, appCreator app.AppCreator) (*node.Node, error) {
+func StartInProcess(ctx *app.Context, appCreator app.AppCreator) (*node.Node, error) {
 	cfg := ctx.Config
 	home := cfg.RootDir
 	traceStore := viper.GetString(flagTraceStore)

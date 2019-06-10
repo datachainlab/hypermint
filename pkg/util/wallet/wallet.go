@@ -9,6 +9,7 @@ import (
 
 	"github.com/btcsuite/btcd/chaincfg"
 	"github.com/btcsuite/btcutil/hdkeychain"
+	"github.com/tyler-smith/go-bip39"
 )
 
 type HDPathLevel struct {
@@ -124,4 +125,13 @@ func GetPrvKeyFromHDWallet(seed []byte, hp *HDPathLevel) (*ecdsa.PrivateKey, err
 		return nil, err
 	}
 	return btcecPrivKey.ToECDSA(), nil
+}
+
+func GetPrivKeyWithMnemonic(mnemonic, path string) (*ecdsa.PrivateKey, error) {
+	hp, err := ParseHDPathLevel(path)
+	if err != nil {
+		return nil, err
+	}
+	seed := bip39.NewSeed(mnemonic, "")
+	return GetPrvKeyFromHDWallet(seed, hp)
 }
