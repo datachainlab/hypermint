@@ -54,7 +54,7 @@ var deployCmd = &cobra.Command{
 		}
 		tx := &transaction.ContractDeployTx{
 			Code: code,
-			CommonTx: transaction.CommonTx{
+			Common: transaction.CommonTx{
 				From:  from,
 				Gas:   uint64(viper.GetInt(flagGas)),
 				Nonce: nonce,

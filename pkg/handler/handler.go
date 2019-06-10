@@ -37,7 +37,7 @@ func NewHandler(txm transaction.TxIndexMapper, am account.AccountMapper, cm *con
 }
 
 func handleTransferTx(ctx types.Context, am account.AccountMapper, tx *transaction.TransferTx) types.Result {
-	if err := am.Transfer(ctx, tx.From, tx.Amount, tx.To); err != nil {
+	if err := am.Transfer(ctx, tx.Common.From, tx.Amount, tx.To); err != nil {
 		return transaction.ErrFailTransfer(transaction.DefaultCodespace, err.Error()).Result()
 	}
 	return types.Result{}
@@ -49,14 +49,14 @@ func handleContractDeployTx(ctx types.Context, cm *contract.ContractManager, env
 		return transaction.ErrInvalidDeploy(transaction.DefaultCodespace, err.Error()).Result()
 	}
 	return handleContractCallTx(ctx, cm, envm, &transaction.ContractCallTx{
-		Address:  addr,
-		Func:     transaction.ContractInitFunc,
-		CommonTx: tx.CommonTx,
+		Address: addr,
+		Func:    transaction.ContractInitFunc,
+		Common:  tx.Common,
 	})
 }
 
 func handleContractCallTx(ctx types.Context, cm *contract.ContractManager, envm *contract.EnvManager, tx *transaction.ContractCallTx) types.Result {
-	env, err := envm.Get(ctx, tx.From, tx.Address, contract.NewArgs(tx.Args))
+	env, err := envm.Get(ctx, tx.Common.From, tx.Address, contract.NewArgs(tx.Args))
 	if err != nil {
 		return transaction.ErrInvalidCall(transaction.DefaultCodespace, err.Error()).Result()
 	}

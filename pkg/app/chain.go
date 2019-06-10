@@ -55,7 +55,7 @@ type Chain struct {
 }
 
 func NewChain(logger log.Logger, db db.DB, traceStore io.Writer) *Chain {
-	app := baseapp.NewBaseApp("hm", logger, db, transaction.Decode)
+	app := baseapp.NewBaseApp("hm", logger, db, transaction.DecodeTx)
 	c := &Chain{
 		BaseApp:         app,
 		cdc:             cdc,

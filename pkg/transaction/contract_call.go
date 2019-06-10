@@ -14,21 +14,30 @@ const (
 )
 
 type ContractCallTx struct {
+	Common     CommonTx
 	Address    common.Address
 	Func       string // function name
 	Args       [][]byte
 	RWSetsHash []byte
-	CommonTx
+}
+
+func DecodeContractCallTx(b []byte) (*ContractCallTx, error) {
+	tx := new(ContractCallTx)
+	return tx, rlp.DecodeBytes(b, tx)
+}
+
+func (tx *ContractCallTx) SetSignature(sig []byte) {
+	tx.Common.SetSignature(sig)
 }
 
 func (tx *ContractCallTx) ValidateBasic() types.Error {
-	if err := tx.CommonTx.ValidateBasic(); err != nil {
+	if err := tx.Common.ValidateBasic(); err != nil {
 		return err
 	}
 	if tx.Func == ContractInitFunc {
 		return ErrInvalidCall(DefaultCodespace, fmt.Sprintf("func '%v' is reserved by contract initializer", ContractInitFunc))
 	}
-	return tx.VerifySignature(tx.GetSignBytes())
+	return tx.Common.VerifySignature(tx.GetSignBytes())
 }
 
 func (tx *ContractCallTx) Decode(b []byte) error {
@@ -37,7 +46,7 @@ func (tx *ContractCallTx) Decode(b []byte) error {
 
 func (tx *ContractCallTx) GetSignBytes() []byte {
 	ntx := *tx
-	ntx.Signature = nil
+	ntx.SetSignature(nil)
 	return util.TxHash(ntx.Bytes())
 }
 
@@ -46,5 +55,5 @@ func (tx *ContractCallTx) Bytes() []byte {
 	if err != nil {
 		panic(err)
 	}
-	return append([]byte{CONTRACT_CALL}, b...)
+	return b
 }
