@@ -61,6 +61,9 @@ test:
 integration-test:
 	$(MAKE) -C ./tests/integration test
 
+e2e-test:
+	$(GO_TEST_CMD) ./tests/e2e
+
 build-image:
 	docker build . -t bluele/hypermint:${VERSION}
 
