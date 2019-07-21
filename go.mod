@@ -34,6 +34,7 @@ require (
 	github.com/kr/pretty v0.1.0
 	github.com/magiconair/properties v1.8.0 // indirect
 	github.com/mattn/go-isatty v0.0.4
+	github.com/mattn/go-shellwords v1.0.5
 	github.com/matttproud/golang_protobuf_extensions v1.0.1 // indirect
 	github.com/mitchellh/mapstructure v1.1.2 // indirect
 	github.com/pborman/uuid v0.0.0-20180906182336-adf5a7427709 // indirect
@@ -64,6 +65,7 @@ require (
 	golang.org/x/sync v0.0.0-20190423024810-112230192c58 // indirect
 	golang.org/x/sys v0.0.0-20190516110030-61b9204099cb // indirect
 	golang.org/x/text v0.3.2 // indirect
+	golang.org/x/xerrors v0.0.0-20190717185122-a985d3407aa7
 	google.golang.org/genproto v0.0.0-20181004005441-af9cb2a35e7f // indirect
 	google.golang.org/grpc v1.13.0 // indirect
 )

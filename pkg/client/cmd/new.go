@@ -50,6 +50,9 @@ var newAccountCmd = &cobra.Command{
 		} else {
 			ac, err = createAccountWithPassword(ks, password)
 		}
+		if err != nil {
+			return err
+		}
 		fmt.Println(ac.Address.Hex())
 		return nil
 	},
