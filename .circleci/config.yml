@@ -49,6 +49,19 @@ jobs:
           command: |
             make integration-test
 
+  e2e-test:
+    working_directory: /go/src/github.com/bluele/hypermint
+    docker:
+      - image: bluele/go-rust:0.1.0
+    environment:
+      GO111MODULE: "on"
+    steps:
+      - checkout
+      - run:
+          name: "test"
+          command: |
+            make e2e-test
+
   pre-release:
     <<: *release_config
     steps:
@@ -90,6 +103,12 @@ workflows:
             tags:
               only: /.*/
       - integration-test:
+          filters:
+            tags:
+              only: /.*/
+          requires:
+            - build
+      - e2e-test:
           filters:
             tags:
               only: /.*/
