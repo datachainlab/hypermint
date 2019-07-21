@@ -3,3 +3,6 @@ contract:
 
 test: contract
 	go test -v . -count=1
+
+fmt:
+	cargo fmt

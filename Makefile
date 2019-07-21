@@ -59,8 +59,7 @@ test:
 	$(GO_TEST_CMD) ./pkg/...
 
 integration-test:
-	$(GO_TEST_CMD) ./tests/transaction/...
-	$(MAKE) -C ./tests/contract test
+	$(MAKE) -C ./tests/integration test
 
 build-image:
 	docker build . -t bluele/hypermint:${VERSION}
