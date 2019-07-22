@@ -434,19 +434,20 @@ func (app *BaseApp) BeginBlock(req abci.RequestBeginBlock) (res abci.ResponseBeg
 	return
 }
 
-// CheckTx implements ABCI
-// CheckTx runs the "basic checks" to see whether or not a transaction can possibly be executed,
-// first decoding, then the ante handler (which checks signatures/fees/ValidateBasic),
-// then finally the route match to see whether a handler exists. CheckTx does not run the actual
-// Msg handler function(s).
-func (app *BaseApp) CheckTx(txBytes []byte) (res abci.ResponseCheckTx) {
-	// Decode the Tx.
+// CheckTx implements the ABCI interface. It runs the "basic checks" to see
+// whether or not a transaction can possibly be executed, first decoding, then
+// the ante handler (which checks signatures/fees/ValidateBasic), then finally
+// the route match to see whether a handler exists.
+//
+// NOTE:CheckTx does not run the actual Tx handler function(s).
+func (app *BaseApp) CheckTx(req abci.RequestCheckTx) (res abci.ResponseCheckTx) {
 	var result sdk.Result
-	var tx, err = app.txDecoder(txBytes)
+
+	tx, err := app.txDecoder(req.Tx)
 	if err != nil {
 		result = err.Result()
 	} else {
-		result = app.runTx(runTxModeCheck, txBytes, tx)
+		result = app.runTx(runTxModeCheck, req.Tx, tx)
 	}
 
 	return abci.ResponseCheckTx{
@@ -455,25 +456,21 @@ func (app *BaseApp) CheckTx(txBytes []byte) (res abci.ResponseCheckTx) {
 		Log:       result.Log,
 		GasWanted: int64(result.GasWanted), // TODO: Should type accept unsigned ints?
 		GasUsed:   int64(result.GasUsed),   // TODO: Should type accept unsigned ints?
-		Tags:      result.Tags,
+		Events:    result.Events.ToABCIEvents(),
 	}
 }
 
-// Implements ABCI
-func (app *BaseApp) DeliverTx(txBytes []byte) (res abci.ResponseDeliverTx) {
-	// Decode the Tx.
+// DeliverTx implements the ABCI interface.
+func (app *BaseApp) DeliverTx(req abci.RequestDeliverTx) (res abci.ResponseDeliverTx) {
 	var result sdk.Result
-	var tx, err = app.txDecoder(txBytes)
+
+	tx, err := app.txDecoder(req.Tx)
 	if err != nil {
 		result = err.Result()
 	} else {
-		result = app.runTx(runTxModeDeliver, txBytes, tx)
+		result = app.runTx(runTxModeDeliver, req.Tx, tx)
 	}
 
-	// Even though the Result.Code is not OK, there are still effects,
-	// namely fee deductions and sequence incrementing.
-
-	// Tell the blockchain engine (i.e. Tendermint).
 	return abci.ResponseDeliverTx{
 		Code:      uint32(result.Code),
 		Codespace: string(result.Codespace),
@@ -481,7 +478,7 @@ func (app *BaseApp) DeliverTx(txBytes []byte) (res abci.ResponseDeliverTx) {
 		Log:       result.Log,
 		GasWanted: int64(result.GasWanted), // TODO: Should type accept unsigned ints?
 		GasUsed:   int64(result.GasUsed),   // TODO: Should type accept unsigned ints?
-		Tags:      result.Tags,
+		Events:    result.Events.ToABCIEvents(),
 	}
 }
 

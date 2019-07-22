@@ -55,18 +55,20 @@ func EventCMD() *cobra.Command {
 			for ev := range out {
 				etx := ev.Data.(types.EventDataTx)
 				fmt.Printf("TxID=0x%x\n", etx.Tx.Hash())
-				for _, tag := range etx.Result.Tags {
-					k := string(tag.GetKey())
-					if k == "event.data" {
-						ev, err := contract.ParseEventData(tag.GetValue())
-						if err != nil {
-							return err
+				for _, ev := range etx.Result.Events {
+					for _, tag := range ev.Attributes {
+						k := string(tag.GetKey())
+						if k == "event.data" {
+							ev, err := contract.ParseEventData(tag.GetValue())
+							if err != nil {
+								return err
+							}
+							fmt.Println(ev.String())
+						} else if k == "event.name" || k == "contract.address" {
+							// skip
+						} else {
+							fmt.Printf("unknown event: %v\n", tag)
 						}
-						fmt.Println(ev.String())
-					} else if k == "event.name" || k == "contract.address" {
-						// skip
-					} else {
-						fmt.Printf("unknown event: %v\n", tag)
 					}
 				}
 			}

@@ -11,8 +11,6 @@ import (
 	sdk "github.com/bluele/hypermint/pkg/abci/types"
 )
 
-const useDebugDB = false
-
 func TestStoreType(t *testing.T) {
 	db := dbm.NewMemDB()
 	store := NewCommitMultiStore(db)
@@ -38,9 +36,6 @@ func TestStoreMount(t *testing.T) {
 
 func TestMultistoreCommitLoad(t *testing.T) {
 	var db dbm.DB = dbm.NewMemDB()
-	if useDebugDB {
-		db = dbm.NewDebugDB("CMS", db)
-	}
 	store := newMultiStoreWithMounts(db)
 	err := store.LoadLatestVersion()
 	require.Nil(t, err)

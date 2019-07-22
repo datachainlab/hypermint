@@ -86,9 +86,17 @@ func handleContractCallTx(ctx types.Context, cm *contract.ContractManager, envm 
 		return transaction.ErrInvalidCall(transaction.DefaultCodespace, err.Error()).Result()
 	}
 	tags = append(tags, makeTag("contract.address", []byte(tx.Address.Hex())))
+
+	// var attrs []types.Attribute
+	// for _, tag := range tags {
+	// 	attrs = append(attrs, types.Attribute(tag))
+	// }
+	e := types.Event{Type: "sample"}
+	e.Attributes = tags
+
 	return types.Result{
-		Data: rb,
-		Tags: tags,
+		Data:   rb,
+		Events: types.Events{e},
 	}
 }
 
