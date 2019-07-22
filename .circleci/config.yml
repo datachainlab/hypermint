@@ -24,6 +24,10 @@ jobs:
           name: "test"
           command: |
             make test
+      - persist_to_workspace:
+          root: /
+          paths:
+            - go/src/github.com/bluele/hypermint
 
   contract-test:
     working_directory: /go/src/github.com/bluele/hypermint
@@ -44,8 +48,10 @@ jobs:
       GO111MODULE: "on"
     steps:
       - checkout
+      - attach_workspace:
+          at: /
       - run:
-          name: "test"
+          name: "integration-test"
           command: |
             make integration-test
 
@@ -57,8 +63,10 @@ jobs:
       GO111MODULE: "on"
     steps:
       - checkout
+      - attach_workspace:
+          at: /
       - run:
-          name: "test"
+          name: "e2e-test"
           command: |
             make e2e-test
 
