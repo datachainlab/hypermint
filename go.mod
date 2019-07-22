@@ -2,7 +2,10 @@ module github.com/bluele/hypermint
 
 go 1.12
 
-replace github.com/go-interpreter/wagon v0.0.0 => github.com/perlin-network/wagon v0.3.1-0.20180825141017-f8cb99b55a39
+replace (
+	github.com/go-interpreter/wagon v0.0.0 => github.com/perlin-network/wagon v0.3.1-0.20180825141017-f8cb99b55a39
+	github.com/tendermint/tendermint v0.32.2-rc1 => github.com/bluele/tendermint v0.32.2-rc1
+)
 
 require (
 	github.com/allegro/bigcache v1.2.0 // indirect
@@ -29,7 +32,7 @@ require (
 	github.com/stretchr/testify v1.3.0
 	github.com/tendermint/go-amino v0.14.1
 	github.com/tendermint/iavl v0.12.3-0.20190712145259-c834d3192b52
-	github.com/tendermint/tendermint v0.32.1
+	github.com/tendermint/tendermint v0.32.2-rc1
 	github.com/tyler-smith/go-bip39 v0.3.6
 	golang.org/x/crypto v0.0.0-20190513172903-22d7a77e9e5f
 	golang.org/x/net v0.0.0-20190514140710-3ec191127204 // indirect
