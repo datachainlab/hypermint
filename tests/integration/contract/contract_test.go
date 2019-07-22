@@ -24,6 +24,8 @@ import (
 const (
 	testMnemonic = "math razor capable expose worth grape metal sunset metal sudden usage scheme"
 	hdwPath      = "m/44'/60'/0'/0/"
+
+	testContractPath = "../../build/contract_test.wasm"
 )
 
 type ContractTestSuite struct {
@@ -38,8 +40,7 @@ type ContractTestSuite struct {
 
 func (ts *ContractTestSuite) SetupTest() {
 	assert := ts.Assert()
-	contractPath := "./contract-test/target/wasm32-unknown-unknown/debug/contract_test.wasm"
-	b, err := ioutil.ReadFile(contractPath)
+	b, err := ioutil.ReadFile(testContractPath)
 	assert.NoError(err)
 
 	ts.owner, err = ts.GetPrvkey(0)

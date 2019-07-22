@@ -8,7 +8,7 @@ import (
 
 	clihelper "github.com/bluele/hypermint/pkg/client/helper"
 	"github.com/bluele/hypermint/pkg/transaction"
-	"github.com/bluele/hypermint/tests/helper"
+	"github.com/bluele/hypermint/tests/integration/helper"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/spf13/viper"
