@@ -24,6 +24,7 @@ const (
 	flagSimulate   = "simulate"
 	flagRWSetsHash = "rwsh"
 	flagArgs       = "args"
+	flagSilent     = "silent"
 )
 
 func init() {
@@ -35,6 +36,7 @@ func init() {
 	callCmd.Flags().String(flagRWSetsHash, "", "RWSets hash")
 	callCmd.Flags().Uint(flagGas, 0, "gas for tx")
 	callCmd.Flags().Bool(flagSimulate, false, "execute as simulation")
+	callCmd.Flags().Bool(flagSilent, false, "if true, suppress unnecessary output")
 	util.CheckRequiredFlag(callCmd, helper.FlagAddress, flagGas)
 }
 
@@ -95,9 +97,13 @@ var callCmd = &cobra.Command{
 			if err := rs.FromBytes(res.RWSetsBytes); err != nil {
 				return err
 			}
-			pretty.Println(rs)
-			fmt.Printf("RWSetsHash: 0x%x\n", rs.Hash())
-			fmt.Println("Result:", string(res.Returned))
+			if viper.GetBool(flagSilent) {
+				fmt.Print(string(res.Returned))
+			} else {
+				pretty.Println(rs)
+				fmt.Printf("RWSetsHash: 0x%x\n", rs.Hash())
+				fmt.Println("Result:", string(res.Returned))
+			}
 			return nil
 		}
 

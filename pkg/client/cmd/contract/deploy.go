@@ -64,7 +64,7 @@ var deployCmd = &cobra.Command{
 		if err := ctx.SignAndBroadcastTx(tx, from); err != nil {
 			return err
 		}
-		fmt.Printf("%v\n", contract.TxToContract(tx).Address().Hex())
+		fmt.Print(contract.TxToContract(tx).Address().Hex())
 		return nil
 	},
 }
