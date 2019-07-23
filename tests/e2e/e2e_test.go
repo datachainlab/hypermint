@@ -17,6 +17,10 @@ import (
 	"golang.org/x/xerrors"
 )
 
+const (
+	testContractPath = "../build/contract_test.wasm"
+)
+
 type E2ETestSuite struct {
 	helper.NodeTestSuite
 }
@@ -78,6 +82,11 @@ func (ts *E2ETestSuite) TestTransfer() {
 	}
 }
 
+func (ts *E2ETestSuite) TestDeploy() {
+	ctx := context.Background()
+	ts.NoError(ts.DeployContract(ctx, ts.Account(1), testContractPath))
+}
+
 func (ts *E2ETestSuite) GetBalance(ctx context.Context, addr common.Address) (int, error) {
 	cmd := fmt.Sprintf("balance --address=%v", addr.Hex())
 	if out, e, err := ts.ExecCLICommand(ctx, cmd); err != nil {
@@ -89,6 +98,15 @@ func (ts *E2ETestSuite) GetBalance(ctx context.Context, addr common.Address) (in
 
 func (ts *E2ETestSuite) Transfer(ctx context.Context, from, to common.Address, amount int) error {
 	cmd := fmt.Sprintf("transfer --address=%v --amount=10 --to=%v --gas=1 --password=password", from.Hex(), to.Hex())
+	if out, e, err := ts.ExecCLICommand(ctx, cmd); err != nil {
+		return xerrors.Errorf("%v:%v:%v", string(out), string(e), err)
+	}
+	time.Sleep(2 * ts.TimeoutCommit)
+	return nil
+}
+
+func (ts *E2ETestSuite) DeployContract(ctx context.Context, from common.Address, path string) error {
+	cmd := fmt.Sprintf("contract deploy --address=%v --path=%v --gas=1 --password=password", from.Hex(), path)
 	if out, e, err := ts.ExecCLICommand(ctx, cmd); err != nil {
 		return xerrors.Errorf("%v:%v:%v", string(out), string(e), err)
 	}

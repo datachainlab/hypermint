@@ -90,7 +90,8 @@ func (ts *NodeTestSuite) RunNode() {
 		panic(err)
 	}
 	cmd := exec.Command(ts.hmdPath, args...)
-	cmd.Env = []string{WithEnv("TM_PARAMS", fmt.Sprintf("consensus.timeout_commit=%v", ts.TimeoutCommit.String())).String()}
+	params := fmt.Sprintf("consensus.timeout_commit=%v,rpc.max_body_bytes=10000000,mempool.max_msg_bytes=10000000", ts.TimeoutCommit.String())
+	cmd.Env = []string{WithEnv("TM_PARAMS", params).String()}
 	cmd.Stdout = os.Stdout
 	cmd.Stderr = os.Stderr
 	if err := cmd.Start(); err != nil {
