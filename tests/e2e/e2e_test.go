@@ -119,7 +119,7 @@ func (ts *E2ETestSuite) DeployContract(ctx context.Context, from common.Address,
 	if err != nil {
 		return common.Address{}, err
 	}
-	return common.HexToAddress(strings.TrimRight(string(address), "\n")), nil
+	return common.HexToAddress(string(address)), nil
 }
 
 func (ts *E2ETestSuite) CallContract(ctx context.Context, from, contract common.Address, fn string, args []string, isSimulate bool) ([]byte, error) {
