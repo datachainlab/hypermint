@@ -90,12 +90,24 @@ func (ts *E2ETestSuite) TestContract() {
 	}
 	ts.T().Logf("contract address is %v", contract.Hex())
 
-	_, err = ts.CallContract(ctx, ts.Account(1), contract, "test_write_state", []string{"key", "value"}, false)
-	ts.NoError(err)
+	{
+		_, err := ts.CallContract(ctx, ts.Account(1), contract, "test_write_state", []string{"key", "value"}, false)
+		ts.NoError(err)
 
-	out, err := ts.CallContract(ctx, ts.Account(1), contract, "test_read_state", []string{"key"}, true)
-	ts.NoError(err)
-	ts.Equal("value", string(out))
+		out, err := ts.CallContract(ctx, ts.Account(1), contract, "test_read_state", []string{"key"}, true)
+		ts.NoError(err)
+		ts.Equal("value", string(out))
+	}
+	{
+		_, err := ts.CallContract(ctx, ts.Account(1), contract, "test_emit_event", []string{"first", "second"}, false)
+		ts.NoError(err)
+		count, err := ts.SearchEvent(ctx, contract, "test-event-name-0")
+		ts.NoError(err)
+		ts.Equal(1, count)
+		count, err = ts.SearchEvent(ctx, contract, "test-event-name-1")
+		ts.NoError(err)
+		ts.Equal(1, count)
+	}
 }
 
 func (ts *E2ETestSuite) GetBalance(ctx context.Context, addr common.Address) (int, error) {
@@ -134,6 +146,19 @@ func (ts *E2ETestSuite) CallContract(ctx context.Context, from, contract common.
 		cmd += " --simulate --silent"
 	}
 	return ts.sendTxCMD(ctx, cmd)
+}
+
+func (ts *E2ETestSuite) SearchEvent(ctx context.Context, contract common.Address, event string) (int, error) {
+	cmd := fmt.Sprintf(
+		`contract event search --address=%v --event=%v --count`,
+		contract.Hex(),
+		event,
+	)
+	if out, e, err := ts.ExecCLICommand(ctx, cmd); err != nil {
+		return 0, xerrors.Errorf("%v:%v:%v", string(out), string(e), err)
+	} else {
+		return strconv.Atoi(string(out))
+	}
 }
 
 func (ts *E2ETestSuite) sendTxCMD(ctx context.Context, cmd string) ([]byte, error) {
