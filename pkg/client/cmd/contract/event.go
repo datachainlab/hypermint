@@ -23,6 +23,7 @@ func EventCMD() *cobra.Command {
 		Short: "This provides you to pub/sub events",
 	}
 
+	// common
 	const (
 		flagContractAddress = "address"
 		flagEventName       = "event"
@@ -46,7 +47,7 @@ func EventCMD() *cobra.Command {
 			}
 			defer cl.Stop()
 			id := common.RandStr(8)
-			q := fmt.Sprintf("contract.address='%v' AND event.name='%v'", viper.GetString(flagContractAddress), viper.GetString(flagEventName))
+			q := fmt.Sprintf("tm.event='Tx' AND contract.address='%v' AND contract.event.name='%v'", viper.GetString(flagContractAddress), viper.GetString(flagEventName))
 			fmt.Printf("subscription-id=%#v query=%#v\n", id, q)
 			out, err := cl.Subscribe(context.Background(), id, q)
 			if err != nil {
@@ -56,15 +57,17 @@ func EventCMD() *cobra.Command {
 				etx := ev.Data.(types.EventDataTx)
 				fmt.Printf("TxID=0x%x\n", etx.Tx.Hash())
 				for _, ev := range etx.Result.Events {
+					if ev.Type != "contract" {
+						continue
+					}
 					for _, tag := range ev.Attributes {
-						k := string(tag.GetKey())
-						if k == "event.data" {
+						if k := string(tag.GetKey()); k == "event.data" {
 							ev, err := contract.ParseEventData(tag.GetValue())
 							if err != nil {
 								return err
 							}
 							fmt.Println(ev.String())
-						} else if k == "event.name" || k == "contract.address" {
+						} else if k == "event.name" || k == "address" {
 							// skip
 						} else {
 							fmt.Printf("unknown event: %v\n", tag)
@@ -78,7 +81,49 @@ func EventCMD() *cobra.Command {
 	subscribeCmd.Flags().String(flagContractAddress, "", "contract address for subscription")
 	subscribeCmd.Flags().String(flagEventName, "", "event name for subscription")
 	util.CheckRequiredFlag(subscribeCmd, flagContractAddress, flagEventName)
-
 	eventCmd.AddCommand(subscribeCmd)
+
+	// search
+	const (
+		flagCount = "count"
+	)
+
+	var searchCmd = &cobra.Command{
+		Use:   "search",
+		Short: "Search Txs using events",
+		RunE: func(cmd *cobra.Command, args []string) error {
+			viper.BindPFlags(cmd.Flags())
+			ctx, err := client.NewClientContextFromViper()
+			if err != nil {
+				return err
+			}
+			cl, err := ctx.GetNode()
+			if err != nil {
+				return err
+			}
+			q := fmt.Sprintf("contract.address='%v' AND contract.event.name='%v'", viper.GetString(flagContractAddress), viper.GetString(flagEventName))
+			res, err := cl.TxSearch(q, true, 0, 0)
+			if err != nil {
+				return err
+			}
+
+			if viper.GetBool(flagCount) {
+				fmt.Print(len(res.Txs))
+				return nil
+			} else {
+				for _, tx := range res.Txs {
+					fmt.Println(tx.TxResult.String())
+				}
+			}
+			return nil
+		},
+	}
+
+	searchCmd.Flags().String(flagContractAddress, "", "contract address for subscription")
+	searchCmd.Flags().String(flagEventName, "", "event name for subscription")
+	searchCmd.Flags().Bool(flagCount, false, "if true, only print count of txs")
+	util.CheckRequiredFlag(searchCmd, flagContractAddress, flagEventName)
+	eventCmd.AddCommand(searchCmd)
+
 	return eventCmd
 }
