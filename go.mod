@@ -17,6 +17,7 @@ require (
 	github.com/deckarep/golang-set v1.7.1 // indirect
 	github.com/ethereum/go-ethereum v1.8.21
 	github.com/fortytw2/leaktest v1.3.0 // indirect
+	github.com/gogo/protobuf v1.2.1
 	github.com/golang/protobuf v1.3.2
 	github.com/google/uuid v1.0.0 // indirect
 	github.com/kr/pretty v0.1.0
