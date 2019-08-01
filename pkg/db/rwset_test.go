@@ -7,6 +7,29 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
+func TestVersion(t *testing.T) {
+	type V = Version
+	var cases = []struct {
+		version Version
+	}{
+		{V{0, 0}},
+		{V{1, 1}},
+		{V{2, 2}},
+		{V{1, 2}},
+		{V{2, 1}},
+	}
+	for i, cs := range cases {
+		t.Run(fmt.Sprint(i), func(t *testing.T) {
+			assert := assert.New(t)
+
+			b := cs.version.Bytes()
+			v, err := MakeVersion(b)
+			assert.NoError(err)
+			assert.Equal(cs.version, v)
+		})
+	}
+}
+
 func TestValueObject(t *testing.T) {
 	type V = Version
 	var cases = []struct {
