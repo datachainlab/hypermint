@@ -31,6 +31,7 @@ func ProofCMD() *cobra.Command {
 		flagValue           = "value"
 		flagHeight          = "height"
 		flagOutputPath      = "out"
+		flagInputPath       = "in"
 	)
 
 	var proofCmd = &cobra.Command{
@@ -127,7 +128,6 @@ func ProofCMD() *cobra.Command {
 			return ioutil.WriteFile(viper.GetString(flagOutputPath), b, 0644)
 		},
 	}
-
 	getCmd.Flags().String(flagContractAddress, "", "contract address")
 	getCmd.Flags().String(flagKey, "", "key string(if this value is hex, decoded as byte array)")
 	getCmd.Flags().String(flagValue, "", "expected value")
@@ -135,6 +135,60 @@ func ProofCMD() *cobra.Command {
 	getCmd.Flags().String(flagOutputPath, "", "output path to proof info")
 	util.CheckRequiredFlag(getCmd, flagContractAddress, flagKey, flagValue, flagOutputPath)
 
-	proofCmd.AddCommand(getCmd)
+	var verifyCmd = &cobra.Command{
+		Use:   "verify",
+		Short: "verify data existence from proof file",
+		RunE: func(cmd *cobra.Command, args []string) error {
+			viper.BindPFlags(cmd.Flags())
+			ctx, err := client.NewClientContextFromViper()
+			if err != nil {
+				return err
+			}
+
+			in := viper.GetString(flagInputPath)
+			b, err := ioutil.ReadFile(in)
+			if err != nil {
+				return err
+			}
+			kvp := new(proof.KVProof)
+			if err := kvp.Unmarshal(b); err != nil {
+				return err
+			}
+			c, err := ctx.Client.Commit(&kvp.Height)
+			if err != nil {
+				return err
+			}
+			if err := kvp.VerifyWithHeader(c.SignedHeader.Header); err != nil {
+				return err
+			}
+			fmt.Println("ok")
+			return nil
+		},
+	}
+	verifyCmd.Flags().String(flagInputPath, "", "path to proof file")
+	util.CheckRequiredFlag(verifyCmd, flagInputPath)
+
+	var showCmd = &cobra.Command{
+		Use:   "show",
+		Short: "pretty print a proof info",
+		RunE: func(cmd *cobra.Command, args []string) error {
+			viper.BindPFlags(cmd.Flags())
+			in := viper.GetString(flagInputPath)
+			b, err := ioutil.ReadFile(in)
+			if err != nil {
+				return err
+			}
+			kvp := new(proof.KVProof)
+			if err := kvp.Unmarshal(b); err != nil {
+				return err
+			}
+			fmt.Println(kvp.String())
+			return nil
+		},
+	}
+	showCmd.Flags().String(flagInputPath, "", "path to proof file")
+	util.CheckRequiredFlag(showCmd, flagInputPath)
+
+	proofCmd.AddCommand(getCmd, verifyCmd, showCmd)
 	return proofCmd
 }
