@@ -6,7 +6,7 @@ import (
 
 	"github.com/bluele/hypermint/pkg/abci/store"
 	sdk "github.com/bluele/hypermint/pkg/abci/types"
-	dbm "github.com/tendermint/tendermint/libs/db"
+	dbm "github.com/tendermint/tm-db"
 )
 
 // File for storing in-package BaseApp optional functions,

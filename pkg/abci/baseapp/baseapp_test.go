@@ -11,7 +11,7 @@ import (
 	"github.com/stretchr/testify/require"
 
 	abci "github.com/tendermint/tendermint/abci/types"
-	dbm "github.com/tendermint/tendermint/libs/db"
+	dbm "github.com/tendermint/tm-db"
 	"github.com/tendermint/tendermint/libs/log"
 
 	"github.com/bluele/hypermint/pkg/abci/codec"
@@ -433,7 +433,7 @@ func TestCheckTx(t *testing.T) {
 		tx := newTxCounter()
 		txBytes, err := codec.MarshalBinaryLengthPrefixed(tx)
 		require.NoError(t, err)
-		r := app.CheckTx(txBytes)
+		r := app.CheckTx(abci.RequestCheckTx{Tx: txBytes})
 		assert.True(t, r.IsOK(), fmt.Sprintf("%v", r))
 	}
 
@@ -480,7 +480,7 @@ func TestDeliverTx(t *testing.T) {
 			tx := newTxCounter()
 			txBytes, err := codec.MarshalBinaryLengthPrefixed(tx)
 			require.NoError(t, err)
-			res := app.DeliverTx(txBytes)
+			res := app.DeliverTx(abci.RequestDeliverTx{Tx: txBytes})
 			require.True(t, res.IsOK(), fmt.Sprintf("%v", res))
 		}
 		app.EndBlock(abci.RequestEndBlock{})
@@ -602,7 +602,7 @@ func TestRunInvalidTransaction(t *testing.T) {
 
 		txBytes, err := newCdc.MarshalBinaryLengthPrefixed(tx)
 		require.NoError(t, err)
-		res := app.DeliverTx(txBytes)
+		res := app.DeliverTx(abci.RequestDeliverTx{Tx: txBytes})
 		require.EqualValues(t, sdk.CodeTxDecode, res.Code)
 		require.EqualValues(t, sdk.CodespaceRoot, res.Codespace)
 	}
@@ -639,7 +639,7 @@ func TestBaseAppAnteHandler(t *testing.T) {
 	tx.setFailOnAnte(true)
 	txBytes, err := cdc.MarshalBinaryLengthPrefixed(tx)
 	require.NoError(t, err)
-	res := app.DeliverTx(txBytes)
+	res := app.DeliverTx(abci.RequestDeliverTx{Tx: txBytes})
 	require.False(t, res.IsOK(), fmt.Sprintf("%v", res))
 
 	ctx := app.getState(runTxModeDeliver).ctx
@@ -654,7 +654,7 @@ func TestBaseAppAnteHandler(t *testing.T) {
 	txBytes, err = cdc.MarshalBinaryLengthPrefixed(tx)
 	require.NoError(t, err)
 
-	res = app.DeliverTx(txBytes)
+	res = app.DeliverTx(abci.RequestDeliverTx{Tx: txBytes})
 	require.False(t, res.IsOK(), fmt.Sprintf("%v", res))
 
 	ctx = app.getState(runTxModeDeliver).ctx
@@ -669,7 +669,7 @@ func TestBaseAppAnteHandler(t *testing.T) {
 	txBytes, err = cdc.MarshalBinaryLengthPrefixed(tx)
 	require.NoError(t, err)
 
-	res = app.DeliverTx(txBytes)
+	res = app.DeliverTx(abci.RequestDeliverTx{Tx: txBytes})
 	require.True(t, res.IsOK(), fmt.Sprintf("%v", res))
 
 	ctx = app.getState(runTxModeDeliver).ctx
