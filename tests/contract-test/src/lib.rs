@@ -47,16 +47,20 @@ pub fn test_read_uncommitted_state() -> i32 {
 
 #[no_mangle]
 pub fn test_write_state() -> i32 {
-    let b = [0u8; 255];
-    hmc::write_state("key".as_bytes(), &b);
+    let key = hmc::get_arg(0).unwrap();
+    let value = hmc::get_arg(1).unwrap();
+    hmc::write_state(&key, &value);
     0
 }
 
 #[no_mangle]
 pub fn test_read_state() -> i32 {
-    let b = [0u8; 255];
-    hmc::write_state("key".as_bytes(), &b);
-    0
+    let key = hmc::get_arg(0).unwrap();
+    let value = match hmc::read_state(&key) {
+        Ok(v) => v,
+        Err(_) => vec![],
+    };
+    hmc::return_value(&value)
 }
 
 #[no_mangle]

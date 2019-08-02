@@ -188,6 +188,7 @@ func (ts *ContractTestSuite) TestReadWriteState() {
 			Sender:   crypto.PubkeyToAddress(ts.owner.PublicKey),
 			Contract: &ts.contract,
 			DB:       db.NewVersionedDB(cms.GetKVStore(ts.mainKey), db.Version{1, 1}),
+			Args:     contract.NewArgsFromStrings([]string{"key", "value"}),
 		}
 		_, err := env.Exec(sdk.NewContext(cms, abci.Header{}, false, nil), "test_write_state")
 		assert.NoError(err)
@@ -199,6 +200,7 @@ func (ts *ContractTestSuite) TestReadWriteState() {
 			Sender:   crypto.PubkeyToAddress(ts.owner.PublicKey),
 			Contract: &ts.contract,
 			DB:       db.NewVersionedDB(cms.GetKVStore(ts.mainKey), db.Version{2, 1}),
+			Args:     contract.NewArgsFromStrings([]string{"key"}),
 		}
 		_, err := env.Exec(sdk.NewContext(cms, abci.Header{}, false, nil), "test_read_state")
 		assert.NoError(err)

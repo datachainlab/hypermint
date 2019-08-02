@@ -17,6 +17,10 @@ import (
 	"golang.org/x/xerrors"
 )
 
+const (
+	testContractPath = "../build/contract_test.wasm"
+)
+
 type E2ETestSuite struct {
 	helper.NodeTestSuite
 }
@@ -78,22 +82,92 @@ func (ts *E2ETestSuite) TestTransfer() {
 	}
 }
 
+func (ts *E2ETestSuite) TestContract() {
+	ctx := context.Background()
+	contract, err := ts.DeployContract(ctx, ts.Account(1), testContractPath)
+	if !ts.NoError(err) {
+		return
+	}
+	ts.T().Logf("contract address is %v", contract.Hex())
+
+	{
+		_, err := ts.CallContract(ctx, ts.Account(1), contract, "test_write_state", []string{"key", "value"}, false)
+		ts.NoError(err)
+
+		out, err := ts.CallContract(ctx, ts.Account(1), contract, "test_read_state", []string{"key"}, true)
+		ts.NoError(err)
+		ts.Equal("value", string(out))
+	}
+	{
+		_, err := ts.CallContract(ctx, ts.Account(1), contract, "test_emit_event", []string{"first", "second"}, false)
+		ts.NoError(err)
+		count, err := ts.SearchEvent(ctx, contract, "test-event-name-0")
+		ts.NoError(err)
+		ts.Equal(1, count)
+		count, err = ts.SearchEvent(ctx, contract, "test-event-name-1")
+		ts.NoError(err)
+		ts.Equal(1, count)
+	}
+}
+
 func (ts *E2ETestSuite) GetBalance(ctx context.Context, addr common.Address) (int, error) {
 	cmd := fmt.Sprintf("balance --address=%v", addr.Hex())
 	if out, e, err := ts.ExecCLICommand(ctx, cmd); err != nil {
 		return 0, xerrors.Errorf("%v:%v:%v", string(out), string(e), err)
 	} else {
-		return strconv.Atoi(strings.TrimRight(string(out), "\n"))
+		return strconv.Atoi(string(out))
 	}
 }
 
 func (ts *E2ETestSuite) Transfer(ctx context.Context, from, to common.Address, amount int) error {
 	cmd := fmt.Sprintf("transfer --address=%v --amount=10 --to=%v --gas=1 --password=password", from.Hex(), to.Hex())
-	if out, e, err := ts.ExecCLICommand(ctx, cmd); err != nil {
-		return xerrors.Errorf("%v:%v:%v", string(out), string(e), err)
+	_, err := ts.sendTxCMD(ctx, cmd)
+	return err
+}
+
+func (ts *E2ETestSuite) DeployContract(ctx context.Context, from common.Address, path string) (common.Address, error) {
+	cmd := fmt.Sprintf("contract deploy --address=%v --path=%v --gas=1 --password=password", from.Hex(), path)
+	address, err := ts.sendTxCMD(ctx, cmd)
+	if err != nil {
+		return common.Address{}, err
 	}
-	time.Sleep(2 * ts.TimeoutCommit)
-	return nil
+	return common.HexToAddress(string(address)), nil
+}
+
+func (ts *E2ETestSuite) CallContract(ctx context.Context, from, contract common.Address, fn string, args []string, isSimulate bool) ([]byte, error) {
+	cmd := fmt.Sprintf(
+		`contract call --address=%v --contract=%v --func="%v" --args=%#v --password=password --gas=1`,
+		from.Hex(),
+		contract.Hex(),
+		fn,
+		strings.Join(args, ","),
+	)
+	if isSimulate {
+		cmd += " --simulate --silent"
+	}
+	return ts.sendTxCMD(ctx, cmd)
+}
+
+func (ts *E2ETestSuite) SearchEvent(ctx context.Context, contract common.Address, event string) (int, error) {
+	cmd := fmt.Sprintf(
+		`contract event search --address=%v --event=%v --count`,
+		contract.Hex(),
+		event,
+	)
+	if out, e, err := ts.ExecCLICommand(ctx, cmd); err != nil {
+		return 0, xerrors.Errorf("%v:%v:%v", string(out), string(e), err)
+	} else {
+		return strconv.Atoi(string(out))
+	}
+}
+
+func (ts *E2ETestSuite) sendTxCMD(ctx context.Context, cmd string) ([]byte, error) {
+	if out, e, err := ts.ExecCLICommand(ctx, cmd); err != nil {
+		return nil, xerrors.Errorf("%v:%v:%v", string(out), string(e), err)
+	} else {
+		time.Sleep(2 * ts.TimeoutCommit)
+		return out, nil
+	}
 }
 
 func TestE2ETestSuite(t *testing.T) {
