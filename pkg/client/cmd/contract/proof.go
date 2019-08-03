@@ -108,19 +108,22 @@ func ProofCMD() *cobra.Command {
 			if err != nil {
 				return err
 			}
-
-			kvp := &proof.KVProofInfo{
-				Height:   h,
-				Proof:    res.Response.Proof,
-				Contract: contractAddr.Bytes(),
-				Key:      key.Bytes(),
-				Value:    vo.Value,
-				Version:  vo.Version.Bytes(),
-			}
-			if err := kvp.AppendHeaderProofOp(c.SignedHeader.Header); err != nil {
+			header := c.SignedHeader.Header
+			op, err := proof.MakeKVProofOp(header)
+			if err != nil {
 				return err
 			}
-			if err := kvp.VerifyWithHeader(c.SignedHeader.Header); err != nil {
+			p := res.Response.Proof
+			p.Ops = append(p.Ops, op)
+
+			kvp := proof.MakeKVProofInfo(
+				header.Height,
+				p,
+				contractAddr,
+				key,
+				vo,
+			)
+			if err := kvp.VerifyWithHeader(header); err != nil {
 				return err
 			}
 			b, err := kvp.Marshal()
