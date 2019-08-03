@@ -40,4 +40,7 @@ require (
 	golang.org/x/sys v0.0.0-20190516110030-61b9204099cb // indirect
 	golang.org/x/text v0.3.2 // indirect
 	golang.org/x/xerrors v0.0.0-20190717185122-a985d3407aa7
+	google.golang.org/appengine v1.4.0 // indirect
+	google.golang.org/genproto v0.0.0-20190801165951-fa694d86fc64 // indirect
+	google.golang.org/grpc v1.22.1 // indirect
 )
