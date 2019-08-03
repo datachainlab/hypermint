@@ -109,7 +109,7 @@ func ProofCMD() *cobra.Command {
 				return err
 			}
 
-			kvp := &proof.KVProof{
+			kvp := &proof.KVProofInfo{
 				Height:   h,
 				Proof:    res.Response.Proof,
 				Contract: contractAddr.Bytes(),
@@ -152,7 +152,7 @@ func ProofCMD() *cobra.Command {
 			if err != nil {
 				return err
 			}
-			kvp := new(proof.KVProof)
+			kvp := new(proof.KVProofInfo)
 			if err := kvp.Unmarshal(b); err != nil {
 				return err
 			}
@@ -180,7 +180,7 @@ func ProofCMD() *cobra.Command {
 			if err != nil {
 				return err
 			}
-			kvp := new(proof.KVProof)
+			kvp := new(proof.KVProofInfo)
 			if err := kvp.Unmarshal(b); err != nil {
 				return err
 			}

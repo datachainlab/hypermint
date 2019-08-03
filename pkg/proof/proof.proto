@@ -16,7 +16,7 @@ option (gogoproto.equal_all) = true;
 //----------------------------------------
 // Message types
 
-message KVProof {
+message KVProofInfo {
     int64 height = 1;
     merkle.Proof proof = 2;
     bytes contract = 3;

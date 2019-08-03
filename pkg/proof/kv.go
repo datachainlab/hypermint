@@ -11,7 +11,7 @@ import (
 	"github.com/tendermint/tendermint/types"
 )
 
-func (p *KVProof) AppendHeaderProofOp(h *types.Header) error {
+func (p *KVProofInfo) AppendHeaderProofOp(h *types.Header) error {
 	root, proofs := merkle.SimpleProofsFromByteSlices([][]byte{
 		cdcEncode(h.Version),
 		cdcEncode(h.ChainID),
@@ -37,7 +37,7 @@ func (p *KVProof) AppendHeaderProofOp(h *types.Header) error {
 	return nil
 }
 
-func (p KVProof) VerifyWithHeader(h *types.Header) error {
+func (p KVProofInfo) VerifyWithHeader(h *types.Header) error {
 	if p.Height != h.Height {
 		return fmt.Errorf("height is mismatch: %v != %v", p.Height, h.Height)
 	}

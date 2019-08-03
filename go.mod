@@ -23,6 +23,10 @@ require (
 	github.com/kr/pretty v0.1.0
 	github.com/mattn/go-isatty v0.0.4
 	github.com/mattn/go-shellwords v1.0.5
+	github.com/modern-go/concurrent v0.0.0-20180306012644-bacd9c7ef1dd // indirect
+	github.com/modern-go/reflect2 v1.0.1 // indirect
+	github.com/onsi/ginkgo v1.8.0 // indirect
+	github.com/onsi/gomega v1.5.0 // indirect
 	github.com/pborman/uuid v0.0.0-20180906182336-adf5a7427709 // indirect
 	github.com/perlin-network/life v0.0.0-20181106205055-98065d82a6ee
 	github.com/pkg/errors v0.8.1
