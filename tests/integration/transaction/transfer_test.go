@@ -8,6 +8,7 @@ import (
 
 	clihelper "github.com/bluele/hypermint/pkg/client/helper"
 	"github.com/bluele/hypermint/pkg/transaction"
+	icommon "github.com/bluele/hypermint/tests/integration/common"
 	"github.com/bluele/hypermint/tests/integration/helper"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/crypto"
@@ -21,7 +22,7 @@ const (
 )
 
 type TransferTestSuite struct {
-	helper.NodeTestSuite
+	icommon.NodeTestSuite
 	owner *ecdsa.PrivateKey
 	alice *ecdsa.PrivateKey
 	bob   *ecdsa.PrivateKey

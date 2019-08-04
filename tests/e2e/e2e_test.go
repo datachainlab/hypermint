@@ -9,11 +9,11 @@ import (
 	"testing"
 	"time"
 
-	"github.com/ethereum/go-ethereum/common"
-	cmn "github.com/tendermint/tendermint/libs/common"
+	ecommon "github.com/bluele/hypermint/tests/e2e/common"
 
-	"github.com/bluele/hypermint/tests/e2e/helper"
+	"github.com/ethereum/go-ethereum/common"
 	"github.com/stretchr/testify/suite"
+	cmn "github.com/tendermint/tendermint/libs/common"
 	"golang.org/x/xerrors"
 )
 
@@ -22,7 +22,7 @@ const (
 )
 
 type E2ETestSuite struct {
-	helper.NodeTestSuite
+	ecommon.NodeTestSuite
 }
 
 func (ts *E2ETestSuite) SetupTest() {
