@@ -12,6 +12,7 @@ import (
 	ecommon "github.com/bluele/hypermint/tests/e2e/common"
 
 	"github.com/ethereum/go-ethereum/common"
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/suite"
 	cmn "github.com/tendermint/tendermint/libs/common"
 	"golang.org/x/xerrors"
@@ -90,24 +91,28 @@ func (ts *E2ETestSuite) TestContract() {
 	}
 	ts.T().Logf("contract address is %v", contract.Hex())
 
-	{
-		_, err := ts.CallContract(ctx, ts.Account(1), contract, "test_write_state", []string{"key", "value"}, false)
-		ts.NoError(err)
+	const key = "key"
+	const value = "value"
 
-		out, err := ts.CallContract(ctx, ts.Account(1), contract, "test_read_state", []string{"key"}, true)
-		ts.NoError(err)
-		ts.Equal("value", string(out))
-	}
-	{
-		_, err := ts.CallContract(ctx, ts.Account(1), contract, "test_emit_event", []string{"first", "second"}, false)
-		ts.NoError(err)
-		count, err := ts.SearchEvent(ctx, contract, "test-event-name-0")
-		ts.NoError(err)
-		ts.Equal(1, count)
-		count, err = ts.SearchEvent(ctx, contract, "test-event-name-1")
-		ts.NoError(err)
-		ts.Equal(1, count)
-	}
+	ts.T().Run("check if update state successfully", func(t *testing.T) {
+		_, err := ts.CallContract(ctx, ts.Account(1), contract, "test_write_state", []string{key, value}, false)
+		assert.NoError(t, err)
+
+		out, err := ts.CallContract(ctx, ts.Account(1), contract, "test_read_state", []string{key}, true)
+		assert.NoError(t, err)
+		assert.Equal(t, value, string(out))
+
+		t.Run("ensure that expected event is happened", func(t *testing.T) {
+			_, err := ts.CallContract(ctx, ts.Account(1), contract, "test_emit_event", []string{"first", "second"}, false)
+			assert.NoError(t, err)
+			count, err := ts.SearchEvent(ctx, contract, "test-event-name-0")
+			assert.NoError(t, err)
+			assert.Equal(t, 1, count)
+			count, err = ts.SearchEvent(ctx, contract, "test-event-name-1")
+			assert.NoError(t, err)
+			assert.Equal(t, 1, count)
+		})
+	})
 }
 
 func (ts *E2ETestSuite) GetBalance(ctx context.Context, addr common.Address) (int, error) {
