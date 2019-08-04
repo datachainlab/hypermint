@@ -84,32 +84,6 @@ func (op HeaderFieldOp) GetKey() []byte {
 	return op.key
 }
 
-func MakeProofOfAppState(h *types.Header) (merkle.ProofOp, error) {
-	items := [][]byte{
-		cdcEncode(h.Version),
-		cdcEncode(h.ChainID),
-		cdcEncode(h.Height),
-		cdcEncode(h.Time),
-		cdcEncode(h.NumTxs),
-		cdcEncode(h.TotalTxs),
-		cdcEncode(h.LastBlockID),
-		cdcEncode(h.LastCommitHash),
-		cdcEncode(h.DataHash),
-		cdcEncode(h.ValidatorsHash),
-		cdcEncode(h.NextValidatorsHash),
-		cdcEncode(h.ConsensusHash),
-		cdcEncode(h.AppHash),
-		cdcEncode(h.LastResultsHash),
-		cdcEncode(h.EvidenceHash),
-		cdcEncode(h.ProposerAddress),
-	}
-	root, proofs := merkle.SimpleProofsFromByteSlices(items)
-	if !bytes.Equal(h.Hash(), root) {
-		return merkle.ProofOp{}, fmt.Errorf("invalid block hash")
-	}
-	return NewHeaderFieldOp([]byte(HeaderOp), proofs[12]).ProofOp(), nil
-}
-
 // hash functions on tendermint
 // (copy from https://github.com/bluele/tendermint/blob/ec53ce359bb8f011e4dbb715da098bea08c32ded/crypto/merkle/hash.go)
 
