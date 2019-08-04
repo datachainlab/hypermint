@@ -9,6 +9,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/bluele/hypermint/pkg/client/helper"
 	ecommon "github.com/bluele/hypermint/tests/e2e/common"
 
 	"github.com/ethereum/go-ethereum/common"
@@ -112,6 +113,19 @@ func (ts *E2ETestSuite) TestContract() {
 			assert.NoError(t, err)
 			assert.Equal(t, 1, count)
 		})
+	})
+
+	ts.T().Run("get a proof of updated state, and check if its proof is valid", func(t *testing.T) {
+		cli := ts.RPCClient()
+		kvp, err := helper.GetKVProofInfo(cli, contract, 0, []byte(key), []byte(value))
+		if assert.NoError(t, err) {
+			_, err := kvp.Marshal()
+			assert.NoError(t, err)
+			c, err := cli.Commit(&kvp.Height)
+			assert.NoError(t, err)
+			err = kvp.VerifyWithHeader(c.SignedHeader.Header)
+			assert.NoError(t, err)
+		}
 	})
 }
 

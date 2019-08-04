@@ -10,9 +10,13 @@ import (
 	"strings"
 	"time"
 
+	"github.com/bluele/hypermint/pkg/config"
+
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/mattn/go-shellwords"
 	"github.com/stretchr/testify/suite"
+	cfg "github.com/tendermint/tendermint/config"
+	rpclient "github.com/tendermint/tendermint/rpc/client"
 )
 
 const (
@@ -140,6 +144,19 @@ func (ts *NodeTestSuite) ExecCommand(ctx context.Context, binName, cmdStr string
 
 func (ts *NodeTestSuite) Account(idx int) common.Address {
 	return ts.accounts[idx]
+}
+
+func (ts *NodeTestSuite) GetNodeConfig() *cfg.Config {
+	c, err := config.GetConfig(ts.hmdHomeDir)
+	if err != nil {
+		ts.FailNow("config not found", err.Error())
+	}
+	return c
+}
+
+func (ts *NodeTestSuite) RPCClient() rpclient.Client {
+	// FIXME add a support for dynamic port
+	return rpclient.NewHTTP("tcp://0.0.0.0:26657", "/websocket")
 }
 
 type Env interface {
