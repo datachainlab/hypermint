@@ -1,7 +1,6 @@
 package db
 
 import (
-	"encoding/binary"
 	"errors"
 
 	"github.com/bluele/hypermint/pkg/util"
@@ -63,21 +62,24 @@ func BytesToValueObject(b []byte) (*ValueObject, error) {
 	return vo, vo.Unmarshal(b)
 }
 
-func (vo *ValueObject) Marshal() []byte {
-	buf := make([]byte, len(vo.Value)+4+4)
+func (vo ValueObject) Marshal() []byte {
+	buf := make([]byte, len(vo.Value)+VersionSize)
 	copy(buf[:], vo.Value)
-	binary.BigEndian.PutUint32(buf[len(vo.Value):], vo.Version.Height)
-	binary.BigEndian.PutUint32(buf[len(vo.Value)+4:], vo.Version.TxIdx)
+	copy(buf[len(vo.Value):], vo.Version.Bytes())
 	return buf
 }
 
 func (vo *ValueObject) Unmarshal(b []byte) error {
-	if len(b) < 8 {
+	if len(b) < VersionSize {
 		return errors.New("length of value is too short")
 	}
-	vo.Value = b[:len(b)-8]
-	vo.Version.Height = binary.BigEndian.Uint32(b[len(b)-8:])
-	vo.Version.TxIdx = binary.BigEndian.Uint32(b[len(b)-4:])
+	value := b[:len(b)-VersionSize]
+	ver, err := MakeVersion(b[len(b)-VersionSize:])
+	if err != nil {
+		return err
+	}
+	vo.Value = value
+	vo.Version = ver
 	return nil
 }
 

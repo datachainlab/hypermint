@@ -9,11 +9,13 @@ import (
 	"testing"
 	"time"
 
-	"github.com/ethereum/go-ethereum/common"
-	cmn "github.com/tendermint/tendermint/libs/common"
+	"github.com/bluele/hypermint/pkg/client/helper"
+	ecommon "github.com/bluele/hypermint/tests/e2e/common"
 
-	"github.com/bluele/hypermint/tests/e2e/helper"
+	"github.com/ethereum/go-ethereum/common"
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/suite"
+	cmn "github.com/tendermint/tendermint/libs/common"
 	"golang.org/x/xerrors"
 )
 
@@ -22,12 +24,19 @@ const (
 )
 
 type E2ETestSuite struct {
-	helper.NodeTestSuite
+	ecommon.NodeTestSuite
 }
 
 func (ts *E2ETestSuite) SetupTest() {
+	pjRoot, err := filepath.Abs(filepath.Join("..", ".."))
+	if err != nil {
+		ts.FailNow("failed to call Abs()", err.Error())
+	}
 	// TODO these values should be configurable?
-	ts.Setup("../../build", filepath.Join("../../.hm", cmn.RandStr(8)))
+	ts.Setup(
+		filepath.Join(pjRoot, "build"),
+		filepath.Join(filepath.Join(pjRoot, ".hm"), cmn.RandStr(8)),
+	)
 }
 
 func (ts *E2ETestSuite) TearDownTest() {
@@ -90,24 +99,41 @@ func (ts *E2ETestSuite) TestContract() {
 	}
 	ts.T().Logf("contract address is %v", contract.Hex())
 
-	{
-		_, err := ts.CallContract(ctx, ts.Account(1), contract, "test_write_state", []string{"key", "value"}, false)
-		ts.NoError(err)
+	const key = "key"
+	const value = "value"
 
-		out, err := ts.CallContract(ctx, ts.Account(1), contract, "test_read_state", []string{"key"}, true)
-		ts.NoError(err)
-		ts.Equal("value", string(out))
-	}
-	{
-		_, err := ts.CallContract(ctx, ts.Account(1), contract, "test_emit_event", []string{"first", "second"}, false)
-		ts.NoError(err)
-		count, err := ts.SearchEvent(ctx, contract, "test-event-name-0")
-		ts.NoError(err)
-		ts.Equal(1, count)
-		count, err = ts.SearchEvent(ctx, contract, "test-event-name-1")
-		ts.NoError(err)
-		ts.Equal(1, count)
-	}
+	ts.T().Run("check if update state successfully", func(t *testing.T) {
+		_, err := ts.CallContract(ctx, ts.Account(1), contract, "test_write_state", []string{key, value}, false)
+		assert.NoError(t, err)
+
+		out, err := ts.CallContract(ctx, ts.Account(1), contract, "test_read_state", []string{key}, true)
+		assert.NoError(t, err)
+		assert.Equal(t, value, string(out))
+
+		t.Run("ensure that expected event is happened", func(t *testing.T) {
+			_, err := ts.CallContract(ctx, ts.Account(1), contract, "test_emit_event", []string{"first", "second"}, false)
+			assert.NoError(t, err)
+			count, err := ts.SearchEvent(ctx, contract, "test-event-name-0")
+			assert.NoError(t, err)
+			assert.Equal(t, 1, count)
+			count, err = ts.SearchEvent(ctx, contract, "test-event-name-1")
+			assert.NoError(t, err)
+			assert.Equal(t, 1, count)
+		})
+	})
+
+	ts.T().Run("get a proof of updated state, and check if its proof is valid", func(t *testing.T) {
+		cli := ts.RPCClient()
+		kvp, err := helper.GetKVProofInfo(cli, contract, 0, []byte(key), []byte(value))
+		if assert.NoError(t, err) {
+			_, err := kvp.Marshal()
+			assert.NoError(t, err)
+			c, err := cli.Commit(&kvp.Height)
+			assert.NoError(t, err)
+			err = kvp.VerifyWithHeader(c.SignedHeader.Header)
+			assert.NoError(t, err)
+		}
+	})
 }
 
 func (ts *E2ETestSuite) GetBalance(ctx context.Context, addr common.Address) (int, error) {

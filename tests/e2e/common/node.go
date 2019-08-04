@@ -1,4 +1,4 @@
-package helper
+package common
 
 import (
 	"bytes"
@@ -10,9 +10,14 @@ import (
 	"strings"
 	"time"
 
+	"github.com/bluele/hypermint/pkg/config"
+
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/mattn/go-shellwords"
+	"github.com/spf13/viper"
 	"github.com/stretchr/testify/suite"
+	cfg "github.com/tendermint/tendermint/config"
+	rpclient "github.com/tendermint/tendermint/rpc/client"
 )
 
 const (
@@ -140,6 +145,22 @@ func (ts *NodeTestSuite) ExecCommand(ctx context.Context, binName, cmdStr string
 
 func (ts *NodeTestSuite) Account(idx int) common.Address {
 	return ts.accounts[idx]
+}
+
+func (ts *NodeTestSuite) GetNodeConfig() *cfg.Config {
+	viper.AddConfigPath(ts.hmdHomeDir + "/config")
+	viper.ReadInConfig()
+	c, err := config.GetConfig(ts.hmdHomeDir)
+	if err != nil {
+		ts.FailNow("config not found", err.Error())
+	}
+	return c
+}
+
+func (ts *NodeTestSuite) RPCClient() rpclient.Client {
+	c := ts.GetNodeConfig()
+	fmt.Println("address is ", c.RPC.ListenAddress)
+	return rpclient.NewHTTP(c.RPC.ListenAddress, "/websocket")
 }
 
 type Env interface {
