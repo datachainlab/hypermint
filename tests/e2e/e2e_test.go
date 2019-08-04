@@ -28,8 +28,15 @@ type E2ETestSuite struct {
 }
 
 func (ts *E2ETestSuite) SetupTest() {
+	pjRoot, err := filepath.Abs(filepath.Join("..", ".."))
+	if err != nil {
+		ts.FailNow("failed to call Abs()", err.Error())
+	}
 	// TODO these values should be configurable?
-	ts.Setup("../../build", filepath.Join("../../.hm", cmn.RandStr(8)))
+	ts.Setup(
+		filepath.Join(pjRoot, "build"),
+		filepath.Join(filepath.Join(pjRoot, ".hm"), cmn.RandStr(8)),
+	)
 }
 
 func (ts *E2ETestSuite) TearDownTest() {

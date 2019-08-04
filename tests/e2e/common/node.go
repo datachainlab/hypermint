@@ -14,6 +14,7 @@ import (
 
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/mattn/go-shellwords"
+	"github.com/spf13/viper"
 	"github.com/stretchr/testify/suite"
 	cfg "github.com/tendermint/tendermint/config"
 	rpclient "github.com/tendermint/tendermint/rpc/client"
@@ -147,6 +148,8 @@ func (ts *NodeTestSuite) Account(idx int) common.Address {
 }
 
 func (ts *NodeTestSuite) GetNodeConfig() *cfg.Config {
+	viper.AddConfigPath(ts.hmdHomeDir + "/config")
+	viper.ReadInConfig()
 	c, err := config.GetConfig(ts.hmdHomeDir)
 	if err != nil {
 		ts.FailNow("config not found", err.Error())
@@ -155,8 +158,9 @@ func (ts *NodeTestSuite) GetNodeConfig() *cfg.Config {
 }
 
 func (ts *NodeTestSuite) RPCClient() rpclient.Client {
-	// FIXME add a support for dynamic port
-	return rpclient.NewHTTP("tcp://0.0.0.0:26657", "/websocket")
+	c := ts.GetNodeConfig()
+	fmt.Println("address is ", c.RPC.ListenAddress)
+	return rpclient.NewHTTP(c.RPC.ListenAddress, "/websocket")
 }
 
 type Env interface {
