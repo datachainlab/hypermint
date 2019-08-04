@@ -1,15 +1,13 @@
 package contract
 
 import (
-	"bytes"
 	"encoding/hex"
 	"fmt"
 	"io/ioutil"
 	"strings"
 
-	"github.com/bluele/hypermint/pkg/app"
 	"github.com/bluele/hypermint/pkg/client"
-	"github.com/bluele/hypermint/pkg/db"
+	"github.com/bluele/hypermint/pkg/client/helper"
 	"github.com/bluele/hypermint/pkg/proof"
 	"github.com/bluele/hypermint/pkg/util"
 
@@ -17,7 +15,6 @@ import (
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 	cmn "github.com/tendermint/tendermint/libs/common"
-	rpcclient "github.com/tendermint/tendermint/rpc/client"
 )
 
 func init() {
@@ -54,6 +51,9 @@ func ProofCMD() *cobra.Command {
 			if err != nil {
 				return err
 			}
+
+			contractAddr := common.HexToAddress(viper.GetString(flagContractAddress))
+
 			if h := int64(viper.GetInt(flagHeight)); h > 0 {
 				height = h
 			} else if h == 0 {
@@ -79,51 +79,8 @@ func ProofCMD() *cobra.Command {
 				value = cmn.HexBytes(v)
 			}
 
-			contractAddr := common.HexToAddress(viper.GetString(flagContractAddress))
-			path := fmt.Sprintf("/store/%v/key", app.ContractStoreKey.Name())
-			res, err := ctx.Client.ABCIQueryWithOptions(
-				path,
-				append(contractAddr.Bytes(), key.Bytes()...),
-				rpcclient.ABCIQueryOptions{
-					Height: height,
-					Prove:  true,
-				},
-			)
+			kvp, err := helper.GetKVProofInfo(ctx.Client, contractAddr, height, key, value)
 			if err != nil {
-				return err
-			}
-			vo, err := db.BytesToValueObject(res.Response.Value)
-			if err != nil {
-				return err
-			}
-			if value != nil && !bytes.Equal(value, vo.Value) {
-				return fmt.Errorf("value is mismatch: %v(%v) != %v(%v)",
-					string(value), value.Bytes(),
-					string(vo.Value), vo.Value,
-				)
-			}
-
-			h := res.Response.Height + 1
-			c, err := ctx.Client.Commit(&h)
-			if err != nil {
-				return err
-			}
-			header := c.SignedHeader.Header
-			op, err := proof.MakeKVProofOp(header)
-			if err != nil {
-				return err
-			}
-			p := res.Response.Proof
-			p.Ops = append(p.Ops, op)
-
-			kvp := proof.MakeKVProofInfo(
-				header.Height,
-				p,
-				contractAddr,
-				key,
-				vo,
-			)
-			if err := kvp.VerifyWithHeader(header); err != nil {
 				return err
 			}
 			b, err := kvp.Marshal()
