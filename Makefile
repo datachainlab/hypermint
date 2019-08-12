@@ -12,7 +12,7 @@ HDW_VALIDATOR_IDX?=0
 
 COMMIT_HASH:=$(shell git rev-parse --short HEAD)
 VERSION:=$(shell cat version)
-BUILD_FLAGS?=-ldflags "-X github.com/bluele/hypermint/pkg/consts.GitCommit=${COMMIT_HASH} -X github.com/bluele/hypermint/pkg/consts.Version=${VERSION}"
+BUILD_FLAGS?=-mod=readonly -ldflags "-X github.com/bluele/hypermint/pkg/consts.GitCommit=${COMMIT_HASH} -X github.com/bluele/hypermint/pkg/consts.Version=${VERSION}"
 
 GO_BUILD_CMD=$(GO_BIN) build $(BUILD_FLAGS)
 GO_TEST_FLAGS?=-v
