@@ -17,7 +17,7 @@ func NewResolver(env *Env) *Resolver {
 
 func (r *Resolver) withProcess(cb func(*exec.VirtualMachine, Process) int64) exec.FunctionImport {
 	return func(vm *exec.VirtualMachine) int64 {
-		ps := NewProcess(vm, r.env, r.env.Logger, r.vt)
+		ps := NewProcess(r.env, r.env.Logger, r.vt)
 		return cb(vm, ps)
 	}
 }

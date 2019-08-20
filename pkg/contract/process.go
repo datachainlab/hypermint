@@ -8,7 +8,6 @@ import (
 	"github.com/bluele/hypermint/pkg/logger"
 
 	"github.com/ethereum/go-ethereum/common"
-	"github.com/perlin-network/life/exec"
 )
 
 var defaultLogger = logger.GetDefaultLogger("*:debug").With("module", "process")
@@ -32,7 +31,6 @@ type ValueTable interface {
 }
 
 type process struct {
-	vm     *exec.VirtualMachine
 	env    *Env
 	rwm    db.RWSetMap
 	logger logger.Logger
@@ -40,12 +38,11 @@ type process struct {
 }
 
 // NewProcess create a new process
-func NewProcess(vm *exec.VirtualMachine, env *Env, logger logger.Logger, vt ValueTable) Process {
+func NewProcess(env *Env, logger logger.Logger, vt ValueTable) Process {
 	if logger == nil {
 		logger = defaultLogger
 	}
 	return &process{
-		vm:     vm,
 		env:    env,
 		logger: logger,
 		vt:     vt,
