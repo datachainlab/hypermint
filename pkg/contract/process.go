@@ -65,7 +65,7 @@ func (p process) State() db.StateDB {
 }
 
 func (p *process) Call(addr common.Address, entry []byte, args Args) (int, error) {
-	env, err := p.env.EnvManager.Get(p.env.Context, p.env.Sender, addr, args)
+	env, err := p.env.EnvManager.Get(p.env.Context, p.env.Contract.Address(), addr, args)
 	if err != nil {
 		return -1, err
 	}
