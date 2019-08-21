@@ -124,7 +124,7 @@ func DeserializeArgs(b []byte) (Args, error) {
 	var offset uint32 = 4
 	for i := 0; i < argc; i++ {
 		size := binary.BigEndian.Uint32(b[offset : offset+4])
-		bs := make([]byte, 4+size)
+		bs := make([]byte, size)
 		copy(bs[:], b[offset+4:offset+4+size])
 		offset += 4 + size
 		args.PushBytes(bs)
