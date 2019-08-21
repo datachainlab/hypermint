@@ -20,7 +20,8 @@ import (
 )
 
 const (
-	testContractPath = "../build/contract_test.wasm"
+	testContractPath         = "../build/contract_test.wasm"
+	testExternalContractPath = "../build/external_contract_test.wasm"
 )
 
 type E2ETestSuite struct {
@@ -133,6 +134,39 @@ func (ts *E2ETestSuite) TestContract() {
 			err = kvp.VerifyWithHeader(c.SignedHeader.Header)
 			assert.NoError(t, err)
 		}
+	})
+}
+
+func (ts *E2ETestSuite) TestCallExternalContract() {
+	ctx := context.Background()
+	contractAddress, err := ts.DeployContract(ctx, ts.Account(1), testContractPath)
+	if !ts.NoError(err) {
+		return
+	}
+	ts.T().Logf("contract address is %v", contractAddress.Hex())
+
+	exContractAddress, err := ts.DeployContract(ctx, ts.Account(1), testExternalContractPath)
+	if !ts.NoError(err) {
+		return
+	}
+	ts.T().Logf("external contract address is %v", exContractAddress.Hex())
+
+	ts.Run("call contract simply", func() {
+		out, err := ts.CallContract(ctx, ts.Account(1), exContractAddress, "test_plus", []string{"1", "2"}, true)
+		ts.NoError(err)
+		ts.Equal("3", string(out))
+	})
+
+	ts.Run("call contract via contract", func() {
+		out, err := ts.CallContract(ctx, ts.Account(1), contractAddress, "test_call_external_contract", []string{exContractAddress.Hex(), "1", "2"}, true)
+		ts.NoError(err)
+		ts.Equal("3", string(out))
+	})
+
+	ts.Run("check if caller address of external contract is an address of original contract", func() {
+		out, err := ts.CallContract(ctx, ts.Account(1), contractAddress, "test_call_who_am_i_on_external_contract", []string{exContractAddress.Hex()}, true)
+		ts.NoError(err)
+		ts.Equal(contractAddress.Bytes(), out)
 	})
 }
 

@@ -9,13 +9,13 @@ build-image:
 upload-image:
 	docker push bluele/go-rust:$(VERSION)
 
-build/contract_test.wasm:
-	cd ./contract-test && cargo build --target=wasm32-unknown-unknown
+%.wasm:
+	cd ./contracts/$* && cargo build --target=wasm32-unknown-unknown
 	mkdir -p ./build/
-	mv ./contract-test/target/wasm32-unknown-unknown/debug/contract_test.wasm ./build/contract_test.wasm
+	mv ./contracts/$*/target/wasm32-unknown-unknown/debug/$@ ./build/$@
 
-integration-test: build/contract_test.wasm
+integration-test: contract_test.wasm
 	@$(GO_TEST_CMD) ./integration/...
 
-e2e-test: build/contract_test.wasm
+e2e-test: contract_test.wasm external_contract_test.wasm
 	@$(GO_TEST_CMD) ./e2e/...

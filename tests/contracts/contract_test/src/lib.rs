@@ -90,6 +90,36 @@ pub fn test_emit_event() -> i32 {
 }
 
 #[no_mangle]
+pub fn test_call_external_contract() -> i32 {
+    let addr = hmc::hex_to_bytes(hmc::get_arg_str(0).unwrap().as_ref());
+    let x = hmc::get_arg(1).unwrap();
+    let y = hmc::get_arg(2).unwrap();
+    match hmc::call_contract(&addr, "test_plus".as_bytes(), vec![&x, &y]) {
+        Ok(v) => {
+            hmc::return_value(&v)
+        },
+        Err(m) => {
+            hmc::revert(format!("{}", m));
+            -1
+        }
+    }
+}
+
+#[no_mangle]
+pub fn test_call_who_am_i_on_external_contract() -> i32 {
+    let addr = hmc::hex_to_bytes(hmc::get_arg_str(0).unwrap().as_ref());
+    match hmc::call_contract(&addr, "who_am_i".as_bytes(), vec![]) {
+        Ok(v) => {
+            hmc::return_value(&v)
+        },
+        Err(m) => {
+            hmc::revert(format!("{}", m));
+            -1
+        }
+    }
+}
+
+#[no_mangle]
 pub fn init() -> i32 {
     0
 }
