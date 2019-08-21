@@ -13,7 +13,6 @@ import (
 	ecommon "github.com/bluele/hypermint/tests/e2e/common"
 
 	"github.com/ethereum/go-ethereum/common"
-	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/suite"
 	cmn "github.com/tendermint/tendermint/libs/common"
 	"golang.org/x/xerrors"
@@ -103,36 +102,36 @@ func (ts *E2ETestSuite) TestContract() {
 	const key = "key"
 	const value = "value"
 
-	ts.T().Run("check if update state successfully", func(t *testing.T) {
+	ts.Run("check if update state successfully", func() {
 		_, err := ts.CallContract(ctx, ts.Account(1), contract, "test_write_state", []string{key, value}, false)
-		assert.NoError(t, err)
+		ts.NoError(err)
 
 		out, err := ts.CallContract(ctx, ts.Account(1), contract, "test_read_state", []string{key}, true)
-		assert.NoError(t, err)
-		assert.Equal(t, value, string(out))
+		ts.NoError(err)
+		ts.Equal(value, string(out))
 
-		t.Run("ensure that expected event is happened", func(t *testing.T) {
+		ts.Run("ensure that expected event is happened", func() {
 			_, err := ts.CallContract(ctx, ts.Account(1), contract, "test_emit_event", []string{"first", "second"}, false)
-			assert.NoError(t, err)
+			ts.NoError(err)
 			count, err := ts.SearchEvent(ctx, contract, "test-event-name-0")
-			assert.NoError(t, err)
-			assert.Equal(t, 1, count)
+			ts.NoError(err)
+			ts.Equal(1, count)
 			count, err = ts.SearchEvent(ctx, contract, "test-event-name-1")
-			assert.NoError(t, err)
-			assert.Equal(t, 1, count)
+			ts.NoError(err)
+			ts.Equal(1, count)
 		})
 	})
 
-	ts.T().Run("get a proof of updated state, and check if its proof is valid", func(t *testing.T) {
+	ts.Run("get a proof of updated state, and check if its proof is valid", func() {
 		cli := ts.RPCClient()
 		kvp, err := helper.GetKVProofInfo(cli, contract, 0, []byte(key), []byte(value))
-		if assert.NoError(t, err) {
+		if ts.NoError(err) {
 			_, err := kvp.Marshal()
-			assert.NoError(t, err)
+			ts.NoError(err)
 			c, err := cli.Commit(&kvp.Height)
-			assert.NoError(t, err)
+			ts.NoError(err)
 			err = kvp.VerifyWithHeader(c.SignedHeader.Header)
-			assert.NoError(t, err)
+			ts.NoError(err)
 		}
 	})
 }

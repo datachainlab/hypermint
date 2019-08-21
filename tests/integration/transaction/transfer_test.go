@@ -66,7 +66,7 @@ func (ts *TransferTestSuite) TestTransfer() {
 	}
 
 	for i, s := range steps {
-		ts.T().Run(fmt.Sprint(i), func(t *testing.T) {
+		ts.Run(fmt.Sprint(i), func() {
 			ctx := ts.GetNodeClientContext(ts.CliDir, s.sender)
 			tx := &transaction.TransferTx{
 				Common: transaction.CommonTx{

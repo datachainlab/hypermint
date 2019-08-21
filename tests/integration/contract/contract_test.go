@@ -13,7 +13,6 @@ import (
 	"github.com/bluele/hypermint/pkg/util"
 	"github.com/bluele/hypermint/pkg/util/wallet"
 	"github.com/ethereum/go-ethereum/crypto"
-	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/suite"
 	abci "github.com/tendermint/tendermint/abci/types"
 	"github.com/tendermint/tendermint/libs/common"
@@ -39,17 +38,16 @@ type ContractTestSuite struct {
 }
 
 func (ts *ContractTestSuite) SetupTest() {
-	assert := ts.Assert()
 	b, err := ioutil.ReadFile(testContractPath)
-	assert.NoError(err)
+	ts.NoError(err)
 
 	ts.owner, err = ts.GetPrvkey(0)
-	assert.NoError(err)
+	ts.NoError(err)
 	ts.mainKey = sdk.NewKVStoreKey("main")
 	ts.cmsProvider = func() store.CommitMultiStore {
 		cms := store.NewCommitMultiStore(dbm.NewMemDB())
 		cms.MountStoreWithDB(ts.mainKey, sdk.StoreTypeIAVL, nil)
-		assert.NoError(cms.LoadLatestVersion())
+		ts.NoError(cms.LoadLatestVersion())
 		return cms
 	}
 	ts.contract = contract.Contract{
@@ -67,7 +65,6 @@ func (ts *ContractTestSuite) GetPrvkey(index uint32) (*ecdsa.PrivateKey, error) 
 }
 
 func (ts *ContractTestSuite) TestKeccak256() {
-	assert := ts.Assert()
 	cms := ts.cmsProvider()
 
 	msg := common.RandBytes(32)
@@ -80,14 +77,13 @@ func (ts *ContractTestSuite) TestKeccak256() {
 		Args:     args,
 	}
 	res, err := env.Exec(sdk.NewContext(cms, abci.Header{}, false, nil), "test_keccak256")
-	assert.NoError(err)
+	ts.NoError(err)
 	h, err := util.Keccak256(msg)
-	assert.NoError(err)
-	assert.Equal(h, res.Response)
+	ts.NoError(err)
+	ts.Equal(h, res.Response)
 }
 
 func (ts *ContractTestSuite) TestSha256() {
-	assert := ts.Assert()
 	cms := ts.cmsProvider()
 
 	msg := common.RandBytes(32)
@@ -100,9 +96,9 @@ func (ts *ContractTestSuite) TestSha256() {
 		Args:     args,
 	}
 	res, err := env.Exec(sdk.NewContext(cms, abci.Header{}, false, nil), "test_sha256")
-	assert.NoError(err)
+	ts.NoError(err)
 	h := util.Sha256(msg)
-	assert.Equal(h, res.Response)
+	ts.Equal(h, res.Response)
 }
 
 func (ts *ContractTestSuite) TestECRecover() {
@@ -130,20 +126,19 @@ func (ts *ContractTestSuite) TestECRecover() {
 	}
 
 	for i, cs := range cases {
-		ts.T().Run(fmt.Sprint(i), func(t *testing.T) {
-			assert := assert.New(t)
+		ts.Run(fmt.Sprint(i), func() {
 			cms := ts.cmsProvider()
 			var args contract.Args
 
 			signer, err := ts.GetPrvkey(cs.signer)
-			assert.NoError(err)
+			ts.NoError(err)
 			sender, err := ts.GetPrvkey(cs.sender)
-			assert.NoError(err)
+			ts.NoError(err)
 			sh := makeMsgHash(cs.signHashIdx)
 			ah := makeMsgHash(cs.argHashIdx)
 
 			sig, err := crypto.Sign(sh, signer)
-			assert.NoError(err)
+			ts.NoError(err)
 
 			args.PushBytes(ah)
 			args.PushBytes(sig)
@@ -156,18 +151,17 @@ func (ts *ContractTestSuite) TestECRecover() {
 			}
 			res, err := env.Exec(sdk.NewContext(cms, abci.Header{}, false, nil), "check_signature")
 			if cs.hasError {
-				assert.Error(err)
-				assert.EqualValues(-1, res.Code)
+				ts.Error(err)
+				ts.EqualValues(-1, res.Code)
 			} else {
-				assert.NoError(err)
-				assert.EqualValues(0, res.Code)
+				ts.NoError(err)
+				ts.EqualValues(0, res.Code)
 			}
 		})
 	}
 }
 
 func (ts *ContractTestSuite) TestCannotReadUncommittedState() {
-	assert := ts.Assert()
 	cms := ts.cmsProvider()
 
 	env := &contract.Env{
@@ -176,11 +170,10 @@ func (ts *ContractTestSuite) TestCannotReadUncommittedState() {
 		DB:       db.NewVersionedDB(cms.GetKVStore(ts.mainKey), db.Version{1, 1}),
 	}
 	_, err := env.Exec(sdk.NewContext(cms, abci.Header{}, false, nil), "test_read_uncommitted_state")
-	assert.Error(err)
+	ts.Error(err)
 }
 
 func (ts *ContractTestSuite) TestReadWriteState() {
-	assert := ts.Assert()
 	cms := ts.cmsProvider()
 
 	{ // Write a value to state
@@ -191,7 +184,7 @@ func (ts *ContractTestSuite) TestReadWriteState() {
 			Args:     contract.NewArgsFromStrings([]string{"key", "value"}),
 		}
 		_, err := env.Exec(sdk.NewContext(cms, abci.Header{}, false, nil), "test_write_state")
-		assert.NoError(err)
+		ts.NoError(err)
 	}
 	cms.Commit()
 
@@ -203,12 +196,11 @@ func (ts *ContractTestSuite) TestReadWriteState() {
 			Args:     contract.NewArgsFromStrings([]string{"key"}),
 		}
 		_, err := env.Exec(sdk.NewContext(cms, abci.Header{}, false, nil), "test_read_state")
-		assert.NoError(err)
+		ts.NoError(err)
 	}
 }
 
 func (ts *ContractTestSuite) TestEmitEvent() {
-	assert := ts.Assert()
 	cms := ts.cmsProvider()
 	msg0 := common.RandBytes(32)
 	msg1 := common.RandBytes(32)
@@ -221,14 +213,14 @@ func (ts *ContractTestSuite) TestEmitEvent() {
 		Args:     args,
 	}
 	res, err := env.Exec(sdk.NewContext(cms, abci.Header{}, false, nil), "test_emit_event")
-	assert.NoError(err)
-	assert.Equal(2, len(res.Events))
+	ts.NoError(err)
+	ts.Equal(2, len(res.Events))
 
-	assert.Equal([]byte("test-event-name-0"), res.Events[0].Name)
-	assert.Equal(msg0, res.Events[0].Value)
+	ts.Equal([]byte("test-event-name-0"), res.Events[0].Name)
+	ts.Equal(msg0, res.Events[0].Value)
 
-	assert.Equal([]byte("test-event-name-1"), res.Events[1].Name)
-	assert.Equal(msg1, res.Events[1].Value)
+	ts.Equal([]byte("test-event-name-1"), res.Events[1].Name)
+	ts.Equal(msg1, res.Events[1].Value)
 }
 
 func TestContractTestSuite(t *testing.T) {
