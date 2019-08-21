@@ -12,6 +12,7 @@ extern "C" {
         entry: *const u8,
         entry_size: usize,
         args: *const u8,
+        args_size: usize,
     ) -> i32;
 
     fn __set_response(msg: *const u8, len: usize) -> i32;
@@ -199,13 +200,15 @@ pub fn get_sender_str() -> Result<String, String> {
 }
 
 pub fn call_contract(addr: &[u8], entry: &[u8], args: Vec<&[u8]>) -> Result<Vec<u8>, String> {
+    let a = serialize_args(&args);
     let id = match unsafe {
         __call_contract(
             addr.as_ptr(),
             addr.len(),
             entry.as_ptr(),
             entry.len(),
-            serialize_args(&args).as_ptr(),
+            a.as_ptr(),
+            a.len(),
         )
     } {
         -1 => return Err("failed to call contract".to_string()),
