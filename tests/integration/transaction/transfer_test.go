@@ -8,7 +8,8 @@ import (
 
 	clihelper "github.com/bluele/hypermint/pkg/client/helper"
 	"github.com/bluele/hypermint/pkg/transaction"
-	"github.com/bluele/hypermint/tests/helper"
+	icommon "github.com/bluele/hypermint/tests/integration/common"
+	"github.com/bluele/hypermint/tests/integration/helper"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/spf13/viper"
@@ -21,7 +22,7 @@ const (
 )
 
 type TransferTestSuite struct {
-	helper.NodeTestSuite
+	icommon.NodeTestSuite
 	owner *ecdsa.PrivateKey
 	alice *ecdsa.PrivateKey
 	bob   *ecdsa.PrivateKey
@@ -65,7 +66,7 @@ func (ts *TransferTestSuite) TestTransfer() {
 	}
 
 	for i, s := range steps {
-		ts.T().Run(fmt.Sprint(i), func(t *testing.T) {
+		ts.Run(fmt.Sprint(i), func() {
 			ctx := ts.GetNodeClientContext(ts.CliDir, s.sender)
 			tx := &transaction.TransferTx{
 				Common: transaction.CommonTx{

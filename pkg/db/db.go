@@ -1,9 +1,15 @@
 package db
 
 import (
+	"encoding/binary"
 	"errors"
+	"fmt"
 
 	"github.com/bluele/hypermint/pkg/abci/types"
+)
+
+const (
+	VersionSize = 8
 )
 
 var (
@@ -20,6 +26,23 @@ type StateDB interface {
 type Version struct {
 	Height uint32
 	TxIdx  uint32
+}
+
+func (v Version) Bytes() []byte {
+	b := make([]byte, VersionSize)
+	binary.BigEndian.PutUint32(b, v.Height)
+	binary.BigEndian.PutUint32(b[4:], v.TxIdx)
+	return b
+}
+
+func MakeVersion(b []byte) (Version, error) {
+	if l := len(b); l != VersionSize {
+		return Version{}, fmt.Errorf("invalid size: %v", l)
+	}
+	v := Version{}
+	v.Height = binary.BigEndian.Uint32(b)
+	v.TxIdx = binary.BigEndian.Uint32(b[4:])
+	return v, nil
 }
 
 type VersionedDB struct {

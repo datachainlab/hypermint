@@ -12,11 +12,15 @@ HDW_VALIDATOR_IDX?=0
 
 COMMIT_HASH:=$(shell git rev-parse --short HEAD)
 VERSION:=$(shell cat version)
-BUILD_FLAGS?=-ldflags "-X github.com/bluele/hypermint/pkg/consts.GitCommit=${COMMIT_HASH} -X github.com/bluele/hypermint/pkg/consts.Version=${VERSION}"
+BUILD_FLAGS?=-mod=readonly -ldflags "-X github.com/bluele/hypermint/pkg/consts.GitCommit=${COMMIT_HASH} -X github.com/bluele/hypermint/pkg/consts.Version=${VERSION}"
 
 GO_BUILD_CMD=$(GO_BIN) build $(BUILD_FLAGS)
 GO_TEST_FLAGS?=-v
 GO_TEST_CMD=$(GO_BIN) test $(GO_TEST_FLAGS)
+
+INCLUDE = -I=. -I=${GOPATH}/src -I=${GOPATH}/src/github.com/gogo/protobuf/protobuf
+
+export GO111MODULE = on
 
 .PHONY: build
 
@@ -59,11 +63,40 @@ test:
 	$(GO_TEST_CMD) ./pkg/...
 
 integration-test:
-	$(GO_TEST_CMD) ./tests/transaction/...
-	$(MAKE) -C ./tests/contract test
+	$(MAKE) -C ./tests integration-test
+
+e2e-test:
+	$(MAKE) -C ./tests e2e-test
 
 build-image:
 	docker build . -t bluele/hypermint:${VERSION}
 
 build-linux:
 	docker run -v $(PWD):/go/src/github.com/bluele/hypermint -it golang:1.11.4-stretch make build
+
+########################################
+### Protobuf
+
+protoc_all: protoc_proof
+
+%.pb.go: %.proto
+	## If you get the following error,
+	## "error while loading shared libraries: libprotobuf.so.14: cannot open shared object file: No such file or directory"
+	## See https://stackoverflow.com/a/25518702
+	## Note the $< here is substituted for the %.proto
+	## Note the $@ here is substituted for the %.pb.go
+	protoc $(INCLUDE) $< --gogo_out=Mgoogle/protobuf/timestamp.proto=github.com/golang/protobuf/ptypes/timestamp,plugins=grpc:.
+
+protoc_proof: pkg/proof/proof.pb.go
+
+get_protoc:
+	@# https://github.com/google/protobuf/releases
+	curl -L https://github.com/google/protobuf/releases/download/v3.6.1/protobuf-cpp-3.6.1.tar.gz | tar xvz && \
+		cd protobuf-3.6.1 && \
+		DIST_LANG=cpp ./configure && \
+		make && \
+		make check && \
+		sudo make install && \
+		sudo ldconfig && \
+		cd .. && \
+		rm -rf protobuf-3.6.1

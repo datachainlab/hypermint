@@ -47,16 +47,20 @@ pub fn test_read_uncommitted_state() -> i32 {
 
 #[no_mangle]
 pub fn test_write_state() -> i32 {
-    let b = [0u8; 255];
-    hmc::write_state("key".as_bytes(), &b);
+    let key = hmc::get_arg(0).unwrap();
+    let value = hmc::get_arg(1).unwrap();
+    hmc::write_state(&key, &value);
     0
 }
 
 #[no_mangle]
 pub fn test_read_state() -> i32 {
-    let b = [0u8; 255];
-    hmc::write_state("key".as_bytes(), &b);
-    0
+    let key = hmc::get_arg(0).unwrap();
+    let value = match hmc::read_state(&key) {
+        Ok(v) => v,
+        Err(_) => vec![],
+    };
+    hmc::return_value(&value)
 }
 
 #[no_mangle]
@@ -83,6 +87,36 @@ pub fn test_emit_event() -> i32 {
     hmc::emit_event(&name0, &msg0).unwrap();
     hmc::emit_event(&name1, &msg1).unwrap();
     0
+}
+
+#[no_mangle]
+pub fn test_call_external_contract() -> i32 {
+    let addr = hmc::hex_to_bytes(hmc::get_arg_str(0).unwrap().as_ref());
+    let x = hmc::get_arg(1).unwrap();
+    let y = hmc::get_arg(2).unwrap();
+    match hmc::call_contract(&addr, "test_plus".as_bytes(), vec![&x, &y]) {
+        Ok(v) => {
+            hmc::return_value(&v)
+        },
+        Err(m) => {
+            hmc::revert(format!("{}", m));
+            -1
+        }
+    }
+}
+
+#[no_mangle]
+pub fn test_call_who_am_i_on_external_contract() -> i32 {
+    let addr = hmc::hex_to_bytes(hmc::get_arg_str(0).unwrap().as_ref());
+    match hmc::call_contract(&addr, "who_am_i".as_bytes(), vec![]) {
+        Ok(v) => {
+            hmc::return_value(&v)
+        },
+        Err(m) => {
+            hmc::revert(format!("{}", m));
+            -1
+        }
+    }
 }
 
 #[no_mangle]

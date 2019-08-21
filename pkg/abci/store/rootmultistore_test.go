@@ -6,12 +6,10 @@ import (
 	"github.com/stretchr/testify/require"
 	abci "github.com/tendermint/tendermint/abci/types"
 	"github.com/tendermint/tendermint/crypto/merkle"
-	dbm "github.com/tendermint/tendermint/libs/db"
+	dbm "github.com/tendermint/tm-db"
 
 	sdk "github.com/bluele/hypermint/pkg/abci/types"
 )
-
-const useDebugDB = false
 
 func TestStoreType(t *testing.T) {
 	db := dbm.NewMemDB()
@@ -38,9 +36,6 @@ func TestStoreMount(t *testing.T) {
 
 func TestMultistoreCommitLoad(t *testing.T) {
 	var db dbm.DB = dbm.NewMemDB()
-	if useDebugDB {
-		db = dbm.NewDebugDB("CMS", db)
-	}
 	store := newMultiStoreWithMounts(db)
 	err := store.LoadLatestVersion()
 	require.Nil(t, err)

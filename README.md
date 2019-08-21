@@ -13,7 +13,8 @@ hypermint is a Tendermint-based blockchain that support WebAssembly smart contra
 ## Build
 
 ```
-$ GO111MODULE=on make build
+$ export GO111MODULE=on
+$ make build
 ```
 
 ## Getting started
@@ -76,6 +77,13 @@ Next, try to check your balance.
 $ ./build/hmcli contract call --address=$ADDR1 --contract=0xceD4629963CCc0549094e962a01f454EBFD80Cbd --func="get_balance" --password=password --simulate --gas=1
 100
 ```
+
+## Contract development
+
+We develop an emulation library to ease contract development and testing.
+https://github.com/bluele/hmemu
+
+Please check this out.
 
 ## Author
 

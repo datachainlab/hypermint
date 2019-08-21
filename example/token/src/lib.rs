@@ -36,8 +36,8 @@ pub fn transfer() -> i32 {
     let sender = hmc::get_sender().unwrap();
 
     let from_balance = get_balance_from_addr(&sender);
-    if from_balance <= amount {
-        hmc::log(format!("error: {} <= {}", from_balance, amount).as_bytes());
+    if from_balance < amount {
+        hmc::log(format!("error: {} < {}", from_balance, amount).as_bytes());
         return -1;
     }
     let to_balance = get_balance_from_addr(&to);

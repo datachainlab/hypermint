@@ -1,0 +1,11 @@
+[package]
+name = "contract_test"
+version = "0.1.0"
+authors = ["Jun Kimura <junkxdev@gmail.com>"]
+edition = "2018"
+
+[dependencies]
+hmc = { path = "../../../hmc" }
+
+[lib]
+crate-type = ["cdylib", "lib"]

@@ -2,6 +2,7 @@ package cmd
 
 import (
 	"errors"
+	"fmt"
 
 	"github.com/bluele/hypermint/pkg/client"
 	"github.com/bluele/hypermint/pkg/client/helper"
@@ -63,6 +64,10 @@ var transferCmd = &cobra.Command{
 			To:     tos[0],
 			Amount: uint64(viper.GetInt(flagAmount)),
 		}
-		return ctx.SignAndBroadcastTx(tx, from)
+		if err := ctx.SignAndBroadcastTx(tx, from); err != nil {
+			return err
+		}
+		fmt.Println("ok")
+		return nil
 	},
 }

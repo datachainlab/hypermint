@@ -1,5 +1,5 @@
 [package]
-name = "contract-test"
+name = "external_contract_test"
 version = "0.1.0"
 authors = ["Jun Kimura <junkxdev@gmail.com>"]
 edition = "2018"

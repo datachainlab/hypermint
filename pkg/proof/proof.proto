@@ -1,0 +1,26 @@
+syntax = "proto3";
+package proof;
+
+// For more information on gogo.proto, see:
+// https://github.com/gogo/protobuf/blob/master/extensions.md
+import "github.com/gogo/protobuf/gogoproto/gogo.proto";
+import "github.com/tendermint/tendermint/crypto/merkle/merkle.proto";
+
+option (gogoproto.marshaler_all) = true;
+option (gogoproto.unmarshaler_all) = true;
+option (gogoproto.sizer_all) = true;
+
+option (gogoproto.populate_all) = true;
+option (gogoproto.equal_all) = true;
+
+//----------------------------------------
+// Message types
+
+message KVProofInfo {
+    int64 height = 1;
+    merkle.Proof proof = 2;
+    bytes contract = 3;
+    bytes key = 4;
+    bytes value = 5;
+    bytes version = 6;
+}

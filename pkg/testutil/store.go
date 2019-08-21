@@ -3,7 +3,7 @@ package testutil
 import (
 	"github.com/bluele/hypermint/pkg/abci/store"
 	"github.com/bluele/hypermint/pkg/abci/types"
-	"github.com/tendermint/tendermint/libs/db"
+	"github.com/tendermint/tm-db"
 )
 
 func GetTestCommitMultiStore(key types.StoreKey) (types.CommitMultiStore, error) {
