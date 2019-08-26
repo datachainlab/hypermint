@@ -68,7 +68,7 @@ func (p *process) Call(addr common.Address, entry []byte, args Args) (int, error
 	}
 	res, err := env.Exec(p.env.Context, string(entry))
 	if err != nil {
-		return -1, err
+		return int(res.Code), err
 	}
 	p.env.state.Add(res.RWSets...)
 	return p.ValueTable().Put(res.Response)
