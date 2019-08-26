@@ -1,8 +1,6 @@
 package db
 
 import (
-	"fmt"
-
 	sdk "github.com/bluele/hypermint/pkg/abci/types"
 )
 
@@ -15,8 +13,10 @@ func NewStateManager(key sdk.StoreKey) *StateManager {
 }
 
 func (sm StateManager) CommitState(ctx sdk.Context, sets RWSets) {
-	db := ctx.KVStore(sm.key)
-	version := Version{uint32(ctx.BlockHeight()), ctx.TxIndex()}
+	CommitState(ctx.KVStore(sm.key), sets, Version{uint32(ctx.BlockHeight()), ctx.TxIndex()})
+}
+
+func CommitState(db sdk.KVStore, sets RWSets, version Version) {
 	for _, s := range sets {
 		commitState(db.Prefix(s.Address.Bytes()), s.Items, version)
 	}
@@ -24,7 +24,6 @@ func (sm StateManager) CommitState(ctx sdk.Context, sets RWSets) {
 
 func commitState(db sdk.KVStore, items *RWSetItems, version Version) {
 	for _, w := range items.WriteSet {
-		fmt.Printf("Save %v => %v\n", string(w.Key), string(w.Value))
 		db.Set(w.Key, (&ValueObject{Value: w.Value, Version: version}).Marshal())
 	}
 }
