@@ -23,7 +23,7 @@ type Env struct {
 	VMProvider VMProvider
 
 	DB     *db.VersionedDB
-	state  db.State
+	state  db.RWSets
 	events []*Event
 }
 
@@ -80,7 +80,7 @@ type VM struct {
 type Result struct {
 	Code     int32
 	Response []byte
-	RWSets   *db.RWSets
+	RWSets   db.RWSets
 	Events   []*Event
 }
 
@@ -106,19 +106,15 @@ func (env *Env) Exec(ctx sdk.Context, entry string) (*Result, error) {
 	if code < 0 {
 		return &Result{Code: code}, fmt.Errorf("execute contract error(exit code: %v)", code)
 	}
-	set, err := env.DB.Commit()
-	if err != nil {
-		return nil, err
-	}
+	env.state.Add(&db.RWSet{
+		Address: env.Contract.Address(),
+		Items:   env.DB.RWSetItems(),
+	})
 	return &Result{
 		Code:     code,
 		Response: env.GetReponse(),
-		RWSets: &db.RWSets{
-			Address: env.Contract.Address(),
-			RWSet:   set,
-			Childs:  env.state.Childs,
-		},
-		Events: env.events,
+		RWSets:   env.state,
+		Events:   env.events,
 	}, nil
 }
 

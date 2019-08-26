@@ -87,11 +87,6 @@ func (db *VersionedDB) Get(k []byte) ([]byte, error) {
 	return vo.Value, nil
 }
 
-func (db *VersionedDB) Commit() (*RWSet, error) {
-	set := db.rwm.ToSet()
-	for _, w := range set.WriteSet {
-		db.set(w.Key, w.Value, db.version)
-	}
-	db.rwm = NewRWSetMap()
-	return set, nil
+func (db *VersionedDB) RWSetItems() *RWSetItems {
+	return db.rwm.ToItems()
 }

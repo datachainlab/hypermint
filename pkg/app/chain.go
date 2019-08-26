@@ -12,16 +12,17 @@ import (
 	amino "github.com/tendermint/go-amino"
 	"github.com/tendermint/tendermint/crypto"
 	"github.com/tendermint/tendermint/libs/common"
-	"github.com/tendermint/tm-db"
 	"github.com/tendermint/tendermint/libs/log"
 	"github.com/tendermint/tendermint/types"
 	tmtypes "github.com/tendermint/tendermint/types"
+	tmdb "github.com/tendermint/tm-db"
 
 	"github.com/bluele/hypermint/pkg/abci/baseapp"
 	sdk "github.com/bluele/hypermint/pkg/abci/types"
 	"github.com/bluele/hypermint/pkg/account"
 	"github.com/bluele/hypermint/pkg/config"
 	"github.com/bluele/hypermint/pkg/contract"
+	"github.com/bluele/hypermint/pkg/db"
 	"github.com/bluele/hypermint/pkg/handler"
 	"github.com/bluele/hypermint/pkg/transaction"
 )
@@ -54,8 +55,8 @@ type Chain struct {
 	txIndexStore    *sdk.TransientStoreKey
 }
 
-func NewChain(logger log.Logger, db db.DB, traceStore io.Writer) *Chain {
-	app := baseapp.NewBaseApp("hm", logger, db, transaction.DecodeTx)
+func NewChain(logger log.Logger, tmdb tmdb.DB, traceStore io.Writer) *Chain {
+	app := baseapp.NewBaseApp("hm", logger, tmdb, transaction.DecodeTx)
 	c := &Chain{
 		BaseApp:         app,
 		cdc:             cdc,
@@ -66,10 +67,11 @@ func NewChain(logger log.Logger, db db.DB, traceStore io.Writer) *Chain {
 	am := account.NewAccountMapper(c.capKeyMainStore)
 	cm := contract.NewContractMapper(c.contractStore)
 	cmn := contract.NewContractManager(cm)
+	sm := db.NewStateManager(c.contractStore)
 	envm := contract.NewEnvManager(c.contractStore, cm)
 	txm := transaction.NewTxIndexMapper(c.txIndexStore)
 
-	c.SetHandler(handler.NewHandler(txm, am, cmn, envm))
+	c.SetHandler(handler.NewHandler(txm, am, cmn, envm, sm))
 	c.SetAnteHandler(handler.NewAnteHandler(am))
 	c.SetInitChainer(GetInitChainer(am))
 
