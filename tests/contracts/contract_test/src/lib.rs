@@ -64,6 +64,21 @@ pub fn test_read_state() -> i32 {
 }
 
 #[no_mangle]
+pub fn test_read_write_state() -> i32 {
+    let key = hmc::get_arg(0).unwrap();
+    let value = hmc::get_arg(1).unwrap();
+
+    // read a value, but nop
+    match hmc::read_state(&key) {
+        Ok(v) => v,
+        Err(_) => vec![],
+    };
+
+    hmc::write_state(&key, &value);
+    0
+}
+
+#[no_mangle]
 pub fn test_keccak256() -> i32 {
     let msg = hmc::get_arg(0).unwrap();
     let h = hmc::keccak256(&msg).unwrap();

@@ -12,6 +12,7 @@ import (
 	"github.com/bluele/hypermint/pkg/db"
 	"github.com/bluele/hypermint/pkg/util"
 	"github.com/bluele/hypermint/pkg/util/wallet"
+
 	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/stretchr/testify/suite"
 	abci "github.com/tendermint/tendermint/abci/types"
@@ -198,6 +199,67 @@ func (ts *ContractTestSuite) TestReadWriteState() {
 		_, err := env.Exec(sdk.NewContext(cms, abci.Header{}, false, nil), "test_read_state")
 		ts.NoError(err)
 	}
+}
+
+func (ts *ContractTestSuite) TestReadWriteSet() {
+	const height uint32 = 1
+	var txIndex uint32 = 0
+
+	cms := ts.cmsProvider()
+
+	var sendTx = func(isSimulate bool) db.RWSets {
+		addr := ts.contract.Address()
+		env := &contract.Env{
+			Sender:   crypto.PubkeyToAddress(ts.owner.PublicKey),
+			Contract: &ts.contract,
+			DB:       db.NewVersionedDB(cms.GetKVStore(ts.mainKey).Prefix(addr[:]), db.Version{height, txIndex}),
+			Args:     contract.NewArgsFromStrings([]string{"key", "value"}),
+		}
+		res, err := env.Exec(sdk.NewContext(cms, abci.Header{}, false, nil), "test_read_write_state")
+		if err != nil {
+			ts.FailNow("failed to Exec", err.Error())
+		}
+		if !isSimulate {
+			db.CommitState(cms.GetKVStore(ts.mainKey), res.RWSets, db.Version{height, txIndex})
+			cms.Commit()
+			txIndex++
+		}
+		return res.RWSets
+	}
+	rs1 := sendTx(true)
+	ts.Equal(db.RWSets{
+		{
+			Address: ts.contract.Address(),
+			Items: &db.RWSetItems{
+				ReadSet: nil,
+				WriteSet: []db.Write{
+					{Key: []byte("key"), Value: []byte("value")},
+				},
+			},
+		},
+	}, rs1)
+
+	rs2 := sendTx(true)
+	ts.Equal(rs1, rs2)
+
+	rs3 := sendTx(false)
+	ts.Equal(rs2, rs3)
+
+	rs4 := sendTx(false)
+	ts.NotEqual(rs3, rs4)
+	ts.Equal(db.RWSets{
+		{
+			Address: ts.contract.Address(),
+			Items: &db.RWSetItems{
+				ReadSet: []db.Read{
+					{Key: []byte("key"), Version: db.Version{height, 0}},
+				},
+				WriteSet: []db.Write{
+					{Key: []byte("key"), Value: []byte("value")},
+				},
+			},
+		},
+	}, rs4)
 }
 
 func (ts *ContractTestSuite) TestEmitEvent() {
