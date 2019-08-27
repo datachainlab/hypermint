@@ -5,16 +5,17 @@ import (
 	"fmt"
 	"reflect"
 
-	"github.com/tendermint/go-amino"
-
 	"github.com/bluele/hypermint/pkg/abci/types"
 	"github.com/bluele/hypermint/pkg/account"
 	"github.com/bluele/hypermint/pkg/contract"
+	"github.com/bluele/hypermint/pkg/db"
 	"github.com/bluele/hypermint/pkg/transaction"
+
+	"github.com/tendermint/go-amino"
 	"github.com/tendermint/tendermint/libs/common"
 )
 
-func NewHandler(txm transaction.TxIndexMapper, am account.AccountMapper, cm *contract.ContractManager, envm *contract.EnvManager) types.Handler {
+func NewHandler(txm transaction.TxIndexMapper, am account.AccountMapper, cm *contract.ContractManager, envm *contract.EnvManager, sm *db.StateManager) types.Handler {
 	return func(ctx types.Context, tx types.Tx) (res types.Result) {
 		ctx = ctx.WithTxIndex(txm.Get(ctx))
 		defer func() {
@@ -26,9 +27,9 @@ func NewHandler(txm transaction.TxIndexMapper, am account.AccountMapper, cm *con
 		case *transaction.TransferTx:
 			return handleTransferTx(ctx, am, tx)
 		case *transaction.ContractDeployTx:
-			return handleContractDeployTx(ctx, cm, envm, tx)
+			return handleContractDeployTx(ctx, cm, envm, sm, tx)
 		case *transaction.ContractCallTx:
-			return handleContractCallTx(ctx, cm, envm, tx)
+			return handleContractCallTx(ctx, cm, envm, sm, tx)
 		default:
 			errMsg := "Unrecognized Tx type: " + reflect.TypeOf(tx).Name()
 			return types.ErrUnknownRequest(errMsg).Result()
@@ -43,19 +44,19 @@ func handleTransferTx(ctx types.Context, am account.AccountMapper, tx *transacti
 	return types.Result{}
 }
 
-func handleContractDeployTx(ctx types.Context, cm *contract.ContractManager, envm *contract.EnvManager, tx *transaction.ContractDeployTx) types.Result {
+func handleContractDeployTx(ctx types.Context, cm *contract.ContractManager, envm *contract.EnvManager, sm *db.StateManager, tx *transaction.ContractDeployTx) types.Result {
 	addr, err := cm.DeployContract(ctx, tx)
 	if err != nil {
 		return transaction.ErrInvalidDeploy(transaction.DefaultCodespace, err.Error()).Result()
 	}
-	return handleContractCallTx(ctx, cm, envm, &transaction.ContractCallTx{
+	return handleContractCallTx(ctx, cm, envm, sm, &transaction.ContractCallTx{
 		Address: addr,
 		Func:    transaction.ContractInitFunc,
 		Common:  tx.Common,
 	})
 }
 
-func handleContractCallTx(ctx types.Context, cm *contract.ContractManager, envm *contract.EnvManager, tx *transaction.ContractCallTx) types.Result {
+func handleContractCallTx(ctx types.Context, cm *contract.ContractManager, envm *contract.EnvManager, sm *db.StateManager, tx *transaction.ContractCallTx) types.Result {
 	env, err := envm.Get(ctx, tx.Common.From, tx.Address, contract.NewArgs(tx.Args))
 	if err != nil {
 		return transaction.ErrInvalidCall(transaction.DefaultCodespace, err.Error()).Result()
@@ -64,6 +65,7 @@ func handleContractCallTx(ctx types.Context, cm *contract.ContractManager, envm 
 	if err != nil {
 		return transaction.ErrInvalidCall(transaction.DefaultCodespace, err.Error()).Result()
 	}
+	sm.CommitState(ctx, res.RWSets)
 	if len(tx.RWSetsHash) != 0 && !bytes.Equal(tx.RWSetsHash, res.RWSets.Hash()) {
 		return transaction.ErrInvalidCall(transaction.DefaultCodespace, fmt.Sprintf("RWSetsHash mismatch %v %v", tx.RWSetsHash, res.RWSets.Hash())).Result()
 	}

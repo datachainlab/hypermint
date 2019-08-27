@@ -57,14 +57,15 @@ func vmCmd(ctx *app.Context) *cobra.Command {
 			} else {
 				kvs = cms.GetKVStore(key)
 			}
+			ctr := &contract.Contract{
+				Owner: from,
+				Code:  b,
+			}
 			env := &contract.Env{
-				Sender: from,
-				Contract: &contract.Contract{
-					Owner: from,
-					Code:  b,
-				},
-				DB:   db.NewVersionedDB(kvs, db.Version{1, 1}),
-				Args: contract.NewArgsFromStrings(viper.GetStringSlice(flagArgs)),
+				Sender:   from,
+				Contract: ctr,
+				DB:       db.NewVersionedDB(kvs.Prefix(ctr.Address().Bytes())),
+				Args:     contract.NewArgsFromStrings(viper.GetStringSlice(flagArgs)),
 			}
 			c := sdk.NewContext(cms, abci.Header{}, false, nil)
 			res, err := env.Exec(c, viper.GetString(flagEntry))

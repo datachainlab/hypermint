@@ -26,12 +26,12 @@ func TestVersionedDB(t *testing.T) {
 	var cases = []struct {
 		state   [][]Write
 		ops     []interface{}
-		expects RWSet
+		expects RWSetItems
 	}{
 		{
 			nil,
 			[]interface{}{ri{"a", ""}, wi{"a", "A"}, ri{"a", ""}, wi{"b", "B"}},
-			RWSet{
+			RWSetItems{
 				nil,
 				[]Write{{B("a"), B("A")}, {B("b"), B("B")}},
 			},
@@ -39,7 +39,7 @@ func TestVersionedDB(t *testing.T) {
 		{
 			[][]Write{{{B("a"), B("A")}}},
 			[]interface{}{ri{"a", "A"}, wi{"a", "A1"}},
-			RWSet{
+			RWSetItems{
 				[]Read{{B("a"), Version{blockHeight, 0}}},
 				[]Write{{B("a"), B("A1")}},
 			},
@@ -47,7 +47,7 @@ func TestVersionedDB(t *testing.T) {
 		{
 			[][]Write{{{B("a"), B("A")}}, {{B("b"), B("B")}}},
 			[]interface{}{ri{"a", "A"}, wi{"a", "A1"}, ri{"b", "B"}},
-			RWSet{
+			RWSetItems{
 				[]Read{{B("a"), Version{blockHeight, 0}}, {B("b"), Version{blockHeight, 1}}},
 				[]Write{{B("a"), B("A1")}},
 			},
@@ -55,7 +55,7 @@ func TestVersionedDB(t *testing.T) {
 		{
 			[][]Write{nil, {{B("a"), B("A")}}, {{B("a"), B("A1")}}, {{B("b"), B("B")}}},
 			[]interface{}{ri{"a", "A1"}, wi{"a", "A2"}, ri{"b", "B"}},
-			RWSet{
+			RWSetItems{
 				[]Read{{B("a"), Version{blockHeight, 2}}, {B("b"), Version{blockHeight, 3}}},
 				[]Write{{B("a"), B("A2")}},
 			},
@@ -71,12 +71,11 @@ func TestVersionedDB(t *testing.T) {
 			ctx := types.NewContext(cms, abci.Header{}, false, nil)
 
 			for i, ws := range cs.state {
-				vdb := NewVersionedDB(ctx.KVStore(testStoreKey), Version{blockHeight, uint32(i)})
+				vdb := NewVersionedDB(ctx.KVStore(testStoreKey))
 				vdb.rwm.ws = ws
-				_, err = vdb.Commit()
-				assert.NoError(err)
+				commitState(ctx.KVStore(testStoreKey), vdb.RWSetItems(), Version{blockHeight, uint32(i)})
 			}
-			vdb := NewVersionedDB(ctx.KVStore(testStoreKey), Version{blockHeight, uint32(len(cs.state))})
+			vdb := NewVersionedDB(ctx.KVStore(testStoreKey))
 
 			for _, op := range cs.ops {
 				switch op := op.(type) {
@@ -94,8 +93,7 @@ func TestVersionedDB(t *testing.T) {
 				}
 			}
 
-			set, err := vdb.Commit()
-			assert.NoError(err)
+			set := vdb.RWSetItems()
 			assert.Equal(cs.expects, *set)
 		})
 	}

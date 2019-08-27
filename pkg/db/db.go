@@ -46,16 +46,14 @@ func MakeVersion(b []byte) (Version, error) {
 }
 
 type VersionedDB struct {
-	store   types.KVStore
-	rwm     *RWSetMap
-	version Version
+	store types.KVStore
+	rwm   *RWSetMap
 }
 
-func NewVersionedDB(store types.KVStore, version Version) *VersionedDB {
+func NewVersionedDB(store types.KVStore) *VersionedDB {
 	return &VersionedDB{
-		store:   store,
-		rwm:     NewRWSetMap(),
-		version: version,
+		store: store,
+		rwm:   NewRWSetMap(),
 	}
 }
 
@@ -87,11 +85,6 @@ func (db *VersionedDB) Get(k []byte) ([]byte, error) {
 	return vo.Value, nil
 }
 
-func (db *VersionedDB) Commit() (*RWSet, error) {
-	set := db.rwm.ToSet()
-	for _, w := range set.WriteSet {
-		db.set(w.Key, w.Value, db.version)
-	}
-	db.rwm = NewRWSetMap()
-	return set, nil
+func (db *VersionedDB) RWSetItems() *RWSetItems {
+	return db.rwm.ToItems()
 }
