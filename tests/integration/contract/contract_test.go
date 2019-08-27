@@ -74,7 +74,7 @@ func (ts *ContractTestSuite) TestKeccak256() {
 	env := &contract.Env{
 		Sender:   crypto.PubkeyToAddress(ts.owner.PublicKey),
 		Contract: &ts.contract,
-		DB:       db.NewVersionedDB(cms.GetKVStore(ts.mainKey), db.Version{1, 1}),
+		DB:       db.NewVersionedDB(cms.GetKVStore(ts.mainKey)),
 		Args:     args,
 	}
 	res, err := env.Exec(sdk.NewContext(cms, abci.Header{}, false, nil), "test_keccak256")
@@ -93,7 +93,7 @@ func (ts *ContractTestSuite) TestSha256() {
 	env := &contract.Env{
 		Sender:   crypto.PubkeyToAddress(ts.owner.PublicKey),
 		Contract: &ts.contract,
-		DB:       db.NewVersionedDB(cms.GetKVStore(ts.mainKey), db.Version{1, 1}),
+		DB:       db.NewVersionedDB(cms.GetKVStore(ts.mainKey)),
 		Args:     args,
 	}
 	res, err := env.Exec(sdk.NewContext(cms, abci.Header{}, false, nil), "test_sha256")
@@ -147,7 +147,7 @@ func (ts *ContractTestSuite) TestECRecover() {
 			env := &contract.Env{
 				Sender:   crypto.PubkeyToAddress(sender.PublicKey),
 				Contract: &ts.contract,
-				DB:       db.NewVersionedDB(cms.GetKVStore(ts.mainKey), db.Version{1, 1}),
+				DB:       db.NewVersionedDB(cms.GetKVStore(ts.mainKey)),
 				Args:     args,
 			}
 			res, err := env.Exec(sdk.NewContext(cms, abci.Header{}, false, nil), "check_signature")
@@ -168,7 +168,7 @@ func (ts *ContractTestSuite) TestCannotReadUncommittedState() {
 	env := &contract.Env{
 		Sender:   crypto.PubkeyToAddress(ts.owner.PublicKey),
 		Contract: &ts.contract,
-		DB:       db.NewVersionedDB(cms.GetKVStore(ts.mainKey), db.Version{1, 1}),
+		DB:       db.NewVersionedDB(cms.GetKVStore(ts.mainKey)),
 	}
 	_, err := env.Exec(sdk.NewContext(cms, abci.Header{}, false, nil), "test_read_uncommitted_state")
 	ts.Error(err)
@@ -181,7 +181,7 @@ func (ts *ContractTestSuite) TestReadWriteState() {
 		env := &contract.Env{
 			Sender:   crypto.PubkeyToAddress(ts.owner.PublicKey),
 			Contract: &ts.contract,
-			DB:       db.NewVersionedDB(cms.GetKVStore(ts.mainKey), db.Version{1, 1}),
+			DB:       db.NewVersionedDB(cms.GetKVStore(ts.mainKey)),
 			Args:     contract.NewArgsFromStrings([]string{"key", "value"}),
 		}
 		_, err := env.Exec(sdk.NewContext(cms, abci.Header{}, false, nil), "test_write_state")
@@ -193,7 +193,7 @@ func (ts *ContractTestSuite) TestReadWriteState() {
 		env := &contract.Env{
 			Sender:   crypto.PubkeyToAddress(ts.owner.PublicKey),
 			Contract: &ts.contract,
-			DB:       db.NewVersionedDB(cms.GetKVStore(ts.mainKey), db.Version{2, 1}),
+			DB:       db.NewVersionedDB(cms.GetKVStore(ts.mainKey)),
 			Args:     contract.NewArgsFromStrings([]string{"key"}),
 		}
 		_, err := env.Exec(sdk.NewContext(cms, abci.Header{}, false, nil), "test_read_state")
@@ -212,7 +212,7 @@ func (ts *ContractTestSuite) TestReadWriteSet() {
 		env := &contract.Env{
 			Sender:   crypto.PubkeyToAddress(ts.owner.PublicKey),
 			Contract: &ts.contract,
-			DB:       db.NewVersionedDB(cms.GetKVStore(ts.mainKey).Prefix(addr[:]), db.Version{height, txIndex}),
+			DB:       db.NewVersionedDB(cms.GetKVStore(ts.mainKey).Prefix(addr[:])),
 			Args:     contract.NewArgsFromStrings(args),
 		}
 		res, err := env.Exec(sdk.NewContext(cms, abci.Header{}, false, nil), fname)
@@ -396,7 +396,7 @@ func (ts *ContractTestSuite) TestEmitEvent() {
 	env := &contract.Env{
 		Sender:   crypto.PubkeyToAddress(ts.owner.PublicKey),
 		Contract: &ts.contract,
-		DB:       db.NewVersionedDB(cms.GetKVStore(ts.mainKey), db.Version{1, 1}),
+		DB:       db.NewVersionedDB(cms.GetKVStore(ts.mainKey)),
 		Args:     args,
 	}
 	res, err := env.Exec(sdk.NewContext(cms, abci.Header{}, false, nil), "test_emit_event")

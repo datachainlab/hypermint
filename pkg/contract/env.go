@@ -148,7 +148,7 @@ func (em *EnvManager) Get(ctx sdk.Context, sender, addr common.Address, args Arg
 		Sender:     sender,
 		EnvManager: em,
 		Contract:   c,
-		DB:         db.NewVersionedDB(ctx.KVStore(em.key).Prefix(addr.Bytes()), db.Version{uint32(ctx.BlockHeight()), ctx.TxIndex()}),
+		DB:         db.NewVersionedDB(ctx.KVStore(em.key).Prefix(addr.Bytes())),
 		Args:       args,
 	}, nil
 }

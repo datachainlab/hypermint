@@ -46,16 +46,14 @@ func MakeVersion(b []byte) (Version, error) {
 }
 
 type VersionedDB struct {
-	store   types.KVStore
-	rwm     *RWSetMap
-	version Version
+	store types.KVStore
+	rwm   *RWSetMap
 }
 
-func NewVersionedDB(store types.KVStore, version Version) *VersionedDB {
+func NewVersionedDB(store types.KVStore) *VersionedDB {
 	return &VersionedDB{
-		store:   store,
-		rwm:     NewRWSetMap(),
-		version: version,
+		store: store,
+		rwm:   NewRWSetMap(),
 	}
 }
 

@@ -71,11 +71,11 @@ func TestVersionedDB(t *testing.T) {
 			ctx := types.NewContext(cms, abci.Header{}, false, nil)
 
 			for i, ws := range cs.state {
-				vdb := NewVersionedDB(ctx.KVStore(testStoreKey), Version{blockHeight, uint32(i)})
+				vdb := NewVersionedDB(ctx.KVStore(testStoreKey))
 				vdb.rwm.ws = ws
 				commitState(ctx.KVStore(testStoreKey), vdb.RWSetItems(), Version{blockHeight, uint32(i)})
 			}
-			vdb := NewVersionedDB(ctx.KVStore(testStoreKey), Version{blockHeight, uint32(len(cs.state))})
+			vdb := NewVersionedDB(ctx.KVStore(testStoreKey))
 
 			for _, op := range cs.ops {
 				switch op := op.(type) {
