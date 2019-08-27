@@ -207,15 +207,15 @@ func (ts *ContractTestSuite) TestReadWriteSet() {
 
 	cms := ts.cmsProvider()
 
-	var sendTx = func(isSimulate bool) db.RWSets {
+	var sendTx = func(fname string, isSimulate bool, args []string) db.RWSets {
 		addr := ts.contract.Address()
 		env := &contract.Env{
 			Sender:   crypto.PubkeyToAddress(ts.owner.PublicKey),
 			Contract: &ts.contract,
 			DB:       db.NewVersionedDB(cms.GetKVStore(ts.mainKey).Prefix(addr[:]), db.Version{height, txIndex}),
-			Args:     contract.NewArgsFromStrings([]string{"key", "value"}),
+			Args:     contract.NewArgsFromStrings(args),
 		}
-		res, err := env.Exec(sdk.NewContext(cms, abci.Header{}, false, nil), "test_read_write_state")
+		res, err := env.Exec(sdk.NewContext(cms, abci.Header{}, false, nil), fname)
 		if err != nil {
 			ts.FailNow("failed to Exec", err.Error())
 		}
@@ -226,40 +226,165 @@ func (ts *ContractTestSuite) TestReadWriteSet() {
 		}
 		return res.RWSets
 	}
-	rs1 := sendTx(true)
-	ts.Equal(db.RWSets{
-		{
-			Address: ts.contract.Address(),
-			Items: &db.RWSetItems{
-				ReadSet: nil,
-				WriteSet: []db.Write{
-					{Key: []byte("key"), Value: []byte("value")},
+
+	{
+		var execReadWriteState = func(isSimulate bool) db.RWSets {
+			return sendTx("test_read_write_state", isSimulate, []string{"key", "value"})
+		}
+
+		rs1 := execReadWriteState(true)
+		ts.Equal(db.RWSets{
+			{
+				Address: ts.contract.Address(),
+				Items: &db.RWSetItems{
+					ReadSet: nil,
+					WriteSet: []db.Write{
+						{Key: []byte("key"), Value: []byte("value")},
+					},
 				},
 			},
-		},
-	}, rs1)
+		}, rs1)
 
-	rs2 := sendTx(true)
-	ts.Equal(rs1, rs2)
+		rs2 := execReadWriteState(true)
+		ts.Equal(rs1, rs2)
 
-	rs3 := sendTx(false)
-	ts.Equal(rs2, rs3)
+		rs3 := execReadWriteState(false)
+		ts.Equal(rs2, rs3)
 
-	rs4 := sendTx(false)
-	ts.NotEqual(rs3, rs4)
-	ts.Equal(db.RWSets{
-		{
-			Address: ts.contract.Address(),
-			Items: &db.RWSetItems{
-				ReadSet: []db.Read{
-					{Key: []byte("key"), Version: db.Version{height, 0}},
-				},
-				WriteSet: []db.Write{
-					{Key: []byte("key"), Value: []byte("value")},
+		rs4 := execReadWriteState(false)
+		ts.NotEqual(rs3, rs4)
+		ts.Equal(db.RWSets{
+			{
+				Address: ts.contract.Address(),
+				Items: &db.RWSetItems{
+					ReadSet: []db.Read{
+						{Key: []byte("key"), Version: db.Version{height, txIndex - 2}},
+					},
+					WriteSet: []db.Write{
+						{Key: []byte("key"), Value: []byte("value")},
+					},
 				},
 			},
-		},
-	}, rs4)
+		}, rs4)
+	}
+
+	{
+		var execWriteToSameKey = func(isSimulate bool) db.RWSets {
+			return sendTx("test_write_to_same_key", isSimulate, []string{"key2", "value2-1", "value2-2"})
+		}
+		rs1 := execWriteToSameKey(true)
+		ts.Equal(db.RWSets{
+			{
+				Address: ts.contract.Address(),
+				Items: &db.RWSetItems{
+					ReadSet: nil,
+					WriteSet: []db.Write{
+						{Key: []byte("key2"), Value: []byte("value2-2")},
+					},
+				},
+			},
+		}, rs1)
+		rs2 := execWriteToSameKey(true)
+		ts.Equal(rs1, rs2)
+
+		rs3 := execWriteToSameKey(false)
+		ts.Equal(rs2, rs3)
+
+		rs4 := execWriteToSameKey(false)
+		ts.NotEqual(rs3, rs4)
+
+		ts.Equal(db.RWSets{
+			{
+				Address: ts.contract.Address(),
+				Items: &db.RWSetItems{
+					ReadSet: []db.Read{
+						{Key: []byte("key2"), Version: db.Version{height, txIndex - 2}},
+					},
+					WriteSet: []db.Write{
+						{Key: []byte("key2"), Value: []byte("value2-2")},
+					},
+				},
+			},
+		}, rs4)
+	}
+
+	{
+		var execWriteToMultipleKey = func(isSimulate bool) db.RWSets {
+			return sendTx("test_write_to_multiple_key", isSimulate, []string{"key3-1", "value3-1", "key3-2", "value3-2"})
+		}
+		var execReadWriteState = func(isSimulate bool, args []string) db.RWSets {
+			return sendTx("test_read_write_state", isSimulate, args)
+		}
+
+		rs1 := execWriteToMultipleKey(true)
+		ts.Equal(db.RWSets{
+			{
+				Address: ts.contract.Address(),
+				Items: &db.RWSetItems{
+					ReadSet: nil,
+					WriteSet: []db.Write{
+						{Key: []byte("key3-1"), Value: []byte("value3-1")},
+						{Key: []byte("key3-2"), Value: []byte("value3-2")},
+					},
+				},
+			},
+		}, rs1)
+		rs2 := execWriteToMultipleKey(true)
+		ts.Equal(rs1, rs2)
+
+		rs3 := execWriteToMultipleKey(false)
+		ts.Equal(rs2, rs3)
+		rs4 := execWriteToMultipleKey(false)
+		ts.NotEqual(rs3, rs4)
+
+		ts.Equal(db.RWSets{
+			{
+				Address: ts.contract.Address(),
+				Items: &db.RWSetItems{
+					ReadSet: []db.Read{
+						{Key: []byte("key3-1"), Version: db.Version{height, txIndex - 2}},
+						{Key: []byte("key3-2"), Version: db.Version{height, txIndex - 2}},
+					},
+					WriteSet: []db.Write{
+						{Key: []byte("key3-1"), Value: []byte("value3-1")},
+						{Key: []byte("key3-2"), Value: []byte("value3-2")},
+					},
+				},
+			},
+		}, rs4)
+
+		rs5 := execReadWriteState(false, []string{"key3-1", "value3-1-modified"})
+		ts.Equal(db.RWSets{
+			{
+				Address: ts.contract.Address(),
+				Items: &db.RWSetItems{
+					ReadSet: []db.Read{
+						{Key: []byte("key3-1"), Version: db.Version{height, txIndex - 2}},
+					},
+					WriteSet: []db.Write{
+						{Key: []byte("key3-1"), Value: []byte("value3-1-modified")},
+					},
+				},
+			},
+		}, rs5)
+
+		rs6 := execWriteToMultipleKey(false)
+		ts.Equal(db.RWSets{
+			{
+				Address: ts.contract.Address(),
+				Items: &db.RWSetItems{
+					ReadSet: []db.Read{
+						{Key: []byte("key3-1"), Version: db.Version{height, txIndex - 2}},
+						{Key: []byte("key3-2"), Version: db.Version{height, txIndex - 3}},
+					},
+					WriteSet: []db.Write{
+						{Key: []byte("key3-1"), Value: []byte("value3-1")},
+						{Key: []byte("key3-2"), Value: []byte("value3-2")},
+					},
+				},
+			},
+		}, rs6)
+	}
 }
 
 func (ts *ContractTestSuite) TestEmitEvent() {
