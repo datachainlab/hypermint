@@ -65,6 +65,39 @@ func (ts *ContractTestSuite) GetPrvkey(index uint32) (*ecdsa.PrivateKey, error) 
 	return wallet.GetPrvKeyFromHDWallet(bip39.NewSeed(testMnemonic, ""), hp)
 }
 
+func (ts *ContractTestSuite) TestEnv() {
+	// alias
+	var Args = contract.NewArgs
+
+	sender := crypto.PubkeyToAddress(ts.owner.PublicKey)
+	contractAddress := ts.contract.Address()
+
+	var cases = []struct {
+		fname    string
+		args     contract.Args
+		expected []byte
+	}{
+		{"test_get_sender", Args(nil), sender[:]},
+		{"test_get_contract_address", Args(nil), contractAddress[:]},
+	}
+
+	for i, cs := range cases {
+		ts.Run(fmt.Sprint(i), func() {
+			cms := ts.cmsProvider()
+			env := &contract.Env{
+				Sender:   sender,
+				Contract: &ts.contract,
+				DB:       db.NewVersionedDB(cms.GetKVStore(ts.mainKey)),
+				Args:     cs.args,
+			}
+			res, err := env.Exec(sdk.NewContext(cms, abci.Header{}, false, nil), cs.fname)
+			if ts.NoError(err) {
+				ts.Equal(cs.expected, res.Response)
+			}
+		})
+	}
+}
+
 func (ts *ContractTestSuite) TestKeccak256() {
 	cms := ts.cmsProvider()
 

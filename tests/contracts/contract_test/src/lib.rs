@@ -14,6 +14,18 @@ fn call_check_signature() -> Result<i32, String> {
 }
 
 #[no_mangle]
+pub fn test_get_sender() -> i32 {
+    let sender = hmc::get_sender().unwrap();
+    hmc::return_value(&sender)
+}
+
+#[no_mangle]
+pub fn test_get_contract_address() -> i32 {
+    let addr = hmc::get_contract_address().unwrap();
+    hmc::return_value(&addr)
+}
+
+#[no_mangle]
 pub fn check_signature() -> i32 {
     match call_check_signature() {
         Ok(v) => v,
