@@ -33,7 +33,9 @@ func TestDeserializeArgs(t *testing.T) {
 			assert.Equal(t, len(cs.expects), args.Len())
 			var as = []string{}
 			for i := 0; i < args.Len(); i++ {
-				as = append(as, string(args.Get(i)))
+				arg, ok := args.Get(i)
+				assert.True(t, ok)
+				as = append(as, string(arg))
 			}
 			assert.Equal(t, cs.expects, as)
 		})

@@ -65,6 +65,55 @@ func (ts *ContractTestSuite) GetPrvkey(index uint32) (*ecdsa.PrivateKey, error) 
 	return wallet.GetPrvKeyFromHDWallet(bip39.NewSeed(testMnemonic, ""), hp)
 }
 
+func (ts *ContractTestSuite) TestEnv() {
+	// alias
+	var Args = contract.NewArgs
+
+	sender := crypto.PubkeyToAddress(ts.owner.PublicKey)
+	contractAddress := ts.contract.Address()
+
+	var U32 = func(v uint32) []byte {
+		return []byte(fmt.Sprint(v))
+	}
+	var S = func(v string) []byte {
+		return []byte(v)
+	}
+
+	var cases = []struct {
+		fname    string
+		args     contract.Args
+		expected []byte
+		valid    bool
+	}{
+		{"test_get_sender", Args(nil), sender[:], true},
+		{"test_get_contract_address", Args(nil), contractAddress[:], true},
+
+		{"test_get_arguments", Args([][]byte{U32(1), S("ok")}), S("ok"), true},
+		{"test_get_arguments", Args([][]byte{U32(0), S("ok")}), U32(0), true},
+		{"test_get_arguments", Args([][]byte{U32(2), S("ok")}), nil, false},
+	}
+
+	for i, cs := range cases {
+		ts.Run(fmt.Sprint(i), func() {
+			cms := ts.cmsProvider()
+			env := &contract.Env{
+				Sender:   sender,
+				Contract: &ts.contract,
+				DB:       db.NewVersionedDB(cms.GetKVStore(ts.mainKey)),
+				Args:     cs.args,
+			}
+			res, err := env.Exec(sdk.NewContext(cms, abci.Header{}, false, nil), cs.fname)
+			if cs.valid {
+				if ts.NoError(err) {
+					ts.Equal(cs.expected, res.Response)
+				}
+			} else {
+				ts.Error(err)
+			}
+		})
+	}
+}
+
 func (ts *ContractTestSuite) TestKeccak256() {
 	cms := ts.cmsProvider()
 

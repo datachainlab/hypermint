@@ -15,6 +15,12 @@ pub fn who_am_i() -> i32 {
 }
 
 #[no_mangle]
+pub fn get_contract_address() -> i32 {
+    let address = hmc::get_contract_address().unwrap();
+    hmc::return_value(&address)
+}
+
+#[no_mangle]
 pub fn init() -> i32 {
     0
 }

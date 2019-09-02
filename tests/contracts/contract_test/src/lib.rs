@@ -14,6 +14,25 @@ fn call_check_signature() -> Result<i32, String> {
 }
 
 #[no_mangle]
+pub fn test_get_sender() -> i32 {
+    let sender = hmc::get_sender().unwrap();
+    hmc::return_value(&sender)
+}
+
+#[no_mangle]
+pub fn test_get_contract_address() -> i32 {
+    let addr = hmc::get_contract_address().unwrap();
+    hmc::return_value(&addr)
+}
+
+#[no_mangle]
+pub fn test_get_arguments() -> i32 {
+    let argIdx = hmc::get_arg_str(0).unwrap().parse::<usize>().unwrap();
+    let arg = hmc::get_arg(argIdx).unwrap();
+    hmc::return_value(&arg)
+}
+
+#[no_mangle]
 pub fn check_signature() -> i32 {
     match call_check_signature() {
         Ok(v) => v,
@@ -156,6 +175,20 @@ pub fn test_call_external_contract() -> i32 {
 pub fn test_call_who_am_i_on_external_contract() -> i32 {
     let addr = hmc::hex_to_bytes(hmc::get_arg_str(0).unwrap().as_ref());
     match hmc::call_contract(&addr, "who_am_i".as_bytes(), vec![]) {
+        Ok(v) => {
+            hmc::return_value(&v)
+        },
+        Err(m) => {
+            hmc::revert(format!("{}", m));
+            -1
+        }
+    }
+}
+
+#[no_mangle]
+pub fn test_call_get_contract_address_on_external_contract() -> i32 {
+    let addr = hmc::hex_to_bytes(hmc::get_arg_str(0).unwrap().as_ref());
+    match hmc::call_contract(&addr, "get_contract_address".as_bytes(), vec![]) {
         Ok(v) => {
             hmc::return_value(&v)
         },
