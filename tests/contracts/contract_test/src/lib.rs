@@ -179,6 +179,20 @@ pub fn test_call_who_am_i_on_external_contract() -> i32 {
 }
 
 #[no_mangle]
+pub fn test_call_get_contract_address_on_external_contract() -> i32 {
+    let addr = hmc::hex_to_bytes(hmc::get_arg_str(0).unwrap().as_ref());
+    match hmc::call_contract(&addr, "get_contract_address".as_bytes(), vec![]) {
+        Ok(v) => {
+            hmc::return_value(&v)
+        },
+        Err(m) => {
+            hmc::revert(format!("{}", m));
+            -1
+        }
+    }
+}
+
+#[no_mangle]
 pub fn init() -> i32 {
     0
 }

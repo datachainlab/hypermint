@@ -167,6 +167,12 @@ func (ts *E2ETestSuite) TestCallExternalContract() {
 		ts.NoError(err)
 		ts.Equal(contractAddress.Bytes(), out)
 	})
+
+	ts.Run("check if external contract address is valid", func() {
+		out, err := ts.CallContract(ctx, ts.Account(1), contractAddress, "test_call_get_contract_address_on_external_contract", []string{exContractAddress.Hex()}, true)
+		ts.NoError(err)
+		ts.Equal(exContractAddress.Bytes(), out)
+	})
 }
 
 func (ts *E2ETestSuite) GetBalance(ctx context.Context, addr common.Address) (int, error) {
