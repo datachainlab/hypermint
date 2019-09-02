@@ -59,7 +59,13 @@ func WriteBuf(ps Process, buf Writer, offset int, v []byte) int {
 }
 
 func GetArg(ps Process, idx, offset int, buf Writer) int {
-	return WriteBuf(ps, buf, offset, ps.Args().Get(idx))
+	arg, err := ps.GetArg(idx)
+	if err != nil {
+		ps.Logger().Debug("failed to GetArg", err.Error())
+		return -1
+	} else {
+		return WriteBuf(ps, buf, offset, arg)
+	}
 }
 
 func Log(ps Process, msg Reader) int {

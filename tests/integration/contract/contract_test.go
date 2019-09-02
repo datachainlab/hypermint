@@ -72,13 +72,25 @@ func (ts *ContractTestSuite) TestEnv() {
 	sender := crypto.PubkeyToAddress(ts.owner.PublicKey)
 	contractAddress := ts.contract.Address()
 
+	var U32 = func(v uint32) []byte {
+		return []byte(fmt.Sprint(v))
+	}
+	var S = func(v string) []byte {
+		return []byte(v)
+	}
+
 	var cases = []struct {
 		fname    string
 		args     contract.Args
 		expected []byte
+		valid    bool
 	}{
-		{"test_get_sender", Args(nil), sender[:]},
-		{"test_get_contract_address", Args(nil), contractAddress[:]},
+		{"test_get_sender", Args(nil), sender[:], true},
+		{"test_get_contract_address", Args(nil), contractAddress[:], true},
+
+		{"test_get_arguments", Args([][]byte{U32(1), S("ok")}), S("ok"), true},
+		{"test_get_arguments", Args([][]byte{U32(0), S("ok")}), U32(0), true},
+		{"test_get_arguments", Args([][]byte{U32(2), S("ok")}), nil, false},
 	}
 
 	for i, cs := range cases {
@@ -91,8 +103,12 @@ func (ts *ContractTestSuite) TestEnv() {
 				Args:     cs.args,
 			}
 			res, err := env.Exec(sdk.NewContext(cms, abci.Header{}, false, nil), cs.fname)
-			if ts.NoError(err) {
-				ts.Equal(cs.expected, res.Response)
+			if cs.valid {
+				if ts.NoError(err) {
+					ts.Equal(cs.expected, res.Response)
+				}
+			} else {
+				ts.Error(err)
 			}
 		})
 	}

@@ -26,6 +26,13 @@ pub fn test_get_contract_address() -> i32 {
 }
 
 #[no_mangle]
+pub fn test_get_arguments() -> i32 {
+    let argIdx = hmc::get_arg_str(0).unwrap().parse::<usize>().unwrap();
+    let arg = hmc::get_arg(argIdx).unwrap();
+    hmc::return_value(&arg)
+}
+
+#[no_mangle]
 pub fn check_signature() -> i32 {
     match call_check_signature() {
         Ok(v) => v,

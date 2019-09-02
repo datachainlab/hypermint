@@ -43,8 +43,11 @@ func (a *Args) PushBytes(b []byte) {
 	a.values = append(a.values, b)
 }
 
-func (a Args) Get(idx int) []byte {
-	return a.values[idx]
+func (a Args) Get(idx int) ([]byte, bool) {
+	if idx >= a.Len() {
+		return nil, false
+	}
+	return a.values[idx], true
 }
 
 func NewArgs(bs [][]byte) Args {
@@ -99,7 +102,8 @@ func (env *Env) Exec(ctx sdk.Context, entry string) (*Result, error) {
 	}
 	ret, err := vm.Run(id)
 	if err != nil {
-		vm.PrintStackTrace()
+		// TODO add debug option?
+		// vm.PrintStackTrace()
 		return nil, err
 	}
 	code := int32(ret)

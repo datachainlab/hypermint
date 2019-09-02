@@ -2,6 +2,7 @@ package contract
 
 import (
 	"encoding/binary"
+	"errors"
 	"fmt"
 
 	"github.com/bluele/hypermint/pkg/db"
@@ -12,11 +13,14 @@ import (
 
 var defaultLogger = logger.GetDefaultLogger("*:debug").With("module", "process")
 
+var ErrArgIdxNotFound = errors.New("argument idx not found")
+
 type Process interface {
 	Logger() logger.Logger
 	Sender() common.Address
 	ContractAddress() common.Address
 	Args() Args
+	GetArg(idx int) ([]byte, error)
 	State() db.StateDB
 	SetResponse([]byte)
 	Call(addr common.Address, entry []byte, args Args) (int, error)
@@ -60,6 +64,14 @@ func (p process) ContractAddress() common.Address {
 
 func (p process) Args() Args {
 	return p.env.Args
+}
+
+func (p process) GetArg(idx int) ([]byte, error) {
+	arg, ok := p.env.Args.Get(idx)
+	if !ok {
+		return nil, ErrArgIdxNotFound
+	}
+	return arg, nil
 }
 
 func (p process) State() db.StateDB {
