@@ -15,6 +15,7 @@ var defaultLogger = logger.GetDefaultLogger("*:debug").With("module", "process")
 type Process interface {
 	Logger() logger.Logger
 	Sender() common.Address
+	ContractAddress() common.Address
 	Args() Args
 	State() db.StateDB
 	SetResponse([]byte)
@@ -51,6 +52,10 @@ func NewProcess(env *Env, logger logger.Logger, vt ValueTable) Process {
 
 func (p process) Sender() common.Address {
 	return p.env.Sender
+}
+
+func (p process) ContractAddress() common.Address {
+	return p.env.Contract.Address()
 }
 
 func (p process) Args() Args {

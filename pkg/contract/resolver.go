@@ -33,6 +33,12 @@ func (r *Resolver) ResolveFunc(module, field string) exec.FunctionImport {
 				w := NewWriter(vm.Memory, cf.Locals[0], cf.Locals[1])
 				return int64(GetSender(ps, w))
 			})
+		case "__get_contract_address":
+			return r.withProcess(func(vm *exec.VirtualMachine, ps Process) int64 {
+				cf := vm.GetCurrentFrame()
+				w := NewWriter(vm.Memory, cf.Locals[0], cf.Locals[1])
+				return int64(GetContractAddress(ps, w))
+			})
 		case "__get_arg":
 			return r.withProcess(func(vm *exec.VirtualMachine, ps Process) int64 {
 				cf := vm.GetCurrentFrame()

@@ -72,6 +72,11 @@ func GetSender(ps Process, w Writer) int {
 	return w.Write(s[:])
 }
 
+func GetContractAddress(ps Process, w Writer) int {
+	c := ps.ContractAddress()
+	return w.Write(c[:])
+}
+
 func ReadState(ps Process, key Reader, offset int, buf Writer) int {
 	v, err := ps.State().Get(key.Read())
 	if err != nil {
