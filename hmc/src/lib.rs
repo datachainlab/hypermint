@@ -5,6 +5,7 @@ const BUF_SIZE: usize = 128;
 extern "C" {
     fn __get_arg(idx: usize, offset: usize, value_buf_ptr: *mut u8, value_buf_len: usize) -> i32;
     fn __get_sender(value_buf_ptr: *mut u8, value_buf_len: usize) -> i32;
+    fn __get_contract_address(value_buf_ptr: *mut u8, value_buf_len: usize) -> i32;
     fn __read(id: usize, offset: usize, value_buf_ptr: *mut u8, value_buf_len: usize) -> i32;
     fn __call_contract(
         addr: *const u8,
@@ -197,6 +198,14 @@ pub fn get_sender() -> Result<[u8; 20], String> {
 pub fn get_sender_str() -> Result<String, String> {
     let sender = get_sender()?;
     Ok(format!("{:X?}", sender))
+}
+
+pub fn get_contract_address() -> Result<[u8; 20], String> {
+    let mut buf = [0u8; 20];
+    match unsafe { __get_contract_address(buf.as_mut_ptr(), 20) } {
+        -1 => Err("contract address not found".to_string()),
+        _ => Ok(buf),
+    }
 }
 
 pub fn call_contract(addr: &[u8], entry: &[u8], args: Vec<&[u8]>) -> Result<Vec<u8>, String> {
