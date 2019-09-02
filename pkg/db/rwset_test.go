@@ -101,7 +101,7 @@ func TestRWSet(t *testing.T) {
 				}
 			}
 
-			rws := rwm.ToSet()
+			rws := rwm.ToItems()
 			assert.Equal(len(rs), len(rws.ReadSet))
 			for i, r := range rs {
 				actual := rws.ReadSet[i]

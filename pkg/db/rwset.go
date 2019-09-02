@@ -17,15 +17,20 @@ type Write struct {
 	Value []byte
 }
 
-type RWSet struct {
+type RWSetItems struct {
 	ReadSet  []Read
 	WriteSet []Write
 }
 
-type RWSets struct {
+type RWSet struct {
 	Address common.Address
-	RWSet   *RWSet
-	Childs  []*RWSets
+	Items   *RWSetItems
+}
+
+type RWSets []*RWSet
+
+func (rs *RWSets) Add(ss ...*RWSet) {
+	*rs = append(*rs, ss...)
 }
 
 func (rs RWSets) Hash() []byte {
@@ -42,14 +47,6 @@ func (rs RWSets) Bytes() ([]byte, error) {
 
 func (rs *RWSets) FromBytes(b []byte) error {
 	return cdc.UnmarshalBinaryBare(b, rs)
-}
-
-type State struct {
-	Childs []*RWSets
-}
-
-func (s *State) Add(rws *RWSets) {
-	s.Childs = append(s.Childs, rws)
 }
 
 type ValueObject struct {
@@ -119,8 +116,8 @@ func (m *RWSetMap) AddWrite(key, value []byte) {
 	}
 }
 
-func (m *RWSetMap) ToSet() *RWSet {
-	return &RWSet{ReadSet: m.rs, WriteSet: m.ws}
+func (m *RWSetMap) ToItems() *RWSetItems {
+	return &RWSetItems{ReadSet: m.rs, WriteSet: m.ws}
 }
 
 func (m *RWSetMap) GetRead(key []byte) (Read, bool) {

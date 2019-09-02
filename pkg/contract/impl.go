@@ -59,7 +59,13 @@ func WriteBuf(ps Process, buf Writer, offset int, v []byte) int {
 }
 
 func GetArg(ps Process, idx, offset int, buf Writer) int {
-	return WriteBuf(ps, buf, offset, ps.Args().Get(idx))
+	arg, err := ps.GetArg(idx)
+	if err != nil {
+		ps.Logger().Debug("failed to GetArg", err.Error())
+		return -1
+	} else {
+		return WriteBuf(ps, buf, offset, arg)
+	}
 }
 
 func Log(ps Process, msg Reader) int {
@@ -72,10 +78,15 @@ func GetSender(ps Process, w Writer) int {
 	return w.Write(s[:])
 }
 
+func GetContractAddress(ps Process, w Writer) int {
+	c := ps.ContractAddress()
+	return w.Write(c[:])
+}
+
 func ReadState(ps Process, key Reader, offset int, buf Writer) int {
 	v, err := ps.State().Get(key.Read())
 	if err != nil {
-		ps.Logger().Debug("fail to execute ReadState", "err", err)
+		ps.Logger().Debug("failed to execute ReadState", "err", err)
 		return -1
 	}
 	return WriteBuf(ps, buf, offset, v)
@@ -84,7 +95,7 @@ func ReadState(ps Process, key Reader, offset int, buf Writer) int {
 func WriteState(ps Process, key, val Reader) int {
 	err := ps.State().Set(key.Read(), val.Read())
 	if err != nil {
-		ps.Logger().Debug("fail to execute WriteState", "err", err)
+		ps.Logger().Debug("failed to execute WriteState", "err", err)
 		return -1
 	}
 	return 0

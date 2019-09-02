@@ -23,7 +23,7 @@ type Env struct {
 	VMProvider VMProvider
 
 	DB     *db.VersionedDB
-	state  db.State
+	state  db.RWSets
 	events []*Event
 }
 
@@ -43,8 +43,11 @@ func (a *Args) PushBytes(b []byte) {
 	a.values = append(a.values, b)
 }
 
-func (a Args) Get(idx int) []byte {
-	return a.values[idx]
+func (a Args) Get(idx int) ([]byte, bool) {
+	if idx >= a.Len() {
+		return nil, false
+	}
+	return a.values[idx], true
 }
 
 func NewArgs(bs [][]byte) Args {
@@ -80,7 +83,7 @@ type VM struct {
 type Result struct {
 	Code     int32
 	Response []byte
-	RWSets   *db.RWSets
+	RWSets   db.RWSets
 	Events   []*Event
 }
 
@@ -99,26 +102,23 @@ func (env *Env) Exec(ctx sdk.Context, entry string) (*Result, error) {
 	}
 	ret, err := vm.Run(id)
 	if err != nil {
-		vm.PrintStackTrace()
+		// TODO add debug option?
+		// vm.PrintStackTrace()
 		return nil, err
 	}
 	code := int32(ret)
 	if code < 0 {
 		return &Result{Code: code}, fmt.Errorf("execute contract error(exit code: %v)", code)
 	}
-	set, err := env.DB.Commit()
-	if err != nil {
-		return nil, err
-	}
+	env.state.Add(&db.RWSet{
+		Address: env.Contract.Address(),
+		Items:   env.DB.RWSetItems(),
+	})
 	return &Result{
 		Code:     code,
 		Response: env.GetReponse(),
-		RWSets: &db.RWSets{
-			Address: env.Contract.Address(),
-			RWSet:   set,
-			Childs:  env.state.Childs,
-		},
-		Events: env.events,
+		RWSets:   env.state,
+		Events:   env.events,
 	}, nil
 }
 
@@ -152,7 +152,7 @@ func (em *EnvManager) Get(ctx sdk.Context, sender, addr common.Address, args Arg
 		Sender:     sender,
 		EnvManager: em,
 		Contract:   c,
-		DB:         db.NewVersionedDB(ctx.KVStore(em.key).Prefix(addr.Bytes()), db.Version{uint32(ctx.BlockHeight()), ctx.TxIndex()}),
+		DB:         db.NewVersionedDB(ctx.KVStore(em.key).Prefix(addr.Bytes())),
 		Args:       args,
 	}, nil
 }

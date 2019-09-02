@@ -2,6 +2,7 @@ package contract
 
 import (
 	"encoding/binary"
+	"errors"
 	"fmt"
 
 	"github.com/bluele/hypermint/pkg/db"
@@ -12,10 +13,14 @@ import (
 
 var defaultLogger = logger.GetDefaultLogger("*:debug").With("module", "process")
 
+var ErrArgIdxNotFound = errors.New("argument idx not found")
+
 type Process interface {
 	Logger() logger.Logger
 	Sender() common.Address
+	ContractAddress() common.Address
 	Args() Args
+	GetArg(idx int) ([]byte, error)
 	State() db.StateDB
 	SetResponse([]byte)
 	Call(addr common.Address, entry []byte, args Args) (int, error)
@@ -53,8 +58,20 @@ func (p process) Sender() common.Address {
 	return p.env.Sender
 }
 
+func (p process) ContractAddress() common.Address {
+	return p.env.Contract.Address()
+}
+
 func (p process) Args() Args {
 	return p.env.Args
+}
+
+func (p process) GetArg(idx int) ([]byte, error) {
+	arg, ok := p.env.Args.Get(idx)
+	if !ok {
+		return nil, ErrArgIdxNotFound
+	}
+	return arg, nil
 }
 
 func (p process) State() db.StateDB {
@@ -68,9 +85,9 @@ func (p *process) Call(addr common.Address, entry []byte, args Args) (int, error
 	}
 	res, err := env.Exec(p.env.Context, string(entry))
 	if err != nil {
-		return -1, err
+		return int(res.Code), err
 	}
-	p.env.state.Add(res.RWSets)
+	p.env.state.Add(res.RWSets...)
 	return p.ValueTable().Put(res.Response)
 }
 

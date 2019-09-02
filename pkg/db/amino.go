@@ -11,8 +11,8 @@ func init() {
 }
 
 func RegisterAmino(cdc *amino.Codec) {
-	cdc.RegisterConcrete(RWSets{},
-		"hypermint/RWSets", nil)
 	cdc.RegisterConcrete(RWSet{},
 		"hypermint/RWSet", nil)
+	cdc.RegisterConcrete(RWSetItems{},
+		"hypermint/RWSetItem", nil)
 }
