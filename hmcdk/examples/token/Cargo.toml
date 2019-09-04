@@ -2,9 +2,11 @@
 name = "token"
 version = "0.1.0"
 authors = ["Jun Kimura <junkxdev@gmail.com>"]
+edition = "2018"
+workspace = "../../"
 
 [dependencies]
-hmc = { path = "../../hmc" }
+hmcdk = { path = "../../lib" }
 
 [lib]
 crate-type = ["cdylib", "lib"]
