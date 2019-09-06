@@ -15,7 +15,7 @@ pub fn contract(_attr: TokenStream, item: TokenStream) -> TokenStream {
         #[cfg_attr(not(feature = "emulation"), export_name = #export_name)]
         pub fn #fn_name() -> i32 {
             use hmcdk::prelude::*;
-            use hmcdk::api::{return_value};
+            use hmcdk::api::{return_value, log};
             match #org_name() {
                 Ok(Some(v)) => {
                     match return_value(&v) {
@@ -25,7 +25,7 @@ pub fn contract(_attr: TokenStream, item: TokenStream) -> TokenStream {
                 },
                 Ok(None) => 0,
                 Err(e) => {
-                    println!("{:?}", e);
+                    log(&format!("{:?}", e).as_str().as_bytes());
                     -1
                 }
             }
