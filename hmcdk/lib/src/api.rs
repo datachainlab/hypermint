@@ -1,5 +1,5 @@
 use crate::error::{from_str, Error};
-use crate::types::{Address, FromBytes, ToBytes};
+use crate::types::{Address, FromBytes};
 
 const BUF_SIZE: usize = 128;
 
@@ -86,10 +86,9 @@ pub fn sha256(msg: &[u8]) -> Result<[u8; 32], Error> {
     }
 }
 
-pub fn emit_event<T: Into<String>, U: ToBytes>(name: T, value: U) -> Result<(), Error> {
-    let v = value.to_bytes();
+pub fn emit_event<T: Into<String>>(name: T, value: &[u8]) -> Result<(), Error> {
     let n = name.into();
-    match unsafe { __emit_event(n.as_ptr(), n.len(), v.as_ptr(), v.len()) } {
+    match unsafe { __emit_event(n.as_ptr(), n.len(), value.as_ptr(), value.len()) } {
         -1 => Err(from_str("failed to emit event")),
         _ => Ok(()),
     }
@@ -215,7 +214,7 @@ pub fn get_contract_address() -> Result<Address, Error> {
     }
 }
 
-pub fn call_contract(addr: &[u8], entry: &[u8], args: Vec<&[u8]>) -> Result<Vec<u8>, Error> {
+pub fn call_contract(addr: &Address, entry: &[u8], args: Vec<&[u8]>) -> Result<Vec<u8>, Error> {
     let a = serialize_args(&args);
     let id = match unsafe {
         __call_contract(
@@ -294,11 +293,9 @@ pub fn read_state<T: FromBytes>(key: &[u8]) -> Result<T, Error> {
     Ok(T::from_bytes(val)?)
 }
 
-pub fn write_state<T: ToBytes, U: ToBytes>(key: T, value: U) {
-    let k: Vec<u8> = key.to_bytes();
-    let v: Vec<u8> = value.to_bytes();
+pub fn write_state(key: &[u8], value: &[u8]) {
     unsafe {
-        let ret = __write_state(k.as_ptr(), k.len(), v.as_ptr(), v.len());
+        let ret = __write_state(key.as_ptr(), key.len(), value.as_ptr(), value.len());
         if ret == -1 {
             return;
         }

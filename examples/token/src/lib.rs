@@ -15,6 +15,11 @@ fn get_balance_from_addr(addr: &Address) -> Result<i64, Error> {
 }
 
 #[contract]
+pub fn balance() -> R<i32> {
+    Ok(Some(1i32))
+}
+
+#[contract]
 pub fn transfer() -> R<i64> {
     let to: Address = get_arg(0)?;
     let amount: i64 = get_arg(1)?;
@@ -28,12 +33,12 @@ pub fn transfer() -> R<i64> {
         )));
     }
     let to_balance = get_balance_from_addr(&to).unwrap_or(0);
-    write_state(&sender, from_balance - amount);
+    write_state(&sender, &(from_balance - amount).to_bytes());
     let to_amount = to_balance + amount;
-    write_state(&to, to_amount);
+    write_state(&to, &to_amount.to_bytes());
     emit_event(
         "Transfer",
-        format!("from={:X?} to={:X?} amount={}", sender, to, amount),
+        format!("from={:X?} to={:X?} amount={}", sender, to, amount).as_bytes(),
     )?;
 
     Ok(Some(to_amount))
@@ -42,6 +47,6 @@ pub fn transfer() -> R<i64> {
 #[contract]
 pub fn init() -> R<Vec<u8>> {
     let sender = get_sender()?;
-    write_state(sender, TOTAL);
+    write_state(&sender, &TOTAL.to_bytes());
     Ok(None)
 }
