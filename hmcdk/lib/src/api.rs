@@ -252,7 +252,7 @@ pub fn call_contract(addr: &[u8], entry: &[u8], args: Vec<&[u8]>) -> Result<Vec<
 }
 
 // format: <elem_num: 4byte>|<elem1_size: 4byte>|<elem1_data>|<elem2_size: 4byte>|<elem2_data>|...
-fn serialize_args(args: &Vec<&[u8]>) -> Vec<u8> {
+fn serialize_args(args: &[&[u8]]) -> Vec<u8> {
     let mut bs: Vec<u8> = vec![];
     bs.extend_from_slice(&(args.len() as u32).to_be_bytes());
     for arg in args {
