@@ -18,7 +18,7 @@ pub fn contract(_attr: TokenStream, item: TokenStream) -> TokenStream {
             use hmcdk::api::{return_value, log};
             match #org_name() {
                 Ok(Some(v)) => {
-                    match return_value(&v) {
+                    match return_value(&v.to_bytes()) {
                         0 => 0,
                         _ => -1,
                     }

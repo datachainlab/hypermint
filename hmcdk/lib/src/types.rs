@@ -2,7 +2,7 @@ use crate::error::{from_str, Error};
 use std::borrow::Borrow;
 
 pub type Value = Vec<u8>;
-pub type R = Result<Option<Value>, Error>;
+pub type R<T> = Result<Option<T>, Error>;
 pub type ArgBytes = Vec<u8>;
 pub type Address = [u8; 20];
 

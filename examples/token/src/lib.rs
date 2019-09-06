@@ -6,7 +6,7 @@ use hmcdk::prelude::*;
 static TOTAL: i64 = 10000;
 
 #[contract]
-pub fn get_balance() -> R {
+pub fn get_balance() -> R<Vec<u8>> {
     Ok(Some(read_state(&get_sender()?)?))
 }
 
@@ -15,7 +15,7 @@ fn get_balance_from_addr(addr: &Address) -> Result<i64, Error> {
 }
 
 #[contract]
-pub fn transfer() -> R {
+pub fn transfer() -> R<i64> {
     let to: Address = get_arg(0)?;
     let amount: i64 = get_arg(1)?;
     let sender = get_sender()?;
@@ -36,11 +36,11 @@ pub fn transfer() -> R {
         format!("from={:X?} to={:X?} amount={}", sender, to, amount),
     )?;
 
-    Ok(Some(to_amount.to_bytes()))
+    Ok(Some(to_amount))
 }
 
 #[contract]
-pub fn init() -> R {
+pub fn init() -> R<Vec<u8>> {
     let sender = get_sender()?;
     write_state(sender, TOTAL);
     Ok(None)
