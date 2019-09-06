@@ -15,7 +15,6 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/stretchr/testify/suite"
 	cmn "github.com/tendermint/tendermint/libs/common"
-	"golang.org/x/xerrors"
 )
 
 const (
@@ -178,7 +177,7 @@ func (ts *E2ETestSuite) TestCallExternalContract() {
 func (ts *E2ETestSuite) GetBalance(ctx context.Context, addr common.Address) (int, error) {
 	cmd := fmt.Sprintf("balance --address=%v", addr.Hex())
 	if out, e, err := ts.ExecCLICommand(ctx, cmd); err != nil {
-		return 0, xerrors.Errorf("%v:%v:%v", string(out), string(e), err)
+		return 0, fmt.Errorf("%v:%v:%v", string(out), string(e), err)
 	} else {
 		return strconv.Atoi(string(out))
 	}
@@ -220,7 +219,7 @@ func (ts *E2ETestSuite) SearchEvent(ctx context.Context, contract common.Address
 		event,
 	)
 	if out, e, err := ts.ExecCLICommand(ctx, cmd); err != nil {
-		return 0, xerrors.Errorf("%v:%v:%v", string(out), string(e), err)
+		return 0, fmt.Errorf("%v:%v:%v", string(out), string(e), err)
 	} else {
 		return strconv.Atoi(string(out))
 	}
@@ -228,7 +227,7 @@ func (ts *E2ETestSuite) SearchEvent(ctx context.Context, contract common.Address
 
 func (ts *E2ETestSuite) sendTxCMD(ctx context.Context, cmd string) ([]byte, error) {
 	if out, e, err := ts.ExecCLICommand(ctx, cmd); err != nil {
-		return nil, xerrors.Errorf("%v:%v:%v", string(out), string(e), err)
+		return nil, fmt.Errorf("%v:%v:%v", string(out), string(e), err)
 	} else {
 		time.Sleep(2 * ts.TimeoutCommit)
 		return out, nil
