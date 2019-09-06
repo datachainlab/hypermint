@@ -20,3 +20,25 @@ pub fn hex_to_bytes(hex_asm: &str) -> Vec<u8> {
     }
     bytes
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    fn check_conversion_hex_and_bytes(s: &str, b: &[u8]) {
+        let v = hex_to_bytes(s);
+        assert_eq!(v, b.to_vec());
+    }
+
+    #[test]
+    fn test_hex_conversion() {
+        check_conversion_hex_and_bytes("0x0000", &[0, 0]);
+        check_conversion_hex_and_bytes("0x0100", &[1, 0]);
+        check_conversion_hex_and_bytes("0x0101", &[1, 1]);
+        check_conversion_hex_and_bytes("0xFF01", &[255, 1]);
+        check_conversion_hex_and_bytes("0xFFFF", &[255, 255]);
+        check_conversion_hex_and_bytes("FFFF", &[255, 255]);
+        check_conversion_hex_and_bytes("0xffffffff", &[255, 255, 255, 255]);
+        check_conversion_hex_and_bytes("0xFffFfFFf", &[255, 255, 255, 255]);
+    }
+}
