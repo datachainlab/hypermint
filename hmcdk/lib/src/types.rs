@@ -189,7 +189,7 @@ mod tests {
         assert_eq!(v, vi);
     }
 
-    fn test_type_conversion2<
+    fn test_try_conversion<
         T: ToBytes + FromBytes + std::fmt::Debug + Eq,
         U: ToBytes + FromBytes + std::fmt::Debug + Eq,
     >(
@@ -213,17 +213,17 @@ mod tests {
         test_type_conversion(Vec::<u8>::new());
         test_type_conversion(b"test".to_vec());
 
-        assert!(test_type_conversion2::<i32, i64>(1).is_err());
-        assert!(test_type_conversion2::<i64, i32>(1).is_err());
-        assert!(test_type_conversion2::<i32, u32>(1).is_ok());
-        assert!(test_type_conversion2::<i64, u64>(1).is_ok());
-        assert!(test_type_conversion2::<String, i64>("test".to_string()).is_err());
-        assert!(test_type_conversion2::<String, u64>("test".to_string()).is_err());
-        assert!(test_type_conversion2::<String, Vec<u8>>("test".to_string()).is_ok());
-        assert!(test_type_conversion2::<String, String>("test".to_string()).is_ok());
-        assert!(test_type_conversion2::<Vec<u8>, String>(b"test".to_vec()).is_ok());
-        assert!(test_type_conversion2::<Vec<u8>, Vec<u8>>(b"test".to_vec()).is_ok());
-        assert!(test_type_conversion2::<Vec<u8>, i64>(b"test".to_vec()).is_err());
-        assert!(test_type_conversion2::<Vec<u8>, u64>(b"test".to_vec()).is_err());
+        assert!(test_try_conversion::<i32, i64>(1).is_err());
+        assert!(test_try_conversion::<i64, i32>(1).is_err());
+        assert!(test_try_conversion::<i32, u32>(1).is_ok());
+        assert!(test_try_conversion::<i64, u64>(1).is_ok());
+        assert!(test_try_conversion::<String, i64>("test".to_string()).is_err());
+        assert!(test_try_conversion::<String, u64>("test".to_string()).is_err());
+        assert!(test_try_conversion::<String, Vec<u8>>("test".to_string()).is_ok());
+        assert!(test_try_conversion::<String, String>("test".to_string()).is_ok());
+        assert!(test_try_conversion::<Vec<u8>, String>(b"test".to_vec()).is_ok());
+        assert!(test_try_conversion::<Vec<u8>, Vec<u8>>(b"test".to_vec()).is_ok());
+        assert!(test_try_conversion::<Vec<u8>, i64>(b"test".to_vec()).is_err());
+        assert!(test_try_conversion::<Vec<u8>, u64>(b"test".to_vec()).is_err());
     }
 }
