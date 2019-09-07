@@ -62,7 +62,7 @@ To deploy [simple token project](https://github.com/bluele/hypermint/tree/develo
 $ export ADDR1=0x1221a0726d56aEdeA9dBe2522DdAE3Dd8ED0f36c
 
 # To exec deploy cmd, cargo with wasm32 and wasm-gc
-$ make -C ./examples/token deploy
+$ make -C ./example/token deploy
 cargo build --target=wasm32-unknown-unknown
    Compiling hmc v0.1.0 (/Users/jun/go/src/github.com/bluele/hypermint/hmc)
    Compiling token v0.1.0 (/Users/jun/go/src/github.com/bluele/hypermint/example/token)
