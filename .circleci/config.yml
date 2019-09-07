@@ -38,7 +38,8 @@ jobs:
       - run:
           name: "test"
           command: |
-            cd hmc && cargo test
+            cargo test
+          working_directory: hmcdk
 
   integration-test:
     working_directory: /go/src/github.com/bluele/hypermint
