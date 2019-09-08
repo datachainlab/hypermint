@@ -148,13 +148,6 @@ impl ToBytes for Address {
     }
 }
 
-// TODO
-impl ToBytes for &Address {
-    fn to_bytes(&self) -> Vec<u8> {
-        (&self).to_vec()
-    }
-}
-
 #[cfg(test)]
 mod tests {
     use super::*;
