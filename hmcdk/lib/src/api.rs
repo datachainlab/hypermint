@@ -214,7 +214,7 @@ pub fn get_contract_address() -> Result<Address, Error> {
     }
 }
 
-pub fn call_contract(addr: &Address, entry: &[u8], args: Vec<&[u8]>) -> Result<Vec<u8>, Error> {
+pub fn call_contract<T: FromBytes>(addr: &Address, entry: &[u8], args: Vec<&[u8]>) -> Result<T, Error> {
     let a = serialize_args(&args);
     let id = match unsafe {
         __call_contract(
@@ -247,7 +247,7 @@ pub fn call_contract(addr: &Address, entry: &[u8], args: Vec<&[u8]>) -> Result<V
             }
         }
     }
-    Ok(val)
+    Ok(T::from_bytes(val)?)
 }
 
 // format: <elem_num: 4byte>|<elem1_size: 4byte>|<elem1_data>|<elem2_size: 4byte>|<elem2_data>|...
