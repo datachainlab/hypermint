@@ -1,58 +1,52 @@
-extern crate hmc;
+extern crate hmcdk;
+use hmcdk::api::{emit_event, get_arg, get_sender, read_state, write_state};
+use hmcdk::error;
+use hmcdk::prelude::*;
 
 static TOTAL: i64 = 10000;
 
-#[no_mangle]
-pub fn get_balance() -> i32 {
-    let sender = hmc::get_sender().unwrap();
-    match hmc::read_state(&sender) {
-        Ok(v) => {
-            hmc::log(format!("read {:?}", v).as_bytes());
-            hmc::return_value(&v)
-        },
-        Err(m) => {
-            hmc::log(m.as_bytes());
-            -1
-        },
-    }
+#[contract]
+pub fn get_balance() -> R<Vec<u8>> {
+    Ok(Some(read_state(&get_sender()?)?))
 }
 
-fn get_balance_from_addr(addr: &[u8]) -> i64 {
-    match hmc::read_state_str(addr) {
-        Ok(v) => {
-            v.parse::<i64>().unwrap()
-        },
-        Err(m) => {
-            hmc::log(m.as_bytes());
-            0
-        },
-    }
+fn get_balance_from_addr(addr: &Address) -> Result<i64, Error> {
+    read_state::<i64>(addr)
 }
 
-#[no_mangle]
-pub fn transfer() -> i32 {
-    let to = hmc::hex_to_bytes(hmc::get_arg_str(0).unwrap().as_ref());
-    let amount = hmc::get_arg_str(1).unwrap().parse::<i64>().unwrap();
-    let sender = hmc::get_sender().unwrap();
+#[contract]
+pub fn balance() -> R<i32> {
+    Ok(Some(1i32))
+}
 
-    let from_balance = get_balance_from_addr(&sender);
+#[contract]
+pub fn transfer() -> R<i64> {
+    let to: Address = get_arg(0)?;
+    let amount: i64 = get_arg(1)?;
+    let sender = get_sender()?;
+
+    let from_balance = get_balance_from_addr(&sender)?;
     if from_balance < amount {
-        hmc::log(format!("error: {} < {}", from_balance, amount).as_bytes());
-        return -1;
+        return Err(error::from_str(format!(
+            "error: {} < {}",
+            from_balance, amount
+        )));
     }
-    let to_balance = get_balance_from_addr(&to);
+    let to_balance = get_balance_from_addr(&to).unwrap_or(0);
+    write_state(&sender, &(from_balance - amount).to_bytes());
+    let to_amount = to_balance + amount;
+    write_state(&to, &to_amount.to_bytes());
+    emit_event(
+        "Transfer",
+        format!("from={:X?} to={:X?} amount={}", sender, to, amount).as_bytes(),
+    )?;
 
-    hmc::write_state(&sender, format!("{}", from_balance-amount).as_bytes());
-    let to_amount = format!("{}", to_balance+amount);
-    hmc::write_state(&to, to_amount.as_bytes());
-    hmc::emit_event("Transfer", format!("from={:X?} to={:X?} amount={}", sender, to, amount).as_bytes()).unwrap();
-
-    return hmc::return_value(to_amount.as_bytes());
+    Ok(Some(to_amount))
 }
 
-#[no_mangle]
-pub fn init() -> i64 {
-    let sender = hmc::get_sender().unwrap();
-    hmc::write_state(&sender, format!("{}", TOTAL).as_bytes());
-    0
+#[contract]
+pub fn init() -> R<Vec<u8>> {
+    let sender = get_sender()?;
+    write_state(&sender, &TOTAL.to_bytes());
+    Ok(None)
 }

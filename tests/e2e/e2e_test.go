@@ -2,6 +2,7 @@ package e2e
 
 import (
 	"context"
+	"encoding/hex"
 	"fmt"
 	"path/filepath"
 	"strconv"
@@ -9,13 +10,13 @@ import (
 	"testing"
 	"time"
 
+	"github.com/bluele/hypermint/pkg/client/contract"
 	"github.com/bluele/hypermint/pkg/client/helper"
 	ecommon "github.com/bluele/hypermint/tests/e2e/common"
 
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/stretchr/testify/suite"
 	cmn "github.com/tendermint/tendermint/libs/common"
-	"golang.org/x/xerrors"
 )
 
 const (
@@ -93,30 +94,30 @@ func (ts *E2ETestSuite) TestTransfer() {
 
 func (ts *E2ETestSuite) TestContract() {
 	ctx := context.Background()
-	contract, err := ts.DeployContract(ctx, ts.Account(1), testContractPath)
+	c, err := ts.DeployContract(ctx, ts.Account(1), testContractPath)
 	if !ts.NoError(err) {
 		return
 	}
-	ts.T().Logf("contract address is %v", contract.Hex())
+	ts.T().Logf("contract address is %v", c.Hex())
 
 	const key = "key"
 	const value = "value"
 
 	ts.Run("check if update state successfully", func() {
-		_, err := ts.CallContract(ctx, ts.Account(1), contract, "test_write_state", []string{key, value}, false)
+		_, err := ts.CallContract(ctx, ts.Account(1), c, "test_write_state", []string{key, value}, []string{contract.Str, contract.Str}, contract.Str, false)
 		ts.NoError(err)
 
-		out, err := ts.CallContract(ctx, ts.Account(1), contract, "test_read_state", []string{key}, true)
+		out, err := ts.CallContract(ctx, ts.Account(1), c, "test_read_state", []string{key}, []string{contract.Str}, contract.Str, true)
 		ts.NoError(err)
-		ts.Equal(value, string(out))
+		ts.Equal(value, out)
 
 		ts.Run("ensure that expected event is happened", func() {
-			_, err := ts.CallContract(ctx, ts.Account(1), contract, "test_emit_event", []string{"first", "second"}, false)
+			_, err := ts.CallContract(ctx, ts.Account(1), c, "test_emit_event", []string{"first", "second"}, []string{contract.Str, contract.Str}, contract.Str, false)
 			ts.NoError(err)
-			count, err := ts.SearchEvent(ctx, contract, "test-event-name-0")
+			count, err := ts.SearchEvent(ctx, c, "test-event-name-0")
 			ts.NoError(err)
 			ts.Equal(1, count)
-			count, err = ts.SearchEvent(ctx, contract, "test-event-name-1")
+			count, err = ts.SearchEvent(ctx, c, "test-event-name-1")
 			ts.NoError(err)
 			ts.Equal(1, count)
 		})
@@ -124,7 +125,7 @@ func (ts *E2ETestSuite) TestContract() {
 
 	ts.Run("get a proof of updated state, and check if its proof is valid", func() {
 		cli := ts.RPCClient()
-		kvp, err := helper.GetKVProofInfo(cli, contract, 0, []byte(key), []byte(value))
+		kvp, err := helper.GetKVProofInfo(cli, c, 0, []byte(key), []byte(value))
 		if ts.NoError(err) {
 			_, err := kvp.Marshal()
 			ts.NoError(err)
@@ -151,34 +152,34 @@ func (ts *E2ETestSuite) TestCallExternalContract() {
 	ts.T().Logf("external contract address is %v", exContractAddress.Hex())
 
 	ts.Run("call contract simply", func() {
-		out, err := ts.CallContract(ctx, ts.Account(1), exContractAddress, "test_plus", []string{"1", "2"}, true)
+		out, err := ts.CallContract(ctx, ts.Account(1), exContractAddress, "test_plus", []string{"1", "2"}, []string{contract.Int64, contract.Int64}, contract.Int64, true)
 		ts.NoError(err)
-		ts.Equal("3", string(out))
+		ts.Equal(int64(3), out)
 	})
 
 	ts.Run("call contract via contract", func() {
-		out, err := ts.CallContract(ctx, ts.Account(1), contractAddress, "test_call_external_contract", []string{exContractAddress.Hex(), "1", "2"}, true)
+		out, err := ts.CallContract(ctx, ts.Account(1), contractAddress, "test_call_external_contract", []string{exContractAddress.Hex(), "1", "2"}, []string{contract.Address, contract.Int64, contract.Int64}, contract.Int64, true)
 		ts.NoError(err)
-		ts.Equal("3", string(out))
+		ts.Equal(int64(3), out)
 	})
 
 	ts.Run("check if caller address of external contract is an address of original contract", func() {
-		out, err := ts.CallContract(ctx, ts.Account(1), contractAddress, "test_call_who_am_i_on_external_contract", []string{exContractAddress.Hex()}, true)
+		out, err := ts.CallContract(ctx, ts.Account(1), contractAddress, "test_call_who_am_i_on_external_contract", []string{exContractAddress.Hex()}, []string{contract.Address}, contract.Address, true)
 		ts.NoError(err)
-		ts.Equal(contractAddress.Bytes(), out)
+		ts.Equal(contractAddress, out)
 	})
 
 	ts.Run("check if external contract address is valid", func() {
-		out, err := ts.CallContract(ctx, ts.Account(1), contractAddress, "test_call_get_contract_address_on_external_contract", []string{exContractAddress.Hex()}, true)
+		out, err := ts.CallContract(ctx, ts.Account(1), contractAddress, "test_call_get_contract_address_on_external_contract", []string{exContractAddress.Hex()}, []string{contract.Address}, contract.Address, true)
 		ts.NoError(err)
-		ts.Equal(exContractAddress.Bytes(), out)
+		ts.Equal(exContractAddress, out)
 	})
 }
 
 func (ts *E2ETestSuite) GetBalance(ctx context.Context, addr common.Address) (int, error) {
 	cmd := fmt.Sprintf("balance --address=%v", addr.Hex())
 	if out, e, err := ts.ExecCLICommand(ctx, cmd); err != nil {
-		return 0, xerrors.Errorf("%v:%v:%v", string(out), string(e), err)
+		return 0, fmt.Errorf("%v:%v:%v", string(out), string(e), err)
 	} else {
 		return strconv.Atoi(string(out))
 	}
@@ -199,18 +200,27 @@ func (ts *E2ETestSuite) DeployContract(ctx context.Context, from common.Address,
 	return common.HexToAddress(string(address)), nil
 }
 
-func (ts *E2ETestSuite) CallContract(ctx context.Context, from, contract common.Address, fn string, args []string, isSimulate bool) ([]byte, error) {
+func (ts *E2ETestSuite) CallContract(ctx context.Context, from, contractAddress common.Address, fn string, args []string, argTypes []string, retType string, isSimulate bool) (interface{}, error) {
 	cmd := fmt.Sprintf(
-		`contract call --address=%v --contract=%v --func="%v" --args=%#v --password=password --gas=1`,
+		`contract call --address=%v --contract=%v --func="%v" --args=%#v --argtypes=%#v --password=password --gas=1`,
 		from.Hex(),
-		contract.Hex(),
+		contractAddress.Hex(),
 		fn,
 		strings.Join(args, ","),
+		strings.Join(argTypes, ","),
 	)
 	if isSimulate {
 		cmd += " --simulate --silent"
 	}
-	return ts.sendTxCMD(ctx, cmd)
+	out, err := ts.sendTxCMD(ctx, cmd)
+	if err != nil {
+		return nil, err
+	}
+	ret, err := hex.DecodeString(string(out))
+	if err != nil {
+		return nil, err
+	}
+	return contract.DeserializeValue(ret, retType)
 }
 
 func (ts *E2ETestSuite) SearchEvent(ctx context.Context, contract common.Address, event string) (int, error) {
@@ -220,7 +230,7 @@ func (ts *E2ETestSuite) SearchEvent(ctx context.Context, contract common.Address
 		event,
 	)
 	if out, e, err := ts.ExecCLICommand(ctx, cmd); err != nil {
-		return 0, xerrors.Errorf("%v:%v:%v", string(out), string(e), err)
+		return 0, fmt.Errorf("%v:%v:%v", string(out), string(e), err)
 	} else {
 		return strconv.Atoi(string(out))
 	}
@@ -228,7 +238,7 @@ func (ts *E2ETestSuite) SearchEvent(ctx context.Context, contract common.Address
 
 func (ts *E2ETestSuite) sendTxCMD(ctx context.Context, cmd string) ([]byte, error) {
 	if out, e, err := ts.ExecCLICommand(ctx, cmd); err != nil {
-		return nil, xerrors.Errorf("%v:%v:%v", string(out), string(e), err)
+		return nil, fmt.Errorf("%v:%v:%v", string(out), string(e), err)
 	} else {
 		time.Sleep(2 * ts.TimeoutCommit)
 		return out, nil

@@ -3,7 +3,7 @@ version: 2
 release_config: &release_config
   working_directory: /go/src/github.com/bluele/hypermint
   docker:
-    - image: golang:1.12.4-stretch
+    - image: golang:1.13.0-buster
   environment:
     BUILD_DIR: ./build
 
@@ -11,7 +11,7 @@ jobs:
   build:
     working_directory: /go/src/github.com/bluele/hypermint
     docker:
-      - image: golang:1.12.4-stretch
+      - image: golang:1.13.0-buster
     environment:
       GO111MODULE: "on"
     steps:
@@ -32,18 +32,35 @@ jobs:
   contract-test:
     working_directory: /go/src/github.com/bluele/hypermint
     docker:
-      - image: rust:1.34.1-stretch
+      - image: rust:1.37.0-buster
     steps:
       - checkout
       - run:
+          name: "install clippy & rustfmt"
+          command: |
+            rustup update
+            rustup component add clippy
+            rustup component add rustfmt
+      - run:
+          name: "fmt check"
+          command: |
+            cargo fmt -- --check
+          working_directory: hmcdk
+      - run:
+          name: "clippy"
+          command: |
+            cargo clippy -- -D warnings
+          working_directory: hmcdk
+      - run:
           name: "test"
           command: |
-            cd hmc && cargo test
+            cargo test
+          working_directory: hmcdk
 
   integration-test:
     working_directory: /go/src/github.com/bluele/hypermint
     docker:
-      - image: bluele/go-rust:0.1.0
+      - image: hypermint/go-rust:v0.2.0
     environment:
       GO111MODULE: "on"
     steps:
@@ -58,7 +75,7 @@ jobs:
   e2e-test:
     working_directory: /go/src/github.com/bluele/hypermint
     docker:
-      - image: bluele/go-rust:0.1.0
+      - image: hypermint/go-rust:v0.2.0
     environment:
       GO111MODULE: "on"
     steps:
