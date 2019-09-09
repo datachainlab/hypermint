@@ -36,6 +36,22 @@ jobs:
     steps:
       - checkout
       - run:
+          name: "install clippy & rustfmt"
+          command: |
+            rustup update
+            rustup component add clippy
+            rustup component add rustfmt
+      - run:
+          name: "fmt check"
+          command: |
+            cargo fmt -- --check
+          working_directory: hmcdk
+      - run:
+          name: "clippy"
+          command: |
+            cargo clippy -- -D warnings
+          working_directory: hmcdk
+      - run:
           name: "test"
           command: |
             cargo test
