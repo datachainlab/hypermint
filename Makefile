@@ -20,8 +20,6 @@ GO_TEST_CMD=$(GO_BIN) test $(GO_TEST_FLAGS)
 
 INCLUDE = -I=. -I=${GOPATH}/src -I=${GOPATH}/src/github.com/gogo/protobuf/protobuf
 
-export GO111MODULE = on
-
 .PHONY: build
 
 build: server cli

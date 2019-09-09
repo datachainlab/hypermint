@@ -13,9 +13,10 @@ hypermint is a Tendermint-based blockchain that support WebAssembly smart contra
 ## Build
 
 ```
-$ export GO111MODULE=on
 $ make build
 ```
+
+If you use Golang 1.12 or 1.11, export `GO111MODULE=on` for modules. 
 
 ## Getting started
 
