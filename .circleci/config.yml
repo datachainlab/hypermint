@@ -36,25 +36,19 @@ jobs:
     steps:
       - checkout
       - run:
-          name: "install clippy & rustfmt"
+          name: "setup lint tools"
           command: |
-            rustup update
-            rustup component add clippy
-            rustup component add rustfmt
-      - run:
-          name: "fmt check"
-          command: |
-            cargo fmt -- --check
+            make lint-tools
           working_directory: hmcdk
       - run:
-          name: "clippy"
+          name: "lint"
           command: |
-            cargo clippy -- -D warnings
+            make lint
           working_directory: hmcdk
       - run:
           name: "test"
           command: |
-            cargo test
+            make test
           working_directory: hmcdk
 
   integration-test:
