@@ -214,7 +214,11 @@ pub fn get_contract_address() -> Result<Address, Error> {
     }
 }
 
-pub fn call_contract<T: FromBytes>(addr: &Address, entry: &[u8], args: Vec<&[u8]>) -> Result<T, Error> {
+pub fn call_contract<T: FromBytes>(
+    addr: &Address,
+    entry: &[u8],
+    args: Vec<&[u8]>,
+) -> Result<T, Error> {
     let a = serialize_args(&args);
     let id = match unsafe {
         __call_contract(
