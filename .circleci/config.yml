@@ -43,7 +43,7 @@ jobs:
   integration-test:
     working_directory: /go/src/github.com/bluele/hypermint
     docker:
-      - image: bluele/go-rust:0.1.0
+      - image: hypermint/go-rust:v0.2.0
     environment:
       GO111MODULE: "on"
     steps:
@@ -58,7 +58,7 @@ jobs:
   e2e-test:
     working_directory: /go/src/github.com/bluele/hypermint
     docker:
-      - image: bluele/go-rust:0.1.0
+      - image: hypermint/go-rust:v0.2.0
     environment:
       GO111MODULE: "on"
     steps:
