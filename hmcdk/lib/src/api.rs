@@ -1,4 +1,5 @@
-use std::str;
+use crate::error::{from_str, Error};
+use crate::types::{Address, FromBytes};
 
 const BUF_SIZE: usize = 128;
 
@@ -66,48 +67,54 @@ extern "C" {
         ret: *mut u8,
         ret_len: usize,
     ) -> i32;
-    fn __emit_event(
-        ev: *const u8,
-        ev_len: usize,
-        data: *const u8,
-        data_len: usize,
-    ) -> i32;
+    fn __emit_event(ev: *const u8, ev_len: usize, data: *const u8, data_len: usize) -> i32;
 }
 
-pub fn keccak256(msg: &[u8]) -> Result<[u8; 32], String> {
+pub fn keccak256(msg: &[u8]) -> Result<[u8; 32], Error> {
     let mut buf = [0u8; 32];
     match unsafe { __keccak256(msg.as_ptr(), msg.len(), buf.as_mut_ptr(), buf.len()) } {
-        -1 => Err(format!("fail to call keccak256")),
+        -1 => Err(from_str("failed to call keccak256")),
         _ => Ok(buf),
     }
 }
 
-pub fn sha256(msg: &[u8]) -> Result<[u8; 32], String> {
+pub fn sha256(msg: &[u8]) -> Result<[u8; 32], Error> {
     let mut buf = [0u8; 32];
     match unsafe { __sha256(msg.as_ptr(), msg.len(), buf.as_mut_ptr(), buf.len()) } {
-        -1 => Err(format!("fail to call sha256")),
+        -1 => Err(from_str("failed to call sha256")),
         _ => Ok(buf),
     }
 }
 
-pub fn emit_event(name: &str, value: &[u8]) -> Result<(), String> {
-    match unsafe {
-        __emit_event(name.as_ptr(), name.len(), value.as_ptr(), value.len())
-    } {
-        -1 => Err(format!("fail to emit event")),
-        _ => Ok(())
+pub fn emit_event<T: Into<String>>(name: T, value: &[u8]) -> Result<(), Error> {
+    let n = name.into();
+    match unsafe { __emit_event(n.as_ptr(), n.len(), value.as_ptr(), value.len()) } {
+        -1 => Err(from_str("failed to emit event")),
+        _ => Ok(()),
     }
 }
 
-pub fn ecrecover(h: &[u8], v: &[u8], r: &[u8], s: &[u8]) -> Result<[u8; 65], String> {
+pub fn ecrecover(h: &[u8], v: &[u8], r: &[u8], s: &[u8]) -> Result<[u8; 65], Error> {
     if h.len() != 32 {
-        return Err(format!("length of h should be 32, got {}", h.len()));
+        return Err(from_str(format!(
+            "length of h should be 32, got {}",
+            h.len()
+        )));
     } else if v.len() != 1 {
-        return Err(format!("length of v should be 1, got {}", v.len()));
+        return Err(from_str(format!(
+            "length of v should be 1, got {}",
+            v.len()
+        )));
     } else if r.len() != 32 {
-        return Err(format!("length of r should be 32, got {}", r.len()));
+        return Err(from_str(format!(
+            "length of r should be 32, got {}",
+            r.len()
+        )));
     } else if s.len() != 32 {
-        return Err(format!("length of s should be 32, got {}", s.len()));
+        return Err(from_str(format!(
+            "length of s should be 32, got {}",
+            s.len()
+        )));
     }
     let mut buf = [0u8; 65];
     match unsafe {
@@ -124,22 +131,34 @@ pub fn ecrecover(h: &[u8], v: &[u8], r: &[u8], s: &[u8]) -> Result<[u8; 65], Str
             buf.len(),
         )
     } {
-        -1 => Err(format!("fail to ecrecover")),
+        -1 => Err(from_str("failed to ecrecover")),
         _ => Ok(buf),
     }
 }
 
-pub fn ecrecover_address(h: &[u8], v: &[u8], r: &[u8], s: &[u8]) -> Result<[u8; 20], String> {
+pub fn ecrecover_address(h: &[u8], v: &[u8], r: &[u8], s: &[u8]) -> Result<Address, Error> {
     if h.len() != 32 {
-        return Err(format!("length of h should be 32, got {}", h.len()));
+        return Err(from_str(format!(
+            "a length of h should be 32, got {}",
+            h.len()
+        )));
     } else if v.len() != 1 {
-        return Err(format!("length of v should be 1, got {}", v.len()));
+        return Err(from_str(format!(
+            "a length of v should be 1, got {}",
+            v.len()
+        )));
     } else if r.len() != 32 {
-        return Err(format!("length of r should be 32, got {}", r.len()));
+        return Err(from_str(format!(
+            "a length of r should be 32, got {}",
+            r.len()
+        )));
     } else if s.len() != 32 {
-        return Err(format!("length of s should be 32, got {}", s.len()));
+        return Err(from_str(format!(
+            "a length of s should be 32, got {}",
+            s.len()
+        )));
     }
-    let mut buf = [0u8; 20];
+    let mut buf: Address = Default::default();
     match unsafe {
         __ecrecover_address(
             h.as_ptr(),
@@ -154,18 +173,18 @@ pub fn ecrecover_address(h: &[u8], v: &[u8], r: &[u8], s: &[u8]) -> Result<[u8; 
             buf.len(),
         )
     } {
-        -1 => Err(format!("fail to ecrecover")),
+        -1 => Err(from_str("failed to ecrecover")),
         _ => Ok(buf),
     }
 }
 
-pub fn get_arg(idx: usize) -> Result<Vec<u8>, String> {
+pub fn get_arg<T: FromBytes>(idx: usize) -> Result<T, Error> {
     let mut buf = [0u8; BUF_SIZE];
     let mut offset = 0;
     let mut val: Vec<u8> = Vec::new();
     loop {
         match unsafe { __get_arg(idx, offset, buf.as_mut_ptr(), buf.len()) } {
-            -1 => return Err("read_state: key not found".to_string()),
+            -1 => return Err(from_str("read_state: key not found")),
             0 => break,
             n => {
                 val.extend_from_slice(&buf[0..n as usize]);
@@ -176,39 +195,30 @@ pub fn get_arg(idx: usize) -> Result<Vec<u8>, String> {
             }
         }
     }
-    Ok(val)
+    Ok(T::from_bytes(val)?)
 }
 
-pub fn get_arg_str(idx: usize) -> Result<String, String> {
-    let v = get_arg(idx)?;
-    match str::from_utf8(&v) {
-        Ok(v) => Ok(v.to_string()),
-        Err(e) => Err(format!("Invalid UTF-8 sequence: {}", e)),
-    }
-}
-
-pub fn get_sender() -> Result<[u8; 20], String> {
-    let mut buf = [0u8; 20];
+pub fn get_sender() -> Result<Address, Error> {
+    let mut buf: Address = Default::default();
     match unsafe { __get_sender(buf.as_mut_ptr(), 20) } {
-        -1 => Err("sender not found".to_string()),
+        -1 => Err(from_str("sender not found")),
         _ => Ok(buf),
     }
 }
 
-pub fn get_sender_str() -> Result<String, String> {
-    let sender = get_sender()?;
-    Ok(format!("{:X?}", sender))
-}
-
-pub fn get_contract_address() -> Result<[u8; 20], String> {
-    let mut buf = [0u8; 20];
+pub fn get_contract_address() -> Result<Address, Error> {
+    let mut buf: Address = Default::default();
     match unsafe { __get_contract_address(buf.as_mut_ptr(), 20) } {
-        -1 => Err("contract address not found".to_string()),
+        -1 => Err(from_str("contract address not found")),
         _ => Ok(buf),
     }
 }
 
-pub fn call_contract(addr: &[u8], entry: &[u8], args: Vec<&[u8]>) -> Result<Vec<u8>, String> {
+pub fn call_contract<T: FromBytes>(
+    addr: &Address,
+    entry: &[u8],
+    args: Vec<&[u8]>,
+) -> Result<T, Error> {
     let a = serialize_args(&args);
     let id = match unsafe {
         __call_contract(
@@ -220,7 +230,7 @@ pub fn call_contract(addr: &[u8], entry: &[u8], args: Vec<&[u8]>) -> Result<Vec<
             a.len(),
         )
     } {
-        -1 => return Err("failed to call contract".to_string()),
+        -1 => return Err(from_str("failed to call contract")),
         id => id as usize,
     };
 
@@ -230,7 +240,7 @@ pub fn call_contract(addr: &[u8], entry: &[u8], args: Vec<&[u8]>) -> Result<Vec<
 
     loop {
         match unsafe { __read(id, offset, buf.as_mut_ptr(), buf.len()) } {
-            -1 => return Err("read_state: key not found".to_string()),
+            -1 => return Err(from_str("read_state: key not found")),
             0 => break,
             n => {
                 val.extend_from_slice(&buf[0..n as usize]);
@@ -241,11 +251,11 @@ pub fn call_contract(addr: &[u8], entry: &[u8], args: Vec<&[u8]>) -> Result<Vec<
             }
         }
     }
-    Ok(val)
+    Ok(T::from_bytes(val)?)
 }
 
 // format: <elem_num: 4byte>|<elem1_size: 4byte>|<elem1_data>|<elem2_size: 4byte>|<elem2_data>|...
-fn serialize_args(args: &Vec<&[u8]>) -> Vec<u8> {
+fn serialize_args(args: &[&[u8]]) -> Vec<u8> {
     let mut bs: Vec<u8> = vec![];
     bs.extend_from_slice(&(args.len() as u32).to_be_bytes());
     for arg in args {
@@ -259,7 +269,7 @@ pub fn log(b: &[u8]) -> i32 {
     unsafe { __log(b.as_ptr(), b.len()) }
 }
 
-pub fn read_state(key: &[u8]) -> Result<Vec<u8>, String> {
+pub fn read_state<T: FromBytes>(key: &[u8]) -> Result<T, Error> {
     let mut val_buf = [0u8; BUF_SIZE];
     let mut offset = 0;
     let mut val: Vec<u8> = Vec::new();
@@ -273,7 +283,7 @@ pub fn read_state(key: &[u8]) -> Result<Vec<u8>, String> {
                 val_buf.len(),
             )
         } {
-            -1 => return Err("read_state: key not found".to_string()),
+            -1 => return Err(from_str("read_state: key not found")),
             0 => break,
             n => {
                 val.extend_from_slice(&val_buf[0..n as usize]);
@@ -284,15 +294,7 @@ pub fn read_state(key: &[u8]) -> Result<Vec<u8>, String> {
             }
         }
     }
-    Ok(val)
-}
-
-pub fn read_state_str(key: &[u8]) -> Result<String, String> {
-    let v = read_state(key)?;
-    match str::from_utf8(&v) {
-        Ok(v) => Ok(v.to_string()),
-        Err(e) => Err(format!("Invalid UTF-8 sequence: {}", e)),
-    }
+    Ok(T::from_bytes(val)?)
 }
 
 pub fn write_state(key: &[u8], value: &[u8]) {
@@ -313,34 +315,11 @@ pub fn revert(msg: String) {
     panic!(msg);
 }
 
-pub fn hex_to_bytes(hex_asm: &str) -> Vec<u8> {
-    let bs = if hex_asm.starts_with("0x") {
-        &hex_asm[2..].as_bytes()
-    } else {
-        hex_asm.as_bytes()
-    };
-    let mut hex_bytes = bs
-        .iter()
-        .filter_map(|b| match b {
-            b'0'...b'9' => Some(b - b'0'),
-            b'a'...b'f' => Some(b - b'a' + 10),
-            b'A'...b'F' => Some(b - b'A' + 10),
-            _ => None,
-        })
-        .fuse();
-
-    let mut bytes = Vec::new();
-    while let (Some(h), Some(l)) = (hex_bytes.next(), hex_bytes.next()) {
-        bytes.push(h << 4 | l)
-    }
-    bytes
-}
-
 #[cfg(test)]
 mod tests {
     use super::*;
 
-    fn deserialize_args(bs: &Vec<u8>) -> Result<Vec<Vec<u8>>, String> {
+    fn deserialize_args(bs: &Vec<u8>) -> Result<Vec<Vec<u8>>, Error> {
         let mut args: Vec<Vec<u8>> = vec![];
         let mut num_bs = [0u8; 4];
         num_bs.copy_from_slice(&bs[0..4]);

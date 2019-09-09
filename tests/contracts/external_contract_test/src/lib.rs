@@ -1,26 +1,27 @@
-extern crate hmc;
+extern crate hmcdk;
+use hmcdk::api;
+use hmcdk::prelude::*;
 
-#[no_mangle]
-pub fn test_plus() -> i32 {
-    let x = hmc::get_arg_str(0).unwrap().parse::<i64>().unwrap();
-    let y = hmc::get_arg_str(1).unwrap().parse::<i64>().unwrap();
-    let msg = format!("{}", x + y);
-    hmc::return_value(msg.as_bytes())
+#[contract]
+pub fn test_plus() -> R<i64> {
+    let x: i64 = api::get_arg(0)?;
+    let y: i64 = api::get_arg(1)?;
+    Ok(Some(x+y))
 }
 
-#[no_mangle]
-pub fn who_am_i() -> i32 {
-    let sender = hmc::get_sender().unwrap();
-    hmc::return_value(&sender)
+#[contract]
+pub fn who_am_i() -> R<Address> {
+    let sender = api::get_sender()?;
+    Ok(Some(sender))
 }
 
-#[no_mangle]
-pub fn get_contract_address() -> i32 {
-    let address = hmc::get_contract_address().unwrap();
-    hmc::return_value(&address)
+#[contract]
+pub fn get_contract_address() -> R<Address> {
+    let address = api::get_contract_address()?;
+    Ok(Some(address))
 }
 
-#[no_mangle]
-pub fn init() -> i32 {
-    0
+#[contract]
+pub fn init() -> R<i32> {
+    Ok(None)
 }

@@ -11,6 +11,7 @@ import (
 	"github.com/tendermint/go-amino"
 
 	"github.com/bluele/hypermint/pkg/client"
+	"github.com/bluele/hypermint/pkg/client/contract"
 	"github.com/bluele/hypermint/pkg/client/helper"
 	"github.com/bluele/hypermint/pkg/db"
 	"github.com/bluele/hypermint/pkg/handler"
@@ -19,12 +20,14 @@ import (
 )
 
 const (
-	flagContract   = "contract"
-	flagFunc       = "func"
-	flagSimulate   = "simulate"
-	flagRWSetsHash = "rwsh"
-	flagArgs       = "args"
-	flagSilent     = "silent"
+	flagContract        = "contract"
+	flagFunc            = "func"
+	flagSimulate        = "simulate"
+	flagRWSetsHash      = "rwsh"
+	flagArgs            = "args"
+	flagArgTypes        = "argtypes"
+	flagReturnValueType = "type"
+	flagSilent          = "silent"
 )
 
 func init() {
@@ -33,8 +36,10 @@ func init() {
 	callCmd.Flags().String(flagContract, "", "contract address")
 	callCmd.Flags().String(flagFunc, "", "function name")
 	callCmd.Flags().StringSlice(flagArgs, nil, "arguments")
+	callCmd.Flags().StringSlice(flagArgTypes, nil, "types of arguments")
 	callCmd.Flags().String(flagRWSetsHash, "", "RWSets hash")
 	callCmd.Flags().Uint(flagGas, 0, "gas for tx")
+	callCmd.Flags().String(flagReturnValueType, contract.Int, "a type of return value")
 	callCmd.Flags().Bool(flagSimulate, false, "execute as simulation")
 	callCmd.Flags().Bool(flagSilent, false, "if true, suppress unnecessary output")
 	util.CheckRequiredFlag(callCmd, helper.FlagAddress, flagGas)
@@ -68,9 +73,12 @@ var callCmd = &cobra.Command{
 				return err
 			}
 		}
-		var args [][]byte
-		for _, arg := range viper.GetStringSlice(flagArgs) {
-			args = append(args, []byte(arg))
+		args, err := contract.SerializeCallArgs(
+			viper.GetStringSlice(flagArgs),
+			viper.GetStringSlice(flagArgTypes),
+		)
+		if err != nil {
+			return err
 		}
 		tx := &transaction.ContractCallTx{
 			Address:    caddr,
@@ -98,11 +106,15 @@ var callCmd = &cobra.Command{
 				return err
 			}
 			if viper.GetBool(flagSilent) {
-				fmt.Print(string(res.Returned))
+				fmt.Print(hex.EncodeToString(res.Returned))
 			} else {
 				pretty.Println(rs)
 				fmt.Printf("RWSetsHash: 0x%x\n", rs.Hash())
-				fmt.Println("Result:", string(res.Returned))
+				v, err := contract.DeserializeValue(res.Returned, viper.GetString(flagReturnValueType))
+				if err != nil {
+					return err
+				}
+				fmt.Println("Result:", v)
 			}
 			return nil
 		}

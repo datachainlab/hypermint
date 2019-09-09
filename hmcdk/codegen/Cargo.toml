@@ -1,0 +1,12 @@
+[package]
+name = "hmcdk_codegen"
+version = "0.1.0"
+authors = ["Jun Kimura <junkxdev@gmail.com>"]
+edition = "2018"
+
+[dependencies]
+syn = { version = "0.15.18", features = ["full", "extra-traits"] }
+quote = "0.6.9"
+
+[lib]
+proc-macro = true

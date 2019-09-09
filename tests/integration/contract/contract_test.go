@@ -2,6 +2,7 @@ package contract
 
 import (
 	"crypto/ecdsa"
+	"encoding/binary"
 	"fmt"
 	"io/ioutil"
 	"testing"
@@ -73,7 +74,9 @@ func (ts *ContractTestSuite) TestEnv() {
 	contractAddress := ts.contract.Address()
 
 	var U32 = func(v uint32) []byte {
-		return []byte(fmt.Sprint(v))
+		var b [4]byte
+		binary.BigEndian.PutUint32(b[:], v)
+		return b[:]
 	}
 	var S = func(v string) []byte {
 		return []byte(v)

@@ -75,8 +75,8 @@ Now you got the first contract address!
 Next, try to check your balance.
 
 ```
-$ ./build/hmcli contract call --address=$ADDR1 --contract=0xceD4629963CCc0549094e962a01f454EBFD80Cbd --func="get_balance" --password=password --simulate --gas=1
-100
+$ ./build/hmcli contract call --address=$ADDR1 --contract=0xceD4629963CCc0549094e962a01f454EBFD80Cbd --func="get_balance" --type=int --password=password --simulate --gas=1
+10000
 ```
 
 ## Contract development

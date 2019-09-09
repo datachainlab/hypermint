@@ -1,11 +1,13 @@
 [package]
-name = "hmc"
-version = "0.1.1"
+name = "hmcdk"
+version = "0.1.0"
 authors = ["Jun Kimura <junkxdev@gmail.com>"]
 edition = "2018"
 
 [dependencies]
+hmcdk_codegen = { version = "0.1.0", path = "../codegen" }
+failure = "0.1.5"
 
 [lib]
-name = "hmc"
+name = "hmcdk"
 crate-type = ["cdylib", "lib"]
