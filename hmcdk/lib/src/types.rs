@@ -17,8 +17,8 @@ macro_rules! num_from_bytes_impl {
                 let v = value.borrow();
                 if v.len() != $u {
                     Err(from_str(format!(
-                        "a length of bytes must be $u, but got {}",
-                        v.len()
+                        "a length of bytes must be {}, but got {}",
+                        $u, v.len()
                     )))
                 } else {
                     let mut b: [u8; $u] = Default::default();
