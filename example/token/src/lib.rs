@@ -6,17 +6,12 @@ use hmcdk::prelude::*;
 static TOTAL: i64 = 10000;
 
 #[contract]
-pub fn get_balance() -> R<Vec<u8>> {
+pub fn get_balance() -> R<i64> {
     Ok(Some(read_state(&get_sender()?)?))
 }
 
 fn get_balance_from_addr(addr: &Address) -> Result<i64, Error> {
     read_state::<i64>(addr)
-}
-
-#[contract]
-pub fn balance() -> R<i32> {
-    Ok(Some(1i32))
 }
 
 #[contract]
