@@ -4,7 +4,9 @@ import (
 	"bytes"
 	"fmt"
 
-	"github.com/tendermint/tendermint/libs/common"
+	"github.com/bluele/hypermint/pkg/abci/types"
+	"github.com/ethereum/go-ethereum/common"
+	tmcmn "github.com/tendermint/tendermint/libs/common"
 )
 
 type Event struct {
@@ -16,16 +18,30 @@ func (ev Event) String() string {
 	return fmt.Sprintf("%v{0x%X}", string(ev.Name), ev.Value)
 }
 
-func EventsToTags(evs []*Event) (common.KVPairs, error) {
-	var pairs common.KVPairs
+func MakeTMEvents(txAddr common.Address, evs []*Event) (types.Events, error) {
+	pairs, err := eventsToPairs(evs)
+	if err != nil {
+		return nil, err
+	}
+	pairs = append(pairs, tmcmn.KVPair{
+		Key:   []byte("address"),
+		Value: []byte(txAddr.Hex()),
+	})
+	e := types.Event{Type: "contract"}
+	e.Attributes = pairs
+	return types.Events{e}, nil
+}
+
+func eventsToPairs(evs []*Event) (tmcmn.KVPairs, error) {
+	var pairs tmcmn.KVPairs
 	for _, ev := range evs {
 		if err := validateEvent(ev); err != nil {
 			return nil, err
 		}
 		key := []byte("event.name")
-		pairs = append(pairs, common.KVPair{Key: key, Value: ev.Name})
+		pairs = append(pairs, tmcmn.KVPair{Key: key, Value: ev.Name})
 		dataKey := []byte("event.data")
-		pairs = append(pairs, common.KVPair{Key: dataKey, Value: makeEventData(ev)})
+		pairs = append(pairs, tmcmn.KVPair{Key: dataKey, Value: makeEventData(ev)})
 	}
 	return pairs, nil
 }
