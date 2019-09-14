@@ -18,14 +18,14 @@ func (ev Event) String() string {
 	return fmt.Sprintf("%v{0x%X}", string(ev.Name), ev.Value)
 }
 
-func MakeTMEvents(txAddr common.Address, evs []*Event) (types.Events, error) {
+func MakeTMEvents(contractAddr common.Address, evs []*Event) (types.Events, error) {
 	pairs, err := eventsToPairs(evs)
 	if err != nil {
 		return nil, err
 	}
 	pairs = append(pairs, tmcmn.KVPair{
 		Key:   []byte("address"),
-		Value: []byte(txAddr.Hex()),
+		Value: contractAddr.Bytes(),
 	})
 	e := types.Event{Type: "contract"}
 	e.Attributes = pairs
