@@ -1,6 +1,7 @@
 package contract
 
 import (
+	"encoding/hex"
 	"fmt"
 	"testing"
 
@@ -36,4 +37,16 @@ func TestEventData(t *testing.T) {
 			assert.EqualValues(cs.ev, ev)
 		})
 	}
+}
+
+func TestMakeEvent(t *testing.T) {
+	assert := assert.New(t)
+	name, value := "name", "value"
+	ev1, err := MakeEvent(name, value)
+	assert.NoError(err)
+
+	hv := hex.EncodeToString([]byte(value))
+	ev2, err := MakeEvent(name, "0x"+hv)
+	assert.NoError(err)
+	assert.Equal(ev1, ev2)
 }
