@@ -31,8 +31,7 @@ func TestEventData(t *testing.T) {
 			}
 			assert.NoError(err)
 
-			b := makeEventData(cs.ev)
-			ev, err := ParseEventData(b)
+			ev, err := ParseEventData(cs.ev.Bytes())
 			assert.NoError(err)
 			assert.EqualValues(cs.ev, ev)
 		})

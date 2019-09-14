@@ -2,7 +2,9 @@ package contract
 
 import (
 	"bytes"
+	"encoding/hex"
 	"fmt"
+	"strings"
 
 	"github.com/bluele/hypermint/pkg/abci/types"
 	"github.com/ethereum/go-ethereum/common"
@@ -25,7 +27,7 @@ func MakeTMEvents(contractAddr common.Address, evs []*Event) (types.Events, erro
 	}
 	pairs = append(pairs, tmcmn.KVPair{
 		Key:   []byte("address"),
-		Value: contractAddr.Bytes(),
+		Value: []byte(contractAddr.Hex()),
 	})
 	e := types.Event{Type: "contract"}
 	e.Attributes = pairs
@@ -41,7 +43,7 @@ func eventsToPairs(evs []*Event) (tmcmn.KVPairs, error) {
 		key := []byte("event.name")
 		pairs = append(pairs, tmcmn.KVPair{Key: key, Value: ev.Name})
 		dataKey := []byte("event.data")
-		pairs = append(pairs, tmcmn.KVPair{Key: dataKey, Value: makeEventData(ev)})
+		pairs = append(pairs, tmcmn.KVPair{Key: dataKey, Value: ev.Bytes()})
 	}
 	return pairs, nil
 }
@@ -62,18 +64,45 @@ func validateEvent(ev *Event) error {
 	return nil
 }
 
-func makeEventData(ev *Event) []byte {
+func (ev *Event) Bytes() []byte {
 	var buf bytes.Buffer
 	buf.WriteByte(byte(len(ev.Name)))
 	buf.Write(ev.Name)
 	buf.Write(ev.Value)
-	return buf.Bytes()
+	return []byte(hex.EncodeToString(buf.Bytes()))
 }
 
-func ParseEventData(b []byte) (*Event, error) {
+func ParseEventData(hexStrBytes []byte) (*Event, error) {
+	b, err := hex.DecodeString(string(hexStrBytes))
+	if err != nil {
+		return nil, err
+	}
+
 	size := b[0]
 	name := b[1 : 1+size]
 	value := b[1+size : len(b)]
 
 	return &Event{Name: name, Value: value}, nil
+}
+
+func MakeEvent(name, value string) (*Event, error) {
+	var v []byte
+	if strings.Contains(value, "0x") {
+		h, err := hex.DecodeString(value[2:])
+		if err != nil {
+			return nil, err
+		}
+		v = h
+	} else {
+		v = []byte(value)
+	}
+	return &Event{Name: []byte(name), Value: v}, nil
+}
+
+func MakeEventBytes(name, value string) ([]byte, error) {
+	ev, err := MakeEvent(name, value)
+	if err != nil {
+		return nil, err
+	}
+	return ev.Bytes(), nil
 }

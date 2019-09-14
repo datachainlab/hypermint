@@ -26,7 +26,8 @@ func EventCMD() *cobra.Command {
 	// common
 	const (
 		flagContractAddress = "address"
-		flagEventName       = "event"
+		flagEventName       = "event.name"
+		flagEventValue      = "event.value"
 	)
 
 	var subscribeCmd = &cobra.Command{
@@ -101,7 +102,18 @@ func EventCMD() *cobra.Command {
 			if err != nil {
 				return err
 			}
-			q := fmt.Sprintf("contract.address='%v' AND contract.event.name='%v'", viper.GetString(flagContractAddress), viper.GetString(flagEventName))
+			q := fmt.Sprintf(
+				"contract.address='%v' AND contract.event.name='%v'",
+				viper.GetString(flagContractAddress),
+				viper.GetString(flagEventName),
+			)
+			if value := viper.GetString(flagEventValue); len(value) > 0 {
+				ev, err := contract.MakeEventBytes(viper.GetString(flagEventName), value)
+				if err != nil {
+					return err
+				}
+				q += fmt.Sprintf(" AND contract.event.data='%v'", string(ev))
+			}
 			res, err := cl.TxSearch(q, true, 0, 0)
 			if err != nil {
 				return err
@@ -120,7 +132,8 @@ func EventCMD() *cobra.Command {
 	}
 
 	searchCmd.Flags().String(flagContractAddress, "", "contract address for subscription")
-	searchCmd.Flags().String(flagEventName, "", "event name for subscription")
+	searchCmd.Flags().String(flagEventName, "", "event name")
+	searchCmd.Flags().String(flagEventValue, "", "event value as hex string")
 	searchCmd.Flags().Bool(flagCount, false, "if true, only print count of txs")
 	util.CheckRequiredFlag(searchCmd, flagContractAddress, flagEventName)
 	eventCmd.AddCommand(searchCmd)

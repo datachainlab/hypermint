@@ -114,10 +114,10 @@ func (ts *E2ETestSuite) TestContract() {
 		ts.Run("ensure that expected event is happened", func() {
 			_, err := ts.CallContract(ctx, ts.Account(1), c, "test_emit_event", []string{"first", "second"}, []string{contract.Str, contract.Str}, contract.Str, false)
 			ts.NoError(err)
-			count, err := ts.SearchEvent(ctx, c, "test-event-name-0")
+			count, err := ts.SearchEvent(ctx, c, "test-event-name-0", "first")
 			ts.NoError(err)
 			ts.Equal(1, count)
-			count, err = ts.SearchEvent(ctx, c, "test-event-name-1")
+			count, err = ts.SearchEvent(ctx, c, "test-event-name-1", "second")
 			ts.NoError(err)
 			ts.Equal(1, count)
 		})
@@ -223,12 +223,15 @@ func (ts *E2ETestSuite) CallContract(ctx context.Context, from, contractAddress 
 	return contract.DeserializeValue(ret, retType)
 }
 
-func (ts *E2ETestSuite) SearchEvent(ctx context.Context, contract common.Address, event string) (int, error) {
+func (ts *E2ETestSuite) SearchEvent(ctx context.Context, contractAddr common.Address, eventName, eventValue string) (int, error) {
 	cmd := fmt.Sprintf(
-		`contract event search --address=%v --event=%v --count`,
-		contract.Hex(),
-		event,
+		`contract event search --count --address=%v --event.name=%v`,
+		contractAddr.Hex(),
+		eventName,
 	)
+	if len(eventValue) > 0 {
+		cmd += fmt.Sprintf(` --event.value=%#v`, eventValue)
+	}
 	if out, e, err := ts.ExecCLICommand(ctx, cmd); err != nil {
 		return 0, fmt.Errorf("%v:%v:%v", string(out), string(e), err)
 	} else {
