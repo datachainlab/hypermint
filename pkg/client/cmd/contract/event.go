@@ -102,17 +102,13 @@ func EventCMD() *cobra.Command {
 			if err != nil {
 				return err
 			}
-			q := fmt.Sprintf(
-				"contract.address='%v' AND contract.event.name='%v'",
+			q, err := contract.MakeEventSearchQuery(
 				viper.GetString(flagContractAddress),
 				viper.GetString(flagEventName),
+				viper.GetString(flagEventValue),
 			)
-			if value := viper.GetString(flagEventValue); len(value) > 0 {
-				ev, err := contract.MakeEventBytes(viper.GetString(flagEventName), value)
-				if err != nil {
-					return err
-				}
-				q += fmt.Sprintf(" AND contract.event.data='%v'", string(ev))
+			if err != nil {
+				return err
 			}
 			res, err := cl.TxSearch(q, true, 0, 0)
 			if err != nil {

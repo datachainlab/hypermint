@@ -106,3 +106,22 @@ func MakeEventBytes(name, value string) ([]byte, error) {
 	}
 	return ev.Bytes(), nil
 }
+
+// MakeEventSearchQuery returns a query for searching events on transaction
+// contractAddr: target contract address
+// eventName: event name
+// eventValue: value corresponding to event name. NOTE: if value has a prefix "0x", value will be decoded into []byte
+func MakeEventSearchQuery(contractAddr string, eventName, eventValue string) (string, error) {
+	var parts []string
+
+	parts = append(parts, fmt.Sprintf("contract.address='%v'", contractAddr))
+	parts = append(parts, fmt.Sprintf("contract.event.name='%v'", eventName))
+	if len(eventValue) > 0 {
+		ev, err := MakeEventBytes(eventName, eventValue)
+		if err != nil {
+			return "", err
+		}
+		parts = append(parts, fmt.Sprintf("contract.event.data='%v'", string(ev)))
+	}
+	return strings.Join(parts, " AND "), nil
+}
