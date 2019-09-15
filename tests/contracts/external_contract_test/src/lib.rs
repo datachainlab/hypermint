@@ -22,6 +22,14 @@ pub fn get_contract_address() -> R<Address> {
 }
 
 #[contract]
+pub fn test_emit_event() -> R<Vec<u8>> {
+    let msg: Vec<u8> = api::get_arg(0)?;
+    let name = "test-ext-event-name";
+    api::emit_event(name, &msg)?;
+    Ok(None)
+}
+
+#[contract]
 pub fn init() -> R<i32> {
     Ok(None)
 }

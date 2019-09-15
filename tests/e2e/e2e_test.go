@@ -99,6 +99,11 @@ func (ts *E2ETestSuite) TestContract() {
 		return
 	}
 	ts.T().Logf("contract address is %v", c.Hex())
+	e, err := ts.DeployContract(ctx, ts.Account(1), testExternalContractPath)
+	if !ts.NoError(err) {
+		return
+	}
+	ts.T().Logf("external contract address is %v", e.Hex())
 
 	const key = "key"
 	const value = "value"
@@ -133,6 +138,21 @@ func (ts *E2ETestSuite) TestContract() {
 			ts.NoError(err)
 			err = kvp.VerifyWithHeader(c.SignedHeader.Header)
 			ts.NoError(err)
+		}
+	})
+
+	ts.Run("ensure that expected event is also happened on external contract", func() {
+		_, err := ts.CallContract(ctx, ts.Account(1), c, "test_external_emit_event", []string{"first", e.Hex(), "second"}, []string{contract.Str, contract.Address, contract.Str}, contract.Str, false)
+		ts.NoError(err)
+		{
+			count, err := ts.SearchEvent(ctx, c, "test-org-event-name", "first")
+			ts.NoError(err)
+			ts.Equal(1, count)
+		}
+		{
+			count, err := ts.SearchEvent(ctx, e, "test-ext-event-name", "second")
+			ts.NoError(err)
+			ts.Equal(1, count)
 		}
 	})
 }
