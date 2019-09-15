@@ -73,13 +73,11 @@ func handleContractCallTx(ctx types.Context, cm *contract.ContractManager, envm 
 	if err != nil {
 		return transaction.ErrInvalidCall(transaction.DefaultCodespace, err.Error()).Result()
 	}
-	rb, err := amino.MarshalBinaryBare(
-		ContractCallTxResponse{
-			Returned:    res.Response,
-			RWSetsBytes: b,
-			Events:      res.State.Events(),
-		},
-	)
+	rb, err := ContractCallTxResponse{
+		Returned:    res.Response,
+		RWSetsBytes: b,
+		Events:      res.State.Events(),
+	}.Bytes()
 	if err != nil {
 		return transaction.ErrInvalidCall(transaction.DefaultCodespace, err.Error()).Result()
 	}
@@ -97,4 +95,8 @@ type ContractCallTxResponse struct {
 	Returned    []byte
 	RWSetsBytes []byte
 	Events      []*event.Event
+}
+
+func (r ContractCallTxResponse) Bytes() ([]byte, error) {
+	return amino.MarshalBinaryBare(r)
 }
