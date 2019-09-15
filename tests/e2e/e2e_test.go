@@ -150,6 +150,11 @@ func (ts *E2ETestSuite) TestContract() {
 			ts.Equal(1, count)
 		}
 		{
+			count, err := ts.SearchEvent(ctx, c, "test-org-event-name", "0x"+hex.EncodeToString([]byte("first")))
+			ts.NoError(err)
+			ts.Equal(1, count)
+		}
+		{
 			count, err := ts.SearchEvent(ctx, e, "test-ext-event-name", "second")
 			ts.NoError(err)
 			ts.Equal(1, count)
