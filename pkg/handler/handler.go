@@ -83,14 +83,9 @@ func handleContractCallTx(ctx types.Context, cm *contract.ContractManager, envm 
 	if err != nil {
 		return transaction.ErrInvalidCall(transaction.DefaultCodespace, err.Error()).Result()
 	}
-
-	var events types.Events
-	for _, ev := range res.State.Events() {
-		event, err := event.MakeTMEvent(ev.Address(), ev.Entries())
-		if err != nil {
-			return transaction.ErrInvalidCall(transaction.DefaultCodespace, err.Error()).Result()
-		}
-		events = append(events, *event)
+	events, err := event.MakeTMEvents(res.State.Events())
+	if err != nil {
+		return transaction.ErrInvalidCall(transaction.DefaultCodespace, err.Error()).Result()
 	}
 	return types.Result{
 		Data:   rb,

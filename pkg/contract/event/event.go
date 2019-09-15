@@ -64,6 +64,18 @@ func (e Entry) Bytes() []byte {
 	return []byte(hex.EncodeToString(buf.Bytes()))
 }
 
+func MakeTMEvents(evs []*Event) (types.Events, error) {
+	var events types.Events
+	for _, ev := range evs {
+		event, err := MakeTMEvent(ev.Address(), ev.Entries())
+		if err != nil {
+			return nil, err
+		}
+		events = append(events, *event)
+	}
+	return events, nil
+}
+
 func MakeTMEvent(contractAddr common.Address, es []*Entry) (*types.Event, error) {
 	pairs, err := eventsToPairs(es)
 	if err != nil {
