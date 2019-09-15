@@ -133,8 +133,10 @@ func (env *Env) Exec(ctx sdk.Context, entry string) (*Result, error) {
 		return nil, err
 	}
 	code := int32(ret)
+	res := env.GetReponse()
 	if code < 0 {
-		return &Result{Code: code}, fmt.Errorf("execute contract error(exit code: %v)", code)
+		// TODO add error msg from call stacks
+		return &Result{Code: code, Response: res}, fmt.Errorf("execute contract error exitcode=%v description=%v", code, string(res))
 	}
 
 	// Update state
@@ -146,7 +148,7 @@ func (env *Env) Exec(ctx sdk.Context, entry string) (*Result, error) {
 
 	return &Result{
 		Code:     code,
-		Response: env.GetReponse(),
+		Response: res,
 		State:    env.state,
 	}, nil
 }
