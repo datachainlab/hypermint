@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 
+	"github.com/bluele/hypermint/pkg/contract/event"
 	"github.com/bluele/hypermint/pkg/db"
 	"github.com/bluele/hypermint/pkg/logger"
 
@@ -26,7 +27,7 @@ type Process interface {
 	Call(addr common.Address, entry []byte, args Args) (int, error)
 	Read(id int) ([]byte, error)
 	ValueTable() ValueTable
-	EmitEvent(ev *Event)
+	EmitEvent(ev *event.Entry)
 }
 
 // ValueTable manages values that external contract returns.
@@ -87,7 +88,7 @@ func (p *process) Call(addr common.Address, entry []byte, args Args) (int, error
 	if err != nil {
 		return int(res.Code), err
 	}
-	p.env.state.Add(res.RWSets...)
+	p.env.state.Update(res.State)
 	return p.ValueTable().Put(res.Response)
 }
 
@@ -110,8 +111,8 @@ func (p process) ValueTable() ValueTable {
 	return p.vt
 }
 
-func (p *process) EmitEvent(ev *Event) {
-	p.env.events = append(p.env.events, ev)
+func (p *process) EmitEvent(ev *event.Entry) {
+	p.env.entries = append(p.env.entries, ev)
 }
 
 type valueT map[int][]byte

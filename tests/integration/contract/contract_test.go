@@ -272,11 +272,11 @@ func (ts *ContractTestSuite) TestReadWriteSet() {
 			ts.FailNow("failed to Exec", err.Error())
 		}
 		if !isSimulate {
-			db.CommitState(cms.GetKVStore(ts.mainKey), res.RWSets, db.Version{height, txIndex})
+			db.CommitState(cms.GetKVStore(ts.mainKey), res.State.RWSets(), db.Version{height, txIndex})
 			cms.Commit()
 			txIndex++
 		}
-		return res.RWSets
+		return res.State.RWSets()
 	}
 
 	{
@@ -453,13 +453,19 @@ func (ts *ContractTestSuite) TestEmitEvent() {
 	}
 	res, err := env.Exec(sdk.NewContext(cms, abci.Header{}, false, nil), "test_emit_event")
 	ts.NoError(err)
-	ts.Equal(2, len(res.Events))
+	ts.Equal(1, len(res.State.Events()))
 
-	ts.Equal([]byte("test-event-name-0"), res.Events[0].Name)
-	ts.Equal(msg0, res.Events[0].Value)
+	event := res.State.Events()[0]
+	ts.Equal(env.Contract.Address(), event.Address())
 
-	ts.Equal([]byte("test-event-name-1"), res.Events[1].Name)
-	ts.Equal(msg1, res.Events[1].Value)
+	ts.Equal(2, len(event.Entries()))
+	entries := event.Entries()
+
+	ts.Equal([]byte("test-event-name-0"), entries[0].Name)
+	ts.Equal(msg0, entries[0].Value)
+
+	ts.Equal([]byte("test-event-name-1"), entries[1].Name)
+	ts.Equal(msg1, entries[1].Value)
 }
 
 func TestContractTestSuite(t *testing.T) {

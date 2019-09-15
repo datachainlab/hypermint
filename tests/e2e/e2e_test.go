@@ -99,6 +99,11 @@ func (ts *E2ETestSuite) TestContract() {
 		return
 	}
 	ts.T().Logf("contract address is %v", c.Hex())
+	e, err := ts.DeployContract(ctx, ts.Account(1), testExternalContractPath)
+	if !ts.NoError(err) {
+		return
+	}
+	ts.T().Logf("external contract address is %v", e.Hex())
 
 	const key = "key"
 	const value = "value"
@@ -114,10 +119,10 @@ func (ts *E2ETestSuite) TestContract() {
 		ts.Run("ensure that expected event is happened", func() {
 			_, err := ts.CallContract(ctx, ts.Account(1), c, "test_emit_event", []string{"first", "second"}, []string{contract.Str, contract.Str}, contract.Str, false)
 			ts.NoError(err)
-			count, err := ts.SearchEvent(ctx, c, "test-event-name-0")
+			count, err := ts.SearchEvent(ctx, c, "test-event-name-0", "first")
 			ts.NoError(err)
 			ts.Equal(1, count)
-			count, err = ts.SearchEvent(ctx, c, "test-event-name-1")
+			count, err = ts.SearchEvent(ctx, c, "test-event-name-1", "second")
 			ts.NoError(err)
 			ts.Equal(1, count)
 		})
@@ -134,6 +139,32 @@ func (ts *E2ETestSuite) TestContract() {
 			err = kvp.VerifyWithHeader(c.SignedHeader.Header)
 			ts.NoError(err)
 		}
+	})
+
+	ts.Run("ensure that expected event is also happened on external contract", func() {
+		_, err := ts.CallContract(ctx, ts.Account(1), c, "test_external_emit_event", []string{"first", e.Hex(), "second"}, []string{contract.Str, contract.Address, contract.Str}, contract.Str, false)
+		ts.NoError(err)
+		{
+			count, err := ts.SearchEvent(ctx, c, "test-org-event-name", "first")
+			ts.NoError(err)
+			ts.Equal(1, count)
+		}
+		{
+			count, err := ts.SearchEvent(ctx, c, "test-org-event-name", "0x"+hex.EncodeToString([]byte("first")))
+			ts.NoError(err)
+			ts.Equal(1, count)
+		}
+		{
+			count, err := ts.SearchEvent(ctx, e, "test-ext-event-name", "second")
+			ts.NoError(err)
+			ts.Equal(1, count)
+		}
+		// WARNING: currently this test case will be failed.
+		// {
+		// 	count, err := ts.SearchEvent(ctx, c, "test-ext-event-name", "second")
+		// 	ts.NoError(err)
+		// 	ts.Equal(0, count)
+		// }
 	})
 }
 
@@ -223,12 +254,15 @@ func (ts *E2ETestSuite) CallContract(ctx context.Context, from, contractAddress 
 	return contract.DeserializeValue(ret, retType)
 }
 
-func (ts *E2ETestSuite) SearchEvent(ctx context.Context, contract common.Address, event string) (int, error) {
+func (ts *E2ETestSuite) SearchEvent(ctx context.Context, contractAddr common.Address, eventName, eventValue string) (int, error) {
 	cmd := fmt.Sprintf(
-		`contract event search --address=%v --event=%v --count`,
-		contract.Hex(),
-		event,
+		`contract event search --count --address=%v --event.name=%v`,
+		contractAddr.Hex(),
+		eventName,
 	)
+	if len(eventValue) > 0 {
+		cmd += fmt.Sprintf(` --event.value=%#v`, eventValue)
+	}
 	if out, e, err := ts.ExecCLICommand(ctx, cmd); err != nil {
 		return 0, fmt.Errorf("%v:%v:%v", string(out), string(e), err)
 	} else {
