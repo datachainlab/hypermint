@@ -13,7 +13,6 @@ import (
 	"github.com/bluele/hypermint/pkg/transaction"
 
 	"github.com/tendermint/go-amino"
-	"github.com/tendermint/tendermint/libs/common"
 )
 
 func NewHandler(txm transaction.TxIndexMapper, am account.AccountMapper, cm *contract.ContractManager, envm *contract.EnvManager, sm *db.StateManager) types.Handler {
@@ -103,11 +102,4 @@ type ContractCallTxResponse struct {
 	Returned    []byte
 	RWSetsBytes []byte
 	Events      []*event.Event
-}
-
-func makeTag(key string, value []byte) common.KVPair {
-	return common.KVPair{
-		Key:   []byte(key),
-		Value: value,
-	}
 }
