@@ -13,13 +13,13 @@ import (
 
 type Event struct {
 	address common.Address
-	items   []*Entry
+	entries []*Entry
 }
 
-func NewEvent(address common.Address, items []*Entry) *Event {
+func NewEvent(address common.Address, entries []*Entry) *Event {
 	return &Event{
 		address: address,
-		items:   items,
+		entries: entries,
 	}
 }
 
@@ -27,8 +27,8 @@ func (es Event) Address() common.Address {
 	return es.address
 }
 
-func (es Event) Items() []*Entry {
-	return es.items
+func (es Event) Entries() []*Entry {
+	return es.entries
 }
 
 type Entry struct {
