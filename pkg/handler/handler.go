@@ -8,6 +8,7 @@ import (
 	"github.com/bluele/hypermint/pkg/abci/types"
 	"github.com/bluele/hypermint/pkg/account"
 	"github.com/bluele/hypermint/pkg/contract"
+	"github.com/bluele/hypermint/pkg/contract/event"
 	"github.com/bluele/hypermint/pkg/db"
 	"github.com/bluele/hypermint/pkg/transaction"
 
@@ -86,7 +87,7 @@ func handleContractCallTx(ctx types.Context, cm *contract.ContractManager, envm 
 
 	var events types.Events
 	for _, ev := range res.State.Events() {
-		event, err := contract.MakeTMEvent(ev.Address(), ev.Items())
+		event, err := event.MakeTMEvent(ev.Address(), ev.Items())
 		if err != nil {
 			return transaction.ErrInvalidCall(transaction.DefaultCodespace, err.Error()).Result()
 		}
@@ -101,7 +102,7 @@ func handleContractCallTx(ctx types.Context, cm *contract.ContractManager, envm 
 type ContractCallTxResponse struct {
 	Returned    []byte
 	RWSetsBytes []byte
-	Events      []*contract.Events
+	Events      []*event.Event
 }
 
 func makeTag(key string, value []byte) common.KVPair {

@@ -2,6 +2,7 @@ package contract
 
 import (
 	"github.com/bluele/hypermint/pkg/util"
+	"github.com/bluele/hypermint/pkg/contract/event"
 	"github.com/ethereum/go-ethereum/common"
 )
 
@@ -162,8 +163,8 @@ func ECRecoverAddress(ps Process, h, v, r, s Reader, ret Writer) int {
 }
 
 func EmitEvent(ps Process, name, value Reader) int {
-	ev := &Event{Name: name.Read(), Value: value.Read()}
-	if err := validateEvent(ev); err != nil {
+	ev := &event.Entry{Name: name.Read(), Value: value.Read()}
+	if err := ev.Validate(); err != nil {
 		ps.Logger().Debug("invalid event", "err", err)
 		return -1
 	}

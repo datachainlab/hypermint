@@ -5,7 +5,7 @@ import (
 	"fmt"
 
 	"github.com/bluele/hypermint/pkg/client"
-	"github.com/bluele/hypermint/pkg/contract"
+	"github.com/bluele/hypermint/pkg/contract/event"
 	"github.com/bluele/hypermint/pkg/util"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
@@ -63,11 +63,11 @@ func EventCMD() *cobra.Command {
 					}
 					for _, tag := range ev.Attributes {
 						if k := string(tag.GetKey()); k == "event.data" {
-							ev, err := contract.ParseEventData(tag.GetValue())
+							e, err := event.ParseEntry(tag.GetValue())
 							if err != nil {
 								return err
 							}
-							fmt.Println(ev.String())
+							fmt.Println(e.String())
 						} else if k == "event.name" || k == "address" {
 							// skip
 						} else {
@@ -102,7 +102,7 @@ func EventCMD() *cobra.Command {
 			if err != nil {
 				return err
 			}
-			q, err := contract.MakeEventSearchQuery(
+			q, err := event.MakeEventSearchQuery(
 				viper.GetString(flagContractAddress),
 				viper.GetString(flagEventName),
 				viper.GetString(flagEventValue),

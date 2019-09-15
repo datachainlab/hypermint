@@ -3,6 +3,7 @@ package contract
 import (
 	"fmt"
 
+	"github.com/bluele/hypermint/pkg/contract/event"
 	"github.com/bluele/hypermint/pkg/db"
 	"github.com/bluele/hypermint/pkg/logger"
 
@@ -22,9 +23,9 @@ type Env struct {
 	Contract   *Contract
 	VMProvider VMProvider
 
-	DB     *db.VersionedDB
-	state  State
-	events []*Event
+	DB      *db.VersionedDB
+	entries []*event.Entry
+	state   State
 }
 
 type Args struct {
@@ -62,36 +63,16 @@ func NewArgsFromStrings(ss []string) Args {
 	return Args{values: values}
 }
 
-type Events struct {
-	address common.Address
-	items   []*Event
-}
-
-func NewEvents(address common.Address, items []*Event) *Events {
-	return &Events{
-		address: address,
-		items:   items,
-	}
-}
-
-func (es Events) Address() common.Address {
-	return es.address
-}
-
-func (es Events) Items() []*Event {
-	return es.items
-}
-
 type State struct {
 	rws db.RWSets
-	evs []*Events
+	evs []*event.Event
 }
 
 func (s State) RWSets() db.RWSets {
 	return s.rws
 }
 
-func (s State) Events() []*Events {
+func (s State) Events() []*event.Event {
 	return s.evs
 }
 
@@ -104,7 +85,7 @@ func (s *State) AddRWSets(ss ...*db.RWSet) {
 	s.rws.Add(ss...)
 }
 
-func (s *State) AddEvents(evs ...*Events) {
+func (s *State) AddEvents(evs ...*event.Event) {
 	s.evs = append(s.evs, evs...)
 }
 
@@ -155,11 +136,14 @@ func (env *Env) Exec(ctx sdk.Context, entry string) (*Result, error) {
 	if code < 0 {
 		return &Result{Code: code}, fmt.Errorf("execute contract error(exit code: %v)", code)
 	}
+
+	// Update state
 	env.state.AddRWSets(&db.RWSet{
 		Address: env.Contract.Address(),
 		Items:   env.DB.RWSetItems(),
 	})
-	env.state.AddEvents(NewEvents(env.Contract.Address(), env.events))
+	env.state.AddEvents(event.NewEvent(env.Contract.Address(), env.entries))
+
 	return &Result{
 		Code:     code,
 		Response: env.GetReponse(),

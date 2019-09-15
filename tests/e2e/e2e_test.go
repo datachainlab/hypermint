@@ -154,6 +154,12 @@ func (ts *E2ETestSuite) TestContract() {
 			ts.NoError(err)
 			ts.Equal(1, count)
 		}
+		// WARNING: currently this test case will be failed.
+		// {
+		// 	count, err := ts.SearchEvent(ctx, c, "test-ext-event-name", "second")
+		// 	ts.NoError(err)
+		// 	ts.Equal(0, count)
+		// }
 	})
 }
 
