@@ -20,7 +20,7 @@ func (ev Event) String() string {
 	return fmt.Sprintf("%v{0x%X}", string(ev.Name), ev.Value)
 }
 
-func MakeTMEvents(contractAddr common.Address, evs []*Event) (types.Events, error) {
+func MakeTMEvent(contractAddr common.Address, evs []*Event) (*types.Event, error) {
 	pairs, err := eventsToPairs(evs)
 	if err != nil {
 		return nil, err
@@ -31,7 +31,7 @@ func MakeTMEvents(contractAddr common.Address, evs []*Event) (types.Events, erro
 	})
 	e := types.Event{Type: "contract"}
 	e.Attributes = pairs
-	return types.Events{e}, nil
+	return &e, nil
 }
 
 func eventsToPairs(evs []*Event) (tmcmn.KVPairs, error) {

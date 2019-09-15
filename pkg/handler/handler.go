@@ -65,11 +65,11 @@ func handleContractCallTx(ctx types.Context, cm *contract.ContractManager, envm 
 	if err != nil {
 		return transaction.ErrInvalidCall(transaction.DefaultCodespace, err.Error()).Result()
 	}
-	sm.CommitState(ctx, res.RWSets)
-	if len(tx.RWSetsHash) != 0 && !bytes.Equal(tx.RWSetsHash, res.RWSets.Hash()) {
-		return transaction.ErrInvalidCall(transaction.DefaultCodespace, fmt.Sprintf("RWSetsHash mismatch %v %v", tx.RWSetsHash, res.RWSets.Hash())).Result()
+	sm.CommitState(ctx, res.State.RWSets())
+	if len(tx.RWSetsHash) != 0 && !bytes.Equal(tx.RWSetsHash, res.State.RWSets().Hash()) {
+		return transaction.ErrInvalidCall(transaction.DefaultCodespace, fmt.Sprintf("RWSetsHash mismatch %v %v", tx.RWSetsHash, res.State.RWSets().Hash())).Result()
 	}
-	b, err := res.RWSets.Bytes()
+	b, err := res.State.RWSets().Bytes()
 	if err != nil {
 		return transaction.ErrInvalidCall(transaction.DefaultCodespace, err.Error()).Result()
 	}
@@ -77,15 +77,20 @@ func handleContractCallTx(ctx types.Context, cm *contract.ContractManager, envm 
 		ContractCallTxResponse{
 			Returned:    res.Response,
 			RWSetsBytes: b,
-			Events:      res.Events,
+			Events:      res.State.Events(),
 		},
 	)
 	if err != nil {
 		return transaction.ErrInvalidCall(transaction.DefaultCodespace, err.Error()).Result()
 	}
-	events, err := contract.MakeTMEvents(tx.Address, res.Events)
-	if err != nil {
-		return transaction.ErrInvalidCall(transaction.DefaultCodespace, err.Error()).Result()
+
+	var events types.Events
+	for _, ev := range res.State.Events() {
+		event, err := contract.MakeTMEvent(ev.Address(), ev.Items())
+		if err != nil {
+			return transaction.ErrInvalidCall(transaction.DefaultCodespace, err.Error()).Result()
+		}
+		events = append(events, *event)
 	}
 	return types.Result{
 		Data:   rb,
@@ -96,7 +101,7 @@ func handleContractCallTx(ctx types.Context, cm *contract.ContractManager, envm 
 type ContractCallTxResponse struct {
 	Returned    []byte
 	RWSetsBytes []byte
-	Events      []*contract.Event
+	Events      []*contract.Events
 }
 
 func makeTag(key string, value []byte) common.KVPair {

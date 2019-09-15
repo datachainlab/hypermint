@@ -87,7 +87,7 @@ func (p *process) Call(addr common.Address, entry []byte, args Args) (int, error
 	if err != nil {
 		return int(res.Code), err
 	}
-	p.env.state.Add(res.RWSets...)
+	p.env.state.Update(res.State)
 	return p.ValueTable().Put(res.Response)
 }
 

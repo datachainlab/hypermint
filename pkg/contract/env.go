@@ -23,7 +23,7 @@ type Env struct {
 	VMProvider VMProvider
 
 	DB     *db.VersionedDB
-	state  db.RWSets
+	state  State
 	events []*Event
 }
 
@@ -62,6 +62,52 @@ func NewArgsFromStrings(ss []string) Args {
 	return Args{values: values}
 }
 
+type Events struct {
+	address common.Address
+	items   []*Event
+}
+
+func NewEvents(address common.Address, items []*Event) *Events {
+	return &Events{
+		address: address,
+		items:   items,
+	}
+}
+
+func (es Events) Address() common.Address {
+	return es.address
+}
+
+func (es Events) Items() []*Event {
+	return es.items
+}
+
+type State struct {
+	rws db.RWSets
+	evs []*Events
+}
+
+func (s State) RWSets() db.RWSets {
+	return s.rws
+}
+
+func (s State) Events() []*Events {
+	return s.evs
+}
+
+func (s *State) Update(other State) {
+	s.AddRWSets(other.rws...)
+	s.AddEvents(other.evs...)
+}
+
+func (s *State) AddRWSets(ss ...*db.RWSet) {
+	s.rws.Add(ss...)
+}
+
+func (s *State) AddEvents(evs ...*Events) {
+	s.evs = append(s.evs, evs...)
+}
+
 type VMProvider func(*Env) (*VM, error)
 
 func DefaultVMProvider(env *Env) (*VM, error) {
@@ -83,8 +129,7 @@ type VM struct {
 type Result struct {
 	Code     int32
 	Response []byte
-	RWSets   db.RWSets
-	Events   []*Event
+	State    State
 }
 
 func (env *Env) Exec(ctx sdk.Context, entry string) (*Result, error) {
@@ -110,15 +155,15 @@ func (env *Env) Exec(ctx sdk.Context, entry string) (*Result, error) {
 	if code < 0 {
 		return &Result{Code: code}, fmt.Errorf("execute contract error(exit code: %v)", code)
 	}
-	env.state.Add(&db.RWSet{
+	env.state.AddRWSets(&db.RWSet{
 		Address: env.Contract.Address(),
 		Items:   env.DB.RWSetItems(),
 	})
+	env.state.AddEvents(NewEvents(env.Contract.Address(), env.events))
 	return &Result{
 		Code:     code,
 		Response: env.GetReponse(),
-		RWSets:   env.state,
-		Events:   env.events,
+		State:    env.state,
 	}, nil
 }
 
