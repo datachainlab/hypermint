@@ -454,8 +454,12 @@ func (ts *ContractTestSuite) TestEmitEvent() {
 	res, err := env.Exec(sdk.NewContext(cms, abci.Header{}, false, nil), "test_emit_event")
 	ts.NoError(err)
 	ts.Equal(1, len(res.State.Events()))
-	ts.Equal(2, len(res.State.Events()[0].Entries()))
-	entries := res.State.Events()[0].Entries()
+
+	event := res.State.Events()[0]
+	ts.Equal(env.Contract.Address(), event.Address())
+
+	ts.Equal(2, len(event.Entries()))
+	entries := event.Entries()
 
 	ts.Equal([]byte("test-event-name-0"), entries[0].Name)
 	ts.Equal(msg0, entries[0].Value)
