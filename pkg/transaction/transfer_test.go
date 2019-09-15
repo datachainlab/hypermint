@@ -77,20 +77,9 @@ func TestTransferTxSignature(t *testing.T) {
 	}
 
 	var cases = []struct {
-		tx            *TransferTx
-		expectedError bool
+		tx    *TransferTx
+		valid bool
 	}{
-		{
-			&TransferTx{
-				Common: CommonTx{
-					From: crypto.PubkeyToAddress(fprv.PublicKey),
-					Gas:  1,
-				},
-				To:     crypto.PubkeyToAddress(tprv.PublicKey),
-				Amount: 100,
-			},
-			false,
-		},
 		{
 			&TransferTx{
 				Common: CommonTx{
@@ -101,6 +90,37 @@ func TestTransferTxSignature(t *testing.T) {
 				Amount: 100,
 			},
 			true,
+		},
+		{
+			&TransferTx{
+				Common: CommonTx{
+					From: crypto.PubkeyToAddress(fprv.PublicKey),
+					Gas:  0,
+				},
+				To:     crypto.PubkeyToAddress(tprv.PublicKey),
+				Amount: 0,
+			},
+			false,
+		},
+		{
+			&TransferTx{
+				Common: CommonTx{
+					From: crypto.PubkeyToAddress(fprv.PublicKey),
+					Gas:  0,
+				},
+				Amount: 100,
+			},
+			false,
+		},
+		{
+			&TransferTx{
+				Common: CommonTx{
+					Gas: 0,
+				},
+				To:     crypto.PubkeyToAddress(tprv.PublicKey),
+				Amount: 100,
+			},
+			false,
 		},
 	}
 
@@ -113,10 +133,10 @@ func TestTransferTxSignature(t *testing.T) {
 			tx.SetSignature(sig)
 
 			terr := tx.ValidateBasic()
-			if cs.expectedError {
-				assert.NotNil(terr)
-			} else {
+			if cs.valid {
 				assert.Nil(terr)
+			} else {
+				assert.NotNil(terr)
 			}
 		})
 	}
