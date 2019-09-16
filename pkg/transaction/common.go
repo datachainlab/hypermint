@@ -24,9 +24,10 @@ func (tx *CommonTx) ValidateBasic() types.Error {
 	if isEmptyAddr(tx.From) {
 		return ErrInvalidTx(DefaultCodespace, "tx.From == nil")
 	}
-	if tx.Gas == 0 {
-		return ErrInvalidTx(DefaultCodespace, "tx.Gas == 0")
-	}
+	// TODO Currently we don't support a gas system.
+	// if tx.Gas == 0 {
+	// 	return ErrInvalidTx(DefaultCodespace, "tx.Gas == 0")
+	// }
 	if len(tx.Signature) == 0 {
 		return ErrInvalidTx(DefaultCodespace, "len(tx.Signature) == 0")
 	}

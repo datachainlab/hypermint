@@ -4,13 +4,16 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/bluele/hypermint/pkg/abci/types"
 	"github.com/bluele/hypermint/pkg/client"
-	"github.com/bluele/hypermint/pkg/contract"
+	"github.com/bluele/hypermint/pkg/contract/event"
 	"github.com/bluele/hypermint/pkg/util"
+
+	ethcmn "github.com/ethereum/go-ethereum/common"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 	"github.com/tendermint/tendermint/libs/common"
-	"github.com/tendermint/tendermint/types"
+	tmtypes "github.com/tendermint/tendermint/types"
 )
 
 func init() {
@@ -26,7 +29,8 @@ func EventCMD() *cobra.Command {
 	// common
 	const (
 		flagContractAddress = "address"
-		flagEventName       = "event"
+		flagEventName       = "event.name"
+		flagEventValue      = "event.value"
 	)
 
 	var subscribeCmd = &cobra.Command{
@@ -54,25 +58,13 @@ func EventCMD() *cobra.Command {
 				return err
 			}
 			for ev := range out {
-				etx := ev.Data.(types.EventDataTx)
+				etx := ev.Data.(tmtypes.EventDataTx)
 				fmt.Printf("TxID=0x%x\n", etx.Tx.Hash())
 				for _, ev := range etx.Result.Events {
 					if ev.Type != "contract" {
 						continue
 					}
-					for _, tag := range ev.Attributes {
-						if k := string(tag.GetKey()); k == "event.data" {
-							ev, err := contract.ParseEventData(tag.GetValue())
-							if err != nil {
-								return err
-							}
-							fmt.Println(ev.String())
-						} else if k == "event.name" || k == "address" {
-							// skip
-						} else {
-							fmt.Printf("unknown event: %v\n", tag)
-						}
-					}
+					printEvents([]types.Event{types.Event(ev)})
 				}
 			}
 			return nil
@@ -101,18 +93,52 @@ func EventCMD() *cobra.Command {
 			if err != nil {
 				return err
 			}
-			q := fmt.Sprintf("contract.address='%v' AND contract.event.name='%v'", viper.GetString(flagContractAddress), viper.GetString(flagEventName))
+			contractAddr := ethcmn.HexToAddress(viper.GetString(flagContractAddress))
+			q, err := event.MakeEventSearchQuery(
+				contractAddr,
+				viper.GetString(flagEventName),
+				viper.GetString(flagEventValue),
+			)
+			if err != nil {
+				return err
+			}
 			res, err := cl.TxSearch(q, true, 0, 0)
 			if err != nil {
 				return err
 			}
-
 			if viper.GetBool(flagCount) {
-				fmt.Print(len(res.Txs))
+				var count int
+				for _, tx := range res.Txs {
+					events, err := event.GetContractEventsFromResultTx(contractAddr, tx)
+					if err != nil {
+						return err
+					}
+					if len(events) == 0 {
+						continue
+					}
+					events, err = event.FilterContractEvents(
+						events,
+						viper.GetString(flagEventName),
+						viper.GetString(flagEventValue),
+					)
+					if err != nil {
+						return err
+					}
+					if len(events) == 0 {
+						continue
+					}
+					count++
+				}
+				fmt.Print(count)
 				return nil
 			} else {
 				for _, tx := range res.Txs {
-					fmt.Println(tx.TxResult.String())
+					fmt.Printf("Tx=0x%x\n", tx.Tx.Hash())
+					events, err := event.GetContractEventsFromResultTx(contractAddr, tx)
+					if err != nil {
+						return err
+					}
+					printEvents(events)
 				}
 			}
 			return nil
@@ -120,10 +146,24 @@ func EventCMD() *cobra.Command {
 	}
 
 	searchCmd.Flags().String(flagContractAddress, "", "contract address for subscription")
-	searchCmd.Flags().String(flagEventName, "", "event name for subscription")
-	searchCmd.Flags().Bool(flagCount, false, "if true, only print count of txs")
+	searchCmd.Flags().String(flagEventName, "", "event name")
+	searchCmd.Flags().String(flagEventValue, "", "event value as hex string")
+	searchCmd.Flags().Bool(flagCount, false, "if true, only print count of matched txs")
 	util.CheckRequiredFlag(searchCmd, flagContractAddress, flagEventName)
 	eventCmd.AddCommand(searchCmd)
 
 	return eventCmd
+}
+
+func printEvents(events []types.Event) {
+	for _, ev := range events {
+		fmt.Printf("event type=%v\n", ev.Type)
+		es, err := event.GetEntryFromEvent(ev)
+		if err != nil {
+			panic(err)
+		}
+		for _, entry := range es {
+			fmt.Printf("\tname=%v value=%v\n", string(entry.Name), string(entry.Value))
+		}
+	}
 }

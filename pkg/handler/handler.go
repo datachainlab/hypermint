@@ -8,11 +8,11 @@ import (
 	"github.com/bluele/hypermint/pkg/abci/types"
 	"github.com/bluele/hypermint/pkg/account"
 	"github.com/bluele/hypermint/pkg/contract"
+	"github.com/bluele/hypermint/pkg/contract/event"
 	"github.com/bluele/hypermint/pkg/db"
 	"github.com/bluele/hypermint/pkg/transaction"
 
 	"github.com/tendermint/go-amino"
-	"github.com/tendermint/tendermint/libs/common"
 )
 
 func NewHandler(txm transaction.TxIndexMapper, am account.AccountMapper, cm *contract.ContractManager, envm *contract.EnvManager, sm *db.StateManager) types.Handler {
@@ -65,47 +65,40 @@ func handleContractCallTx(ctx types.Context, cm *contract.ContractManager, envm 
 	if err != nil {
 		return transaction.ErrInvalidCall(transaction.DefaultCodespace, err.Error()).Result()
 	}
-	sm.CommitState(ctx, res.RWSets)
-	if len(tx.RWSetsHash) != 0 && !bytes.Equal(tx.RWSetsHash, res.RWSets.Hash()) {
-		return transaction.ErrInvalidCall(transaction.DefaultCodespace, fmt.Sprintf("RWSetsHash mismatch %v %v", tx.RWSetsHash, res.RWSets.Hash())).Result()
+	if err := sm.CommitState(ctx, res.State.RWSets()); err != nil {
+		return transaction.ErrInvalidCall(transaction.DefaultCodespace, err.Error()).Result()
 	}
-	b, err := res.RWSets.Bytes()
+	if len(tx.RWSetsHash) != 0 && !bytes.Equal(tx.RWSetsHash, res.State.RWSets().Hash()) {
+		return transaction.ErrInvalidCall(transaction.DefaultCodespace, fmt.Sprintf("RWSetsHash mismatch %v %v", tx.RWSetsHash, res.State.RWSets().Hash())).Result()
+	}
+	b, err := res.State.RWSets().Bytes()
 	if err != nil {
 		return transaction.ErrInvalidCall(transaction.DefaultCodespace, err.Error()).Result()
 	}
-	rb, err := amino.MarshalBinaryBare(
-		ContractCallTxResponse{
-			Returned:    res.Response,
-			RWSetsBytes: b,
-			Events:      res.Events,
-		},
-	)
+	rb, err := ContractCallTxResponse{
+		Returned:    res.Response,
+		RWSetsBytes: b,
+		Events:      res.State.Events(),
+	}.Bytes()
 	if err != nil {
 		return transaction.ErrInvalidCall(transaction.DefaultCodespace, err.Error()).Result()
 	}
-	tags, err := contract.EventsToTags(res.Events)
+	events, err := event.MakeTMEvents(res.State.Events())
 	if err != nil {
 		return transaction.ErrInvalidCall(transaction.DefaultCodespace, err.Error()).Result()
 	}
-	tags = append(tags, makeTag("address", []byte(tx.Address.Hex())))
-	e := types.Event{Type: "contract"}
-	e.Attributes = tags
-
 	return types.Result{
 		Data:   rb,
-		Events: types.Events{e},
+		Events: events,
 	}
 }
 
 type ContractCallTxResponse struct {
 	Returned    []byte
 	RWSetsBytes []byte
-	Events      []*contract.Event
+	Events      []*event.Event
 }
 
-func makeTag(key string, value []byte) common.KVPair {
-	return common.KVPair{
-		Key:   []byte(key),
-		Value: value,
-	}
+func (r ContractCallTxResponse) Bytes() ([]byte, error) {
+	return amino.MarshalBinaryBare(r)
 }

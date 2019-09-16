@@ -24,9 +24,8 @@ pub fn contract(_attr: TokenStream, item: TokenStream) -> TokenStream {
                     }
                 },
                 Ok(None) => 0,
-                Err(e) => {
-                    log(&format!("{:?}", e).as_str().as_bytes());
-                    -1
+                Err(e) => match return_value(&format!("{:?}", e).as_str().as_bytes()) {
+                    _ => -1,
                 }
             }
         }

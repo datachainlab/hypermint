@@ -138,6 +138,18 @@ pub fn test_emit_event() -> R<Vec<u8>> {
 }
 
 #[contract]
+pub fn test_external_emit_event() -> R<Vec<u8>> {
+    let org_msg: Vec<u8> = get_arg(0)?;
+    let addr: Address = get_arg(1)?;
+    let ext_msg: Vec<u8> = get_arg(2)?;
+
+    let _: Vec<u8> = call_contract(&addr, "test_emit_event".as_bytes(), vec![&ext_msg])?;
+    let name = "test-org-event-name";
+    emit_event(name, &org_msg)?;
+    Ok(None)
+}
+
+#[contract]
 pub fn test_call_external_contract() -> R<Vec<u8>> {
     let addr: Address = get_arg(0)?;
     let x: Vec<u8> = get_arg(1)?;

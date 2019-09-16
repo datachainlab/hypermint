@@ -73,7 +73,7 @@ extern "C" {
 pub fn keccak256(msg: &[u8]) -> Result<[u8; 32], Error> {
     let mut buf = [0u8; 32];
     match unsafe { __keccak256(msg.as_ptr(), msg.len(), buf.as_mut_ptr(), buf.len()) } {
-        -1 => Err(from_str("failed to call keccak256")),
+        -1 => Err(from_str("__keccak256: failed to __keccak256")),
         _ => Ok(buf),
     }
 }
@@ -81,7 +81,7 @@ pub fn keccak256(msg: &[u8]) -> Result<[u8; 32], Error> {
 pub fn sha256(msg: &[u8]) -> Result<[u8; 32], Error> {
     let mut buf = [0u8; 32];
     match unsafe { __sha256(msg.as_ptr(), msg.len(), buf.as_mut_ptr(), buf.len()) } {
-        -1 => Err(from_str("failed to call sha256")),
+        -1 => Err(from_str("__sha256: failed to __sha256")),
         _ => Ok(buf),
     }
 }
@@ -89,7 +89,7 @@ pub fn sha256(msg: &[u8]) -> Result<[u8; 32], Error> {
 pub fn emit_event<T: Into<String>>(name: T, value: &[u8]) -> Result<(), Error> {
     let n = name.into();
     match unsafe { __emit_event(n.as_ptr(), n.len(), value.as_ptr(), value.len()) } {
-        -1 => Err(from_str("failed to emit event")),
+        -1 => Err(from_str("__emit_event: failed to __emit_event")),
         _ => Ok(()),
     }
 }
@@ -131,7 +131,9 @@ pub fn ecrecover(h: &[u8], v: &[u8], r: &[u8], s: &[u8]) -> Result<[u8; 65], Err
             buf.len(),
         )
     } {
-        -1 => Err(from_str("failed to ecrecover")),
+        -1 => Err(from_str(
+            "__ecrecover_address: failed to __ecrecover_address",
+        )),
         _ => Ok(buf),
     }
 }
@@ -173,7 +175,9 @@ pub fn ecrecover_address(h: &[u8], v: &[u8], r: &[u8], s: &[u8]) -> Result<Addre
             buf.len(),
         )
     } {
-        -1 => Err(from_str("failed to ecrecover")),
+        -1 => Err(from_str(
+            "__ecrecover_address: failed to __ecrecover_address",
+        )),
         _ => Ok(buf),
     }
 }
@@ -184,7 +188,7 @@ pub fn get_arg<T: FromBytes>(idx: usize) -> Result<T, Error> {
     let mut val: Vec<u8> = Vec::new();
     loop {
         match unsafe { __get_arg(idx, offset, buf.as_mut_ptr(), buf.len()) } {
-            -1 => return Err(from_str("read_state: key not found")),
+            -1 => return Err(from_str(format!("__get_arg: index not found: {}", idx))),
             0 => break,
             n => {
                 val.extend_from_slice(&buf[0..n as usize]);
@@ -201,7 +205,7 @@ pub fn get_arg<T: FromBytes>(idx: usize) -> Result<T, Error> {
 pub fn get_sender() -> Result<Address, Error> {
     let mut buf: Address = Default::default();
     match unsafe { __get_sender(buf.as_mut_ptr(), 20) } {
-        -1 => Err(from_str("sender not found")),
+        -1 => Err(from_str("__get_sender: failed to __get_sender")),
         _ => Ok(buf),
     }
 }
@@ -209,7 +213,9 @@ pub fn get_sender() -> Result<Address, Error> {
 pub fn get_contract_address() -> Result<Address, Error> {
     let mut buf: Address = Default::default();
     match unsafe { __get_contract_address(buf.as_mut_ptr(), 20) } {
-        -1 => Err(from_str("contract address not found")),
+        -1 => Err(from_str(
+            "__get_contract_address: failed to __get_contract_address",
+        )),
         _ => Ok(buf),
     }
 }
@@ -283,7 +289,13 @@ pub fn read_state<T: FromBytes>(key: &[u8]) -> Result<T, Error> {
                 val_buf.len(),
             )
         } {
-            -1 => return Err(from_str("read_state: key not found")),
+            -1 => {
+                return Err(from_str(format!(
+                    "__read_state: key not found {:?}({})",
+                    key,
+                    String::from_utf8(key.to_vec()).unwrap_or_else(|_| "INVALID UTF8".to_string())
+                )))
+            }
             0 => break,
             n => {
                 val.extend_from_slice(&val_buf[0..n as usize]);

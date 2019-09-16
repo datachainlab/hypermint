@@ -73,8 +73,8 @@ func vmCmd(ctx *app.Context) *cobra.Command {
 				return err
 			}
 			cms.Commit()
-			pretty.Println(res.RWSets)
-			fmt.Printf("RWSetsHash is '0x%x'\n", res.RWSets.Hash())
+			pretty.Println(res.State.RWSets())
+			fmt.Printf("RWSetsHash is '0x%x'\n", res.State.RWSets().Hash())
 			fmt.Println("response:", string(res.Response))
 			return nil
 		},
