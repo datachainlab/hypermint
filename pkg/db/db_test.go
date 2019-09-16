@@ -6,6 +6,7 @@ import (
 
 	"github.com/bluele/hypermint/pkg/abci/types"
 	"github.com/bluele/hypermint/pkg/testutil"
+	"github.com/ethereum/go-ethereum/common"
 	"github.com/stretchr/testify/assert"
 	abci "github.com/tendermint/tendermint/abci/types"
 )
@@ -73,7 +74,7 @@ func TestVersionedDB(t *testing.T) {
 			for i, ws := range cs.state {
 				vdb := NewVersionedDB(ctx.KVStore(testStoreKey))
 				vdb.rwm.ws = ws
-				commitState(ctx.KVStore(testStoreKey), vdb.RWSetItems(), Version{blockHeight, uint32(i)})
+				commitState(common.Address{}, ctx.KVStore(testStoreKey), vdb.RWSetItems(), Version{blockHeight, uint32(i)}, NewKeyMap(), NewKeyMap())
 			}
 			vdb := NewVersionedDB(ctx.KVStore(testStoreKey))
 
