@@ -119,9 +119,46 @@ func (ts *E2ETestSuite) TestContract() {
 		ts.Run("ensure that expected event is happened", func() {
 			_, err := ts.CallContract(ctx, ts.Account(1), c, "test_emit_event", []string{"first", "second"}, []string{contract.Str, contract.Str}, contract.Str, false)
 			ts.NoError(err)
-			count, err := ts.SearchEvent(ctx, c, "test-event-name-0", "first")
+
+			count, err := ts.SearchEvent(ctx, c, "test-event-name-0", "")
 			ts.NoError(err)
 			ts.Equal(1, count)
+
+			count, err = ts.SearchEvent(ctx, c, "test-event-name-0", "first")
+			ts.NoError(err)
+			ts.Equal(1, count)
+
+			count, err = ts.SearchEvent(ctx, c, "test-event-name-0", "second")
+			ts.NoError(err)
+			ts.Equal(0, count)
+
+			count, err = ts.SearchEvent(ctx, c, "test-event-name-1", "")
+			ts.NoError(err)
+			ts.Equal(1, count)
+
+			count, err = ts.SearchEvent(ctx, c, "test-event-name-1", "first")
+			ts.NoError(err)
+			ts.Equal(0, count)
+
+			count, err = ts.SearchEvent(ctx, c, "test-event-name-1", "second")
+			ts.NoError(err)
+			ts.Equal(1, count)
+
+			_, err = ts.CallContract(ctx, ts.Account(1), c, "test_emit_event", []string{"first", "third"}, []string{contract.Str, contract.Str}, contract.Str, false)
+			ts.NoError(err)
+
+			count, err = ts.SearchEvent(ctx, c, "test-event-name-0", "")
+			ts.NoError(err)
+			ts.Equal(2, count)
+
+			count, err = ts.SearchEvent(ctx, c, "test-event-name-0", "first")
+			ts.NoError(err)
+			ts.Equal(2, count)
+
+			count, err = ts.SearchEvent(ctx, c, "test-event-name-1", "third")
+			ts.NoError(err)
+			ts.Equal(1, count)
+
 			count, err = ts.SearchEvent(ctx, c, "test-event-name-1", "second")
 			ts.NoError(err)
 			ts.Equal(1, count)
@@ -144,26 +181,25 @@ func (ts *E2ETestSuite) TestContract() {
 	ts.Run("ensure that expected event is also happened on external contract", func() {
 		_, err := ts.CallContract(ctx, ts.Account(1), c, "test_external_emit_event", []string{"first", e.Hex(), "second"}, []string{contract.Str, contract.Address, contract.Str}, contract.Str, false)
 		ts.NoError(err)
-		{
-			count, err := ts.SearchEvent(ctx, c, "test-org-event-name", "first")
-			ts.NoError(err)
-			ts.Equal(1, count)
-		}
-		{
-			count, err := ts.SearchEvent(ctx, c, "test-org-event-name", "0x"+hex.EncodeToString([]byte("first")))
-			ts.NoError(err)
-			ts.Equal(1, count)
-		}
-		{
-			count, err := ts.SearchEvent(ctx, e, "test-ext-event-name", "second")
-			ts.NoError(err)
-			ts.Equal(1, count)
-		}
-		{
-			count, err := ts.SearchEvent(ctx, c, "test-ext-event-name", "second")
-			ts.NoError(err)
-			ts.Equal(0, count)
-		}
+		count, err := ts.SearchEvent(ctx, c, "test-org-event-name", "first")
+		ts.NoError(err)
+		ts.Equal(1, count)
+
+		count, err = ts.SearchEvent(ctx, c, "test-org-event-name", "0x"+hex.EncodeToString([]byte("first")))
+		ts.NoError(err)
+		ts.Equal(1, count)
+
+		count, err = ts.SearchEvent(ctx, e, "test-ext-event-name", "second")
+		ts.NoError(err)
+		ts.Equal(1, count)
+
+		count, err = ts.SearchEvent(ctx, c, "test-ext-event-name", "second")
+		ts.NoError(err)
+		ts.Equal(0, count)
+
+		count, err = ts.SearchEvent(ctx, c, "test-ext-event-name", "first")
+		ts.NoError(err)
+		ts.Equal(0, count)
 	})
 }
 
