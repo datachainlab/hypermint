@@ -65,7 +65,9 @@ func handleContractCallTx(ctx types.Context, cm *contract.ContractManager, envm 
 	if err != nil {
 		return transaction.ErrInvalidCall(transaction.DefaultCodespace, err.Error()).Result()
 	}
-	sm.CommitState(ctx, res.State.RWSets())
+	if err := sm.CommitState(ctx, res.State.RWSets()); err != nil {
+		return transaction.ErrInvalidCall(transaction.DefaultCodespace, err.Error()).Result()
+	}
 	if len(tx.RWSetsHash) != 0 && !bytes.Equal(tx.RWSetsHash, res.State.RWSets().Hash()) {
 		return transaction.ErrInvalidCall(transaction.DefaultCodespace, fmt.Sprintf("RWSetsHash mismatch %v %v", tx.RWSetsHash, res.State.RWSets().Hash())).Result()
 	}

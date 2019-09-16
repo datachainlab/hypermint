@@ -272,7 +272,7 @@ func (ts *ContractTestSuite) TestReadWriteSet() {
 			ts.FailNow("failed to Exec", err.Error())
 		}
 		if !isSimulate {
-			db.CommitState(cms.GetKVStore(ts.mainKey), res.State.RWSets(), db.Version{height, txIndex})
+			ts.NoError(db.CommitState(cms.GetKVStore(ts.mainKey), res.State.RWSets(), db.Version{height, txIndex}, db.NewKeyMaps()))
 			cms.Commit()
 			txIndex++
 		}
