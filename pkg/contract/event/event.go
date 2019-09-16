@@ -159,8 +159,8 @@ func MakeEventSearchQuery(contractAddr common.Address, eventName, eventValue str
 	return strings.Join(parts, " AND "), nil
 }
 
-// GetEventsByContractAddr returns events that matches a given contract address from ResultTx.
-func GetEventsByContractAddr(contractAddr common.Address, result *ctypes.ResultTx) ([]types.Event, error) {
+// GetContractEventsFromResultTx returns events that matches a given contract address from ResultTx.
+func GetContractEventsFromResultTx(contractAddr common.Address, result *ctypes.ResultTx) ([]types.Event, error) {
 	if !result.TxResult.IsOK() {
 		return nil, errors.New("result has an error")
 	}
@@ -180,8 +180,8 @@ L:
 	return events, nil
 }
 
-// FilterEvents returns events that includes a given event name and value. (value is optional)
-func FilterEvents(events []types.Event, eventName, eventValue string) ([]types.Event, error) {
+// FilterContractEvents returns events that includes a given event name and value. (value is optional)
+func FilterContractEvents(events []types.Event, eventName, eventValue string) ([]types.Event, error) {
 	var value []byte
 	var checkValue bool
 	if len(eventValue) == 0 {

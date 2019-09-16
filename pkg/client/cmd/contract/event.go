@@ -119,14 +119,14 @@ func EventCMD() *cobra.Command {
 			if viper.GetBool(flagCount) {
 				var count int
 				for _, tx := range res.Txs {
-					events, err := event.GetEventsByContractAddr(contractAddr, tx)
+					events, err := event.GetContractEventsFromResultTx(contractAddr, tx)
 					if err != nil {
 						return err
 					}
 					if len(events) == 0 {
 						continue
 					}
-					events, err = event.FilterEvents(
+					events, err = event.FilterContractEvents(
 						events,
 						viper.GetString(flagEventName),
 						viper.GetString(flagEventValue),
