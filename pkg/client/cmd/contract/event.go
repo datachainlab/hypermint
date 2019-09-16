@@ -7,6 +7,7 @@ import (
 	"github.com/bluele/hypermint/pkg/client"
 	"github.com/bluele/hypermint/pkg/contract/event"
 	"github.com/bluele/hypermint/pkg/util"
+	ethcmn "github.com/ethereum/go-ethereum/common"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 	"github.com/tendermint/tendermint/libs/common"
@@ -102,8 +103,9 @@ func EventCMD() *cobra.Command {
 			if err != nil {
 				return err
 			}
+			contractAddr := ethcmn.HexToAddress(viper.GetString(flagContractAddress))
 			q, err := event.MakeEventSearchQuery(
-				viper.GetString(flagContractAddress),
+				contractAddr,
 				viper.GetString(flagEventName),
 				viper.GetString(flagEventValue),
 			)
@@ -114,9 +116,27 @@ func EventCMD() *cobra.Command {
 			if err != nil {
 				return err
 			}
-
 			if viper.GetBool(flagCount) {
-				fmt.Print(len(res.Txs))
+				var count int
+				for _, tx := range res.Txs {
+					events, err := event.GetEventsByContractAddr(contractAddr, tx)
+					if err != nil {
+						return err
+					}
+					if len(events) == 0 {
+						continue
+					}
+					events, err = event.FilterEvents(
+						events,
+						viper.GetString(flagEventName),
+						viper.GetString(flagEventValue),
+					)
+					if err != nil {
+						return err
+					}
+					count += len(events)
+				}
+				fmt.Print(count)
 				return nil
 			} else {
 				for _, tx := range res.Txs {
@@ -130,7 +150,7 @@ func EventCMD() *cobra.Command {
 	searchCmd.Flags().String(flagContractAddress, "", "contract address for subscription")
 	searchCmd.Flags().String(flagEventName, "", "event name")
 	searchCmd.Flags().String(flagEventValue, "", "event value as hex string")
-	searchCmd.Flags().Bool(flagCount, false, "if true, only print count of txs")
+	searchCmd.Flags().Bool(flagCount, false, "if true, only print count of matched txs")
 	util.CheckRequiredFlag(searchCmd, flagContractAddress, flagEventName)
 	eventCmd.AddCommand(searchCmd)
 
