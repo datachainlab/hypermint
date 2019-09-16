@@ -3,12 +3,14 @@ package event
 import (
 	"bytes"
 	"encoding/hex"
+	"errors"
 	"fmt"
 	"strings"
 
 	"github.com/bluele/hypermint/pkg/abci/types"
 	"github.com/ethereum/go-ethereum/common"
 	tmcmn "github.com/tendermint/tendermint/libs/common"
+	ctypes "github.com/tendermint/tendermint/rpc/core/types"
 )
 
 type Event struct {
@@ -143,10 +145,9 @@ func MakeEntryBytes(name, value string) ([]byte, error) {
 // contractAddr: target contract address
 // eventName: event name
 // eventValue: value corresponding to event name. NOTE: if value has a prefix "0x", value will be decoded into []byte
-func MakeEventSearchQuery(contractAddr string, eventName, eventValue string) (string, error) {
+func MakeEventSearchQuery(contractAddr common.Address, eventName, eventValue string) (string, error) {
 	var parts []string
-
-	parts = append(parts, fmt.Sprintf("contract.address='%v'", contractAddr))
+	parts = append(parts, fmt.Sprintf("contract.address='%v'", contractAddr.Hex()))
 	parts = append(parts, fmt.Sprintf("contract.event.name='%v'", eventName))
 	if len(eventValue) > 0 {
 		ev, err := MakeEntryBytes(eventName, eventValue)
@@ -156,4 +157,61 @@ func MakeEventSearchQuery(contractAddr string, eventName, eventValue string) (st
 		parts = append(parts, fmt.Sprintf("contract.event.data='%v'", string(ev)))
 	}
 	return strings.Join(parts, " AND "), nil
+}
+
+// GetEventsByContractAddr returns events that matches a given contract address from ResultTx.
+func GetEventsByContractAddr(contractAddr common.Address, result *ctypes.ResultTx) ([]types.Event, error) {
+	if !result.TxResult.IsOK() {
+		return nil, errors.New("result has an error")
+	}
+
+	var events []types.Event
+L:
+	for _, ev := range result.TxResult.GetEvents() {
+		for _, attr := range ev.GetAttributes() {
+			if bytes.Equal([]byte("address"), attr.GetKey()) {
+				if bytes.Equal([]byte(contractAddr.Hex()), attr.GetValue()) {
+					events = append(events, types.Event(ev))
+				}
+				continue L
+			}
+		}
+	}
+	return events, nil
+}
+
+// FilterEvents returns events that includes a given event name and value. (value is optional)
+func FilterEvents(events []types.Event, eventName, eventValue string) ([]types.Event, error) {
+	var value []byte
+	var checkValue bool
+	if len(eventValue) == 0 {
+		checkValue = false
+	} else {
+		checkValue = true
+		v, err := MakeEntryBytes(eventName, eventValue)
+		if err != nil {
+			return nil, err
+		}
+		value = v
+	}
+
+	var rets []types.Event
+	for _, ev := range events {
+		for _, attr := range ev.Attributes {
+			if !checkValue {
+				if bytes.Equal([]byte("event.name"), attr.GetKey()) {
+					if bytes.Equal([]byte(eventName), attr.GetValue()) {
+						rets = append(rets, ev)
+					}
+				}
+			} else {
+				if bytes.Equal([]byte("event.data"), attr.GetKey()) {
+					if bytes.Equal(value, attr.GetValue()) {
+						rets = append(rets, ev)
+					}
+				}
+			}
+		}
+	}
+	return rets, nil
 }
