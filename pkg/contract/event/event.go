@@ -13,6 +13,18 @@ import (
 	ctypes "github.com/tendermint/tendermint/rpc/core/types"
 )
 
+const (
+	EventKey     = "event"
+	EventDataKey = EventKey + ".data"
+	EventNameKey = EventKey + ".name"
+
+	AddressKey           = "address"
+	ContractKey          = "contract"
+	ContractAddressKey   = ContractKey + "." + AddressKey
+	ContractEventDataKey = ContractKey + "." + EventDataKey
+	ContractEventNameKey = ContractKey + "." + EventNameKey
+)
+
 type Event struct {
 	address common.Address
 	entries []*Entry
@@ -84,10 +96,10 @@ func MakeTMEvent(contractAddr common.Address, es []*Entry) (*types.Event, error)
 		return nil, err
 	}
 	pairs = append(pairs, tmcmn.KVPair{
-		Key:   []byte("address"),
+		Key:   []byte(AddressKey),
 		Value: []byte(contractAddr.Hex()),
 	})
-	e := types.Event{Type: "contract"}
+	e := types.Event{Type: ContractKey}
 	e.Attributes = pairs
 	return &e, nil
 }
@@ -98,10 +110,8 @@ func eventsToPairs(es []*Entry) (tmcmn.KVPairs, error) {
 		if err := e.Validate(); err != nil {
 			return nil, err
 		}
-		key := []byte("event.name")
-		pairs = append(pairs, tmcmn.KVPair{Key: key, Value: e.Name})
-		dataKey := []byte("event.data")
-		pairs = append(pairs, tmcmn.KVPair{Key: dataKey, Value: e.Bytes()})
+		pairs = append(pairs, tmcmn.KVPair{Key: []byte(EventNameKey), Value: e.Name})
+		pairs = append(pairs, tmcmn.KVPair{Key: []byte(EventDataKey), Value: e.Bytes()})
 	}
 	return pairs, nil
 }
@@ -147,14 +157,14 @@ func MakeEntryBytes(name, value string) ([]byte, error) {
 // eventValue: value corresponding to event name. NOTE: if value has a prefix "0x", value will be decoded into []byte
 func MakeEventSearchQuery(contractAddr common.Address, eventName, eventValue string) (string, error) {
 	var parts []string
-	parts = append(parts, fmt.Sprintf("contract.address='%v'", contractAddr.Hex()))
-	parts = append(parts, fmt.Sprintf("contract.event.name='%v'", eventName))
+	parts = append(parts, fmt.Sprintf("%v='%v'", ContractAddressKey, contractAddr.Hex()))
+	parts = append(parts, fmt.Sprintf("%v='%v'", ContractEventNameKey, eventName))
 	if len(eventValue) > 0 {
 		ev, err := MakeEntryBytes(eventName, eventValue)
 		if err != nil {
 			return "", err
 		}
-		parts = append(parts, fmt.Sprintf("contract.event.data='%v'", string(ev)))
+		parts = append(parts, fmt.Sprintf("%v='%v'", ContractEventDataKey, string(ev)))
 	}
 	return strings.Join(parts, " AND "), nil
 }
@@ -169,7 +179,7 @@ func GetContractEventsFromResultTx(contractAddr common.Address, result *ctypes.R
 L:
 	for _, ev := range result.TxResult.GetEvents() {
 		for _, attr := range ev.GetAttributes() {
-			if bytes.Equal([]byte("address"), attr.GetKey()) {
+			if bytes.Equal([]byte(AddressKey), attr.GetKey()) {
 				if bytes.Equal([]byte(contractAddr.Hex()), attr.GetValue()) {
 					events = append(events, types.Event(ev))
 				}
@@ -199,13 +209,13 @@ func FilterContractEvents(events []types.Event, eventName, eventValue string) ([
 	for _, ev := range events {
 		for _, attr := range ev.Attributes {
 			if !checkValue {
-				if bytes.Equal([]byte("event.name"), attr.GetKey()) {
+				if bytes.Equal([]byte(EventNameKey), attr.GetKey()) {
 					if bytes.Equal([]byte(eventName), attr.GetValue()) {
 						rets = append(rets, ev)
 					}
 				}
 			} else {
-				if bytes.Equal([]byte("event.data"), attr.GetKey()) {
+				if bytes.Equal([]byte(EventDataKey), attr.GetKey()) {
 					if bytes.Equal(value, attr.GetValue()) {
 						rets = append(rets, ev)
 					}
@@ -214,4 +224,19 @@ func FilterContractEvents(events []types.Event, eventName, eventValue string) ([
 		}
 	}
 	return rets, nil
+}
+
+func GetEntryFromEvent(ev types.Event) ([]*Entry, error) {
+	var es []*Entry
+	for _, attr := range ev.Attributes {
+		if !bytes.Equal([]byte(EventDataKey), attr.GetKey()) {
+			continue
+		}
+		e, err := ParseEntry(attr.GetValue())
+		if err != nil {
+			return nil, err
+		}
+		es = append(es, e)
+	}
+	return es, nil
 }

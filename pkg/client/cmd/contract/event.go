@@ -4,14 +4,16 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/bluele/hypermint/pkg/abci/types"
 	"github.com/bluele/hypermint/pkg/client"
 	"github.com/bluele/hypermint/pkg/contract/event"
 	"github.com/bluele/hypermint/pkg/util"
+
 	ethcmn "github.com/ethereum/go-ethereum/common"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 	"github.com/tendermint/tendermint/libs/common"
-	"github.com/tendermint/tendermint/types"
+	tmtypes "github.com/tendermint/tendermint/types"
 )
 
 func init() {
@@ -56,25 +58,13 @@ func EventCMD() *cobra.Command {
 				return err
 			}
 			for ev := range out {
-				etx := ev.Data.(types.EventDataTx)
+				etx := ev.Data.(tmtypes.EventDataTx)
 				fmt.Printf("TxID=0x%x\n", etx.Tx.Hash())
 				for _, ev := range etx.Result.Events {
 					if ev.Type != "contract" {
 						continue
 					}
-					for _, tag := range ev.Attributes {
-						if k := string(tag.GetKey()); k == "event.data" {
-							e, err := event.ParseEntry(tag.GetValue())
-							if err != nil {
-								return err
-							}
-							fmt.Println(e.String())
-						} else if k == "event.name" || k == "address" {
-							// skip
-						} else {
-							fmt.Printf("unknown event: %v\n", tag)
-						}
-					}
+					printEvents([]types.Event{types.Event(ev)})
 				}
 			}
 			return nil
@@ -134,13 +124,21 @@ func EventCMD() *cobra.Command {
 					if err != nil {
 						return err
 					}
-					count += len(events)
+					if len(events) == 0 {
+						continue
+					}
+					count++
 				}
 				fmt.Print(count)
 				return nil
 			} else {
 				for _, tx := range res.Txs {
-					fmt.Println(tx.TxResult.String())
+					fmt.Printf("Tx=0x%x\n", tx.Tx.Hash())
+					events, err := event.GetContractEventsFromResultTx(contractAddr, tx)
+					if err != nil {
+						return err
+					}
+					printEvents(events)
 				}
 			}
 			return nil
@@ -155,4 +153,17 @@ func EventCMD() *cobra.Command {
 	eventCmd.AddCommand(searchCmd)
 
 	return eventCmd
+}
+
+func printEvents(events []types.Event) {
+	for _, ev := range events {
+		fmt.Printf("event type=%v\n", ev.Type)
+		es, err := event.GetEntryFromEvent(ev)
+		if err != nil {
+			panic(err)
+		}
+		for _, entry := range es {
+			fmt.Printf("\tname=%v value=%v\n", string(entry.Name), string(entry.Value))
+		}
+	}
 }
