@@ -5,7 +5,7 @@ use hmcdk::prelude::*;
 
 static TOTAL: i64 = 10000;
 
-#[contract]
+#[contract(readonly)]
 pub fn get_balance() -> R<i64> {
     Ok(Some(read_state(&get_sender()?)?))
 }
