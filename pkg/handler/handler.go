@@ -19,9 +19,7 @@ func NewHandler(txm transaction.TxIndexMapper, am account.AccountMapper, cm *con
 	return func(ctx types.Context, tx types.Tx) (res types.Result) {
 		ctx = ctx.WithTxIndex(txm.Get(ctx))
 		defer func() {
-			if res.IsOK() {
-				txm.Incr(ctx)
-			}
+			txm.Incr(ctx)
 		}()
 		switch tx := tx.(type) {
 		case *transaction.TransferTx:
@@ -69,7 +67,7 @@ func handleContractCallTx(ctx types.Context, cm *contract.ContractManager, envm 
 		return transaction.ErrInvalidCall(transaction.DefaultCodespace, err.Error()).Result()
 	}
 	if len(tx.RWSetsHash) != 0 && !bytes.Equal(tx.RWSetsHash, res.State.RWSets().Hash()) {
-		return transaction.ErrInvalidCall(transaction.DefaultCodespace, fmt.Sprintf("RWSetsHash mismatch %v %v", tx.RWSetsHash, res.State.RWSets().Hash())).Result()
+		return transaction.ErrInvalidCall(transaction.DefaultCodespace, fmt.Sprintf("unexpected RWSetsHash %X != %X", tx.RWSetsHash, res.State.RWSets().Hash())).Result()
 	}
 	b, err := res.State.RWSets().Bytes()
 	if err != nil {

@@ -136,7 +136,7 @@ func (env *Env) Exec(ctx sdk.Context, entry string) (*Result, error) {
 	res := env.GetReponse()
 	if code < 0 {
 		// TODO add error msg from call stacks
-		return &Result{Code: code, Response: res}, fmt.Errorf("execute contract error exitcode=%v description=%v", code, string(res))
+		return &Result{Code: code, Response: res}, fmt.Errorf("failed to execute contract exitcode=%v description=%v", code, string(res))
 	}
 
 	// Update state
