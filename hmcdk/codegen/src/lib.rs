@@ -5,22 +5,15 @@ use quote::quote;
 use syn::{parse_macro_input, parse_quote, ItemFn, FnArg, Type, Stmt, Pat, Ident};
 use std::ops::Deref;
 
-use abi::types;
-
 fn get_assignment_from_name_and_type(name: &Ident, ty: &Type, index: usize) -> Result<Stmt, String> {
     match ty {
         Type::Path(type_path) => {
             let pair = type_path.path.segments.last().ok_or("internal error")?;
             let ident = &pair.ident;
-            match types::to_abi_primitive(&ident.to_string()) {
-                Some(_p) => {
-                    let a = parse_quote! {
-                        let #name: #ident = get_arg(#index).unwrap();
-                        };
-                    Ok(a)
-                }
-                None => Err("invalid arg type".to_string())
-            }
+            let a = parse_quote! {
+                let #name: #ident = get_arg(#index).unwrap();
+            };
+            Ok(a)
         }
         _ => Err("invalid arg type".to_string())
     }
