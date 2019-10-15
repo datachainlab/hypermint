@@ -15,9 +15,7 @@ fn get_balance_from_addr(addr: &Address) -> Result<i64, Error> {
 }
 
 #[contract]
-pub fn transfer() -> R<i64> {
-    let to: Address = get_arg(0)?;
-    let amount: i64 = get_arg(1)?;
+pub fn transfer(to: Address, amount: i64) -> R<i64> {
     let sender = get_sender()?;
 
     let from_balance = get_balance_from_addr(&sender)?;
