@@ -48,12 +48,10 @@ pub fn contract(_attr: TokenStream, item: TokenStream) -> TokenStream {
 
     let decl = &ast.sig;
     let inputs = &decl.inputs;
-    let mut c = 0;
     let mut assignments = Vec::new();
     let mut arguments = Vec::new();
-    for arg in inputs {
+    for (c, arg) in inputs.into_iter().enumerate() {
         let a = get_assignment_from_arg(&arg, c);
-        c += 1;
         match a {
             Ok((ident, stmt)) => {
                 assignments.push(stmt);
