@@ -2,10 +2,14 @@ extern crate proc_macro;
 
 use crate::proc_macro::TokenStream;
 use quote::quote;
-use syn::{parse_macro_input, parse_quote, ItemFn, FnArg, Type, Stmt, Pat, Ident};
 use std::ops::Deref;
+use syn::{parse_macro_input, parse_quote, FnArg, Ident, ItemFn, Pat, Stmt, Type};
 
-fn get_assignment_from_name_and_type(name: &Ident, ty: &Type, index: usize) -> Result<Stmt, String> {
+fn get_assignment_from_name_and_type(
+    name: &Ident,
+    ty: &Type,
+    index: usize,
+) -> Result<Stmt, String> {
     match ty {
         Type::Path(type_path) => {
             let pair = type_path.path.segments.last().ok_or("internal error")?;
@@ -15,25 +19,23 @@ fn get_assignment_from_name_and_type(name: &Ident, ty: &Type, index: usize) -> R
             };
             Ok(a)
         }
-        _ => Err("invalid arg type".to_string())
+        _ => Err("invalid arg type".to_string()),
     }
 }
 
 fn get_assignment_from_arg(arg: &FnArg, index: usize) -> Result<(&Ident, Stmt), String> {
     match arg {
-        FnArg::Typed(pat_type) => {
-            match &pat_type.pat.deref() {
-                Pat::Ident(pat) => {
-                    let pat = &pat.ident;
-                    match get_assignment_from_name_and_type(pat, pat_type.ty.deref(), index) {
-                        Ok(stmt) => Ok((pat, stmt)),
-                        Err(err) => Err(err)
-                    }
+        FnArg::Typed(pat_type) => match &pat_type.pat.deref() {
+            Pat::Ident(pat) => {
+                let pat = &pat.ident;
+                match get_assignment_from_name_and_type(pat, pat_type.ty.deref(), index) {
+                    Ok(stmt) => Ok((pat, stmt)),
+                    Err(err) => Err(err),
                 }
-                _ => Err("no parameter name".to_string())
             }
-        }
-        FnArg::Receiver(_receiver) => Err("receiver not supported".to_string())
+            _ => Err("no parameter name".to_string()),
+        },
+        FnArg::Receiver(_receiver) => Err("receiver not supported".to_string()),
     }
 }
 
@@ -46,12 +48,10 @@ pub fn contract(_attr: TokenStream, item: TokenStream) -> TokenStream {
 
     let decl = &ast.sig;
     let inputs = &decl.inputs;
-    let mut c = 0;
     let mut assignments = Vec::new();
     let mut arguments = Vec::new();
-    for arg in inputs {
+    for (c, arg) in inputs.into_iter().enumerate() {
         let a = get_assignment_from_arg(&arg, c);
-        c += 1;
         match a {
             Ok((ident, stmt)) => {
                 assignments.push(stmt);
