@@ -81,6 +81,21 @@ jobs:
           command: |
             make e2e-test
 
+  cligen-test:
+    working_directory: /go/src/github.com/bluele/hypermint
+    docker:
+      - image: hypermint/go-rust:v0.2.0
+    environment:
+      GO111MODULE: "on"
+    steps:
+      - checkout
+      - attach_workspace:
+          at: /
+      - run:
+          name: "cligen-test"
+          command: |
+            make cligen-test
+
   pre-release:
     <<: *release_config
     steps:
@@ -128,6 +143,12 @@ workflows:
           requires:
             - build
       - e2e-test:
+          filters:
+            tags:
+              only: /.*/
+          requires:
+            - build
+      - cligen-test:
           filters:
             tags:
               only: /.*/
