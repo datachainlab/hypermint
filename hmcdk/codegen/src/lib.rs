@@ -11,11 +11,9 @@ fn get_assignment_from_name_and_type(
     index: usize,
 ) -> Result<Stmt, String> {
     match ty {
-        Type::Path(type_path) => {
-            let pair = type_path.path.segments.last().ok_or("internal error")?;
-            let ident = &pair.ident;
+        Type::Path(_type_path) => {
             let a = parse_quote! {
-                let #name: #ident = get_arg(#index).unwrap();
+                let #name: #ty = get_arg(#index).unwrap();
             };
             Ok(a)
         }
