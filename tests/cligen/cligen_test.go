@@ -51,7 +51,7 @@ func (ts *CligenTestSuite) TestCLI() {
 		return
 	}
 
-	caller := ts.Account(0)
+	caller := ts.Account(1)
 
 	for _, tc := range []struct{
 		suc bool
@@ -61,6 +61,8 @@ func (ts *CligenTestSuite) TestCLI() {
 		{ true, []string{"help"}, `.*$`},
 		{ true, []string{"test-get-sender"}, caller.Hex()+`\n$`},
 		{ true, []string{"test-get-contract-address"}, c.Hex()+`\n$`},
+		{ true, []string{"test-write-state", "--key", "a2V5", "--value", "dmFsdWU="}, `$`},
+		{ true, []string{"test-read-state", "--key", "a2V5"}, `dmFsdWU=\n$`},
 	} {
 		var rootCmd = &cobra.Command{
 			Use:   "test",
