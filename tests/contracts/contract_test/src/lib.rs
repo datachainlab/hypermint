@@ -16,24 +16,24 @@ fn call_check_signature() -> Result<i32, Error> {
     }
 }
 
-#[contract]
+#[contract(readonly)]
 pub fn test_get_sender() -> R<Address> {
     Ok(Some(get_sender()?))
 }
 
-#[contract]
+#[contract(readonly)]
 pub fn test_get_contract_address() -> R<Address> {
     Ok(Some(get_contract_address()?))
 }
 
-#[contract]
+#[contract(readonly)]
 pub fn test_get_arguments() -> R<Vec<u8>> {
     let argIdx: i32 = get_arg(0)?;
     let arg: Vec<u8> = get_arg(argIdx as usize)?;
     Ok(Some(arg))
 }
 
-#[contract]
+#[contract(readonly)]
 pub fn check_signature() -> R<i32> {
     Ok(Some(call_check_signature()?))
 }
@@ -59,7 +59,7 @@ pub fn test_write_state() -> R<i32> {
     Ok(None)
 }
 
-#[contract]
+#[contract(readonly)]
 pub fn test_read_state() -> R<Vec<u8>> {
     let key: Vec<u8> = get_arg(0)?;
     let value: Vec<u8> = match read_state(&key) {
@@ -113,13 +113,13 @@ pub fn test_write_to_multiple_key() -> R<i32> {
     Ok(None)
 }
 
-#[contract]
+#[contract(readonly)]
 pub fn test_keccak256() -> R<Vec<u8>> {
     let msg: Vec<u8> = get_arg(0)?;
     Ok(Some(keccak256(&msg)?.to_vec()))
 }
 
-#[contract]
+#[contract(readonly)]
 pub fn test_sha256() -> R<Vec<u8>> {
     let msg: Vec<u8> = get_arg(0)?;
     Ok(Some(sha256(&msg)?.to_vec()))

@@ -52,6 +52,7 @@ var (
 		cmd.PersistentFlags().String("caller", callerAddress, "caller")
 		cmd.PersistentFlags().String("contract", contractAddress, "contract")
 		cmd.PersistentFlags().String("endpoint", "{{$endpoint}}", "endpoint")
+		cmd.PersistentFlags().String("ksdir", "keystore", "keystore directory")
 		{{range .Functions -}}
 			cmd.AddCommand({{$contract.Name}}{{.Name}}Cmd)
 		{{end}}
@@ -77,6 +78,9 @@ var (
 			Use:   "{{.Use}}",
 			Short: "{{.Short}}",
 			RunE: func(cmd *cobra.Command, args []string) error {
+				if cmd.OutOrStderr() == os.Stderr {
+					cmd.SetOut(os.Stdout)
+				}
 				if err := viper.BindPFlags(cmd.Flags()); err != nil {
 					return err
 				}
@@ -106,7 +110,7 @@ var (
 					fmt.Fprintf(os.Stderr, "passphrase=%v\n", viper.GetString("passphrase"))
 				}
 
-				ks := clibind.NewKeyStore("keystore")
+				ks := clibind.NewKeyStore(viper.GetString("ksdir"))
 				opts, c, err := {{$contract.Name}}ContractFromFlags(ks)
 				if err != nil {
 					return err
@@ -129,13 +133,9 @@ var (
 					}
 					{{range $i, $o := .Outputs}}
 						{{if eq .Type.Name "address"}}
-							if _, err := fmt.Fprintln(os.Stdout, v{{$i}}.Hex()); err != nil {
-								return err
-							}
+							cmd.Println(v{{$i}}.Hex())
 						{{else}}
-							if _, err := fmt.Fprintln(os.Stdout, v{{$i}}); err != nil {
-								return err
-							}
+							cmd.Println(v{{$i}})
 						{{end}}
 					{{end}}
 					return nil
@@ -169,9 +169,9 @@ var (
 								fmt.Fprintf(os.Stderr, "%v\n", err.Error())
 							}
 						} else {
-								if verbose {
-									fmt.Fprintf(os.Stderr, "found\n")
-								}
+							if verbose {
+								fmt.Fprintf(os.Stderr, "found\n")
+							}
 							json.NewEncoder(os.Stdout).Encode(&_{{.Name}})
 						}
 					{{end}}

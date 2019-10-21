@@ -76,6 +76,9 @@ integration-test:
 e2e-test:
 	$(MAKE) -C ./tests e2e-test
 
+cligen-test:
+	$(MAKE) -C ./tests cligen-test
+
 build-image:
 	docker build . -t bluele/hypermint:${VERSION}
 
