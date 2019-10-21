@@ -1,6 +1,6 @@
 
 .PHONY: test
-test:
+test: gen-example
 	go build
 	./cligen --outdir example --name token --package main --abi example/token.json
 	(cd example && go build)

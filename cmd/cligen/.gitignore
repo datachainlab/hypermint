@@ -1,1 +1,4 @@
 cligen
+example/token*.go
+example/*.json
+example/example

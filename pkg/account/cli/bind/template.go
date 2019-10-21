@@ -20,7 +20,7 @@ import (
 
 	"github.com/bluele/hypermint/pkg/account/abi/bind"
 	clibind "github.com/bluele/hypermint/pkg/account/cli/bind"
-	"github.com/bluele/hypermint/pkg/account/client"
+	"github.com/bluele/hypermint/pkg/hmclient"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/accounts"
 	"github.com/bluele/hypermint/pkg/transaction"
@@ -211,7 +211,7 @@ var (
 		}
 	
 		endpoint := viper.GetString("endpoint")
-		cl := client.NewClient(endpoint)
+		cl := hmclient.NewClient(endpoint)
 		c{{.Type}}, err := New{{.Type}}(contractAddress, cl)
 		if err != nil {
 			return nil, nil, err
