@@ -42,13 +42,13 @@ func Generate(outdir, pkg, name, abiJsonFilename string) error {
 	} else if src, err := clibind.Bind(pkg, name, string(abiJson)); err != nil {
 		return err
 	} else {
-		if err := os.MkdirAll(outdir, 0700); err != nil {
+		if err := os.MkdirAll(outdir, 0755); err != nil {
 			return err
 		}
-		if err := ioutil.WriteFile(path.Join(outdir, name+".go"), []byte(boundSrc), 0700); err != nil {
+		if err := ioutil.WriteFile(path.Join(outdir, name+".go"), []byte(boundSrc), 0644); err != nil {
 			return err
 		}
-		if err := ioutil.WriteFile(path.Join(outdir, name+"cmd.go"), []byte(src), 0700); err != nil {
+		if err := ioutil.WriteFile(path.Join(outdir, name+"cmd.go"), []byte(src), 0644); err != nil {
 			return err
 		}
 		return nil
@@ -59,7 +59,7 @@ func Generate(outdir, pkg, name, abiJsonFilename string) error {
 func init() {
 	rootCmd.Flags().String("package", "contract", "package name")
 	rootCmd.Flags().String("name", "", "contract name")
-	rootCmd.Flags().String("abi", "example.json", "abi json")
+	rootCmd.Flags().String("abi", "", "abi json")
 	rootCmd.Flags().String("outdir", "", "output dir")
 	viper.AutomaticEnv()
 	viper.SetEnvKeyReplacer(strings.NewReplacer(".", "_"))

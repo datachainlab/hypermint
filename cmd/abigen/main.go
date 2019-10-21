@@ -40,10 +40,10 @@ func Generate(outdir, pkg, name, abiJsonFilename string, mock bool) error {
 	} else if src, err := bind.Bind(pkg, name, string(abiJson), mock); err != nil {
 		return err
 	} else {
-		if err := os.MkdirAll(pkg, 0700); err != nil {
+		if err := os.MkdirAll(pkg, 0755); err != nil {
 			return err
 		}
-		if err := ioutil.WriteFile(path.Join(outdir, name+".go"), []byte(src), 0700); err != nil {
+		if err := ioutil.WriteFile(path.Join(outdir, name+".go"), []byte(src), 0644); err != nil {
 			return err
 		}
 		return nil
@@ -53,7 +53,7 @@ func Generate(outdir, pkg, name, abiJsonFilename string, mock bool) error {
 func init() {
 	rootCmd.Flags().String("package", "contract", "package name")
 	rootCmd.Flags().String("name", "", "contract name")
-	rootCmd.Flags().String("abi", "example.json", "abi json")
+	rootCmd.Flags().String("abi", "", "abi json")
 	rootCmd.Flags().String("outdir", "", "output dir")
 	rootCmd.Flags().Bool("mock", false, "generate mock")
 	viper.AutomaticEnv()
