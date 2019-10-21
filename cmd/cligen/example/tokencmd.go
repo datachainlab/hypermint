@@ -15,9 +15,9 @@ import (
 	"os"
 	"strings"
 
-	"github.com/bluele/hypermint/abi/bind"
-	clibind "github.com/bluele/hypermint/cli/bind"
-	"github.com/bluele/hypermint/client"
+	"github.com/bluele/hypermint/pkg/account/abi/bind"
+	clibind "github.com/bluele/hypermint/pkg/account/cli/bind"
+	"github.com/bluele/hypermint/pkg/account/client"
 	"github.com/bluele/hypermint/pkg/transaction"
 	"github.com/ethereum/go-ethereum/accounts"
 	"github.com/ethereum/go-ethereum/accounts/keystore"

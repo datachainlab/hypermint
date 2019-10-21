@@ -11,7 +11,7 @@ import (
 	"bytes"
 	"encoding/json"
 
-	"github.com/bluele/hypermint/abi/bind"
+	"github.com/bluele/hypermint/pkg/account/abi/bind"
 	"github.com/bluele/hypermint/pkg/transaction"
 	"github.com/ethereum/go-ethereum/common"
 {{if .Mock}}

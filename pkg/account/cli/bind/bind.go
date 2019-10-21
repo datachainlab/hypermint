@@ -4,7 +4,7 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
-	"github.com/bluele/hypermint/abi"
+	"github.com/bluele/hypermint/pkg/account/abi"
 	"github.com/iancoleman/strcase"
 	"go/format"
 	"strings"

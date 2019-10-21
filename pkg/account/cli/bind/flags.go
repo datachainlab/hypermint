@@ -2,7 +2,7 @@ package bind
 
 import (
 	"fmt"
-	"github.com/bluele/hypermint/cli"
+	"github.com/bluele/hypermint/pkg/account/cli"
 	"github.com/ethereum/go-ethereum/common"
 	)
 

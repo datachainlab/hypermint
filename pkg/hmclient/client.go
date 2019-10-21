@@ -4,7 +4,7 @@ import (
 	"context"
 	"github.com/bluele/hypermint/pkg/abci/codec"
 	hmabcitypes "github.com/bluele/hypermint/pkg/abci/types"
-	"github.com/bluele/hypermint/abi/bind"
+	"github.com/bluele/hypermint/pkg/account/abi/bind"
 	"github.com/bluele/hypermint/pkg/contract/event"
 	"github.com/bluele/hypermint/pkg/handler"
 	"github.com/bluele/hypermint/pkg/transaction"

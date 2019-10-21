@@ -3,13 +3,13 @@ package main
 import (
 	"errors"
 	"fmt"
+	"github.com/bluele/hypermint/pkg/account/abi/bind"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 	"io/ioutil"
 	"os"
 	"path"
 	"strings"
-	"github.com/bluele/hypermint/abi/bind"
 )
 
 var rootCmd = &cobra.Command{

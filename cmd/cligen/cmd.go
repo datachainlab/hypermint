@@ -3,8 +3,8 @@ package main
 import (
 	"errors"
 	"fmt"
-	"github.com/bluele/hypermint/abi/bind"
-	clibind "github.com/bluele/hypermint/cli/bind"
+	"github.com/bluele/hypermint/pkg/account/abi/bind"
+	clibind "github.com/bluele/hypermint/pkg/account/cli/bind"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 	"io/ioutil"
