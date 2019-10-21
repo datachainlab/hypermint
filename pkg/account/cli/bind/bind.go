@@ -63,7 +63,7 @@ func Bind(packageName string, name, jsonABI string) (string, error) {
 	c := tmplContract{
 		Type:      strcase.ToCamel(name),
 		Name:      name,
-		Use:       name,
+		Use:       strcase.ToDelimited(name, '-'),
 		Short:     name,
 		Functions: functions,
 		Events:    abi.Events,

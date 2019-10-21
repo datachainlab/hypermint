@@ -53,11 +53,6 @@ func (ts *CligenTestSuite) TestCLI() {
 
 	caller := ts.Account(0)
 
-	var rootCmd = &cobra.Command{
-		Use:   "test",
-		Short: "Test CLI",
-	}
-
 	for _, tc := range []struct{
 		suc bool
 		args []string
@@ -67,7 +62,12 @@ func (ts *CligenTestSuite) TestCLI() {
 		{ true, []string{"test-get-sender"}, caller.Hex()+`\n$`},
 		{ true, []string{"test-get-contract-address"}, c.Hex()+`\n$`},
 	} {
-		args := append([]string{"contract_test", "--passphrase", "password", "--ksdir", ts.GetCLIHomeDir()}, tc.args...)
+		var rootCmd = &cobra.Command{
+			Use:   "test",
+			Short: "Test CLI",
+		}
+
+		args := append([]string{"contract-test", "--passphrase", "password", "--ksdir", ts.GetCLIHomeDir()}, tc.args...)
 		buf := new(bytes.Buffer)
 		rootCmd.SetOut(buf)
 		rootCmd.SetArgs(args)
