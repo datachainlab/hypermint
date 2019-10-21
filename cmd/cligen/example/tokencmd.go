@@ -240,7 +240,7 @@ func tokenContractFromFlags(ks *keystore.KeyStore) (*bind.TransactOpts, TokenCon
 	}
 
 	endpoint := viper.GetString("endpoint")
-	cl := client.NewClient(endpoint)
+	cl := hmclient.NewClient(endpoint)
 	cToken, err := NewToken(contractAddress, cl)
 	if err != nil {
 		return nil, nil, err

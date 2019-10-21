@@ -1,4 +1,4 @@
-package client
+package hmclient
 
 import (
 	"context"
@@ -114,9 +114,9 @@ func (c *Client) TransactionEventEntries(ctx context.Context, txHash common.Hash
 	if err != nil {
 		return nil, err
 	}
-	tx, error := transaction.DecodeTx(resultTx.Tx)
-	if error != nil {
-		return nil, errors.New(error.Error())
+	tx, err := transaction.DecodeTx(resultTx.Tx)
+	if err != nil {
+		return nil, errors.New(err.Error())
 	}
 	switch tx := tx.(type) {
 	case *transaction.ContractCallTx:
