@@ -82,6 +82,12 @@ func (s String) Bytes() []byte {
 	return []byte(s)
 }
 
+type Bytes []byte
+
+func (s Bytes) Bytes() []byte {
+	return s
+}
+
 type Address common.Address
 
 func (a Address) Bytes() []byte {

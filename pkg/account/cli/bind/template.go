@@ -14,6 +14,7 @@ import (
 	"strings"
 	"encoding/binary"
 	"bytes"
+	"encoding/base64"
 	"encoding/json"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
@@ -38,6 +39,7 @@ var (
 	_ = bytes.NewBuffer
 	_ = binary.Read
 	_ = json.NewEncoder
+	_ = base64.StdPadding
 )
 
 {{$endpoint := .Endpoint}}
@@ -99,6 +101,11 @@ var (
 						arg{{.Name}} := common.HexToHash(viper.GetString("{{.Name}}"))
 					{{else if eq .Type.Name "bool"}}
 						arg{{.Name}} := viper.GetBool("{{.Name}}")
+					{{else if eq .Type.Name "bytes"}}
+						arg{{.Name}}, err := base64.StdEncoding.DecodeString(viper.GetString("{{.Name}}"))
+						if err != nil {
+							return errors.New("invalid bytes")
+						}
 					{{else}}
 						arg{{.Name}} := {{.Type.TypeName}}(viper.GetInt64("{{.Name}}"))
 					{{end}}
@@ -134,6 +141,8 @@ var (
 					{{range $i, $o := .Outputs}}
 						{{if eq .Type.Name "address"}}
 							cmd.Println(v{{$i}}.Hex())
+						{{else if eq .Type.Name "bytes"}}
+							cmd.Println(base64.StdEncoding.EncodeToString(v{{$i}}))
 						{{else}}
 							cmd.Println(v{{$i}})
 						{{end}}

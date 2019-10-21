@@ -203,11 +203,12 @@ var (
 				buf := bytes.NewBuffer(result.Data)
 				{{end}}
 				{{range $i, $v := .Outputs -}}
+					var v{{ $i }} {{.Type.TypeName}}
 					{{if eq .Type.TypeName "string"}}
-						var v{{ $i }} {{.Type.TypeName}}
 						v{{ $i }} = buf.String()
+					{{else if eq .Type.TypeName "[]byte"}}
+						v{{ $i }} = buf.Bytes()
 					{{else}}
-						var v{{ $i }} {{.Type.TypeName}}
 						binary.Read(buf, binary.BigEndian, &v{{ $i }})
 					{{end}}
 				{{end -}}

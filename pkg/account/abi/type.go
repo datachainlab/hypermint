@@ -125,6 +125,8 @@ func (t Type) BoundType() string {
 		op = "bind.Bool"
 	case StringTy:
 		op = "bind.String"
+	case BytesTy:
+		op = "bind.Bytes"
 	case AddressTy:
 		op = "bind.Address"
 	case HashTy:
