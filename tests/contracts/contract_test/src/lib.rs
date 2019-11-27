@@ -37,7 +37,7 @@ pub fn check_signature(msg_hash: Vec<u8>, sig: Vec<u8>) -> R<i32> {
     Ok(Some(call_check_signature()?))
 }
 
-#[contract]
+#[contract()]
 pub fn test_read_uncommitted_state() -> R<i32> {
     let b = [0u8; 255];
     write_state("key".as_bytes(), &b);
@@ -50,7 +50,7 @@ pub fn test_read_uncommitted_state() -> R<i32> {
     }
 }
 
-#[contract]
+#[contract()]
 pub fn test_write_state(key: Vec<u8>, value: Vec<u8>) -> R<i32> {
     write_state(&key, &value);
     Ok(None)
@@ -65,7 +65,7 @@ pub fn test_read_state(key: Vec<u8>) -> R<Vec<u8>> {
     Ok(Some(value))
 }
 
-#[contract]
+#[contract()]
 pub fn test_read_write_state(key: Vec<u8>, value: Vec<u8>) -> R<i32> {
     // read a value, but nop
     read_state::<Vec<u8>>(&key);
@@ -74,7 +74,7 @@ pub fn test_read_write_state(key: Vec<u8>, value: Vec<u8>) -> R<i32> {
     Ok(None)
 }
 
-#[contract]
+#[contract()]
 pub fn test_write_to_same_key(key: Vec<u8>, value1: Vec<u8>, value2: Vec<u8>) -> R<i32> {
     // read a value, but nop
     read_state::<Vec<u8>>(&key);
@@ -85,7 +85,7 @@ pub fn test_write_to_same_key(key: Vec<u8>, value1: Vec<u8>, value2: Vec<u8>) ->
     Ok(None)
 }
 
-#[contract]
+#[contract()]
 pub fn test_write_to_multiple_key(key1: Vec<u8>, value1: Vec<u8>, key2: Vec<u8>, value2: Vec<u8>) -> R<i32> {
     // read a value, but nop
     read_state::<Vec<u8>>(&key1);
@@ -107,7 +107,7 @@ pub fn test_sha256(msg: Vec<u8>) -> R<Vec<u8>> {
     Ok(Some(sha256(&msg)?.to_vec()))
 }
 
-#[contract]
+#[contract()]
 pub fn test_emit_event(msg0: Vec<u8>, msg1: Vec<u8>) -> R<Vec<u8>> {
     let name0 = "test-event-name-0";
     let name1 = "test-event-name-1";

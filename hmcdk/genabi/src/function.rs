@@ -61,45 +61,45 @@ fn from_item_fn(f: &ItemFn) -> Result<Option<Function>, ArgumentError> {
     let mut is_readonly = false;
     let fn_name = f.sig.ident.to_string();
     for a in &f.attrs {
-        let s = a.path.segments.last();
-        match s {
-            Some(s) => {
-                if s.ident == "contract" {
-                    is_contract = true;
-                    let ident: syn::Ident = match a.parse_args() {
-                        Ok(ident) => ident,
-                        Err(_) => continue
-                    };
-                    if ident == "readonly" {
-                        is_readonly = true
+        if a.path.segments.len() == 1 {
+            let s = a.path.segments.last();
+            match s {
+                Some(s) => {
+                    if s.ident == "contract" {
+                        is_contract = true;
+                        let ident: syn::Ident = match a.parse_args() {
+                            Ok(ident) => ident,
+                            Err(err) => return Err(ArgumentError::InvalidFunction(err.to_string()))
+                        };
+                        if ident == "readonly" {
+                            is_readonly = true
+                        }
                     }
                 }
+                None => {}
             }
-            None => {}
         }
     }
-    let maybe_args = f
-        .sig
-        .inputs
-        .iter()
-        .map(|input| get_argument_from_arg(input));
-    let func = match is_contract {
-        true => {
-            let rt = get_return_type(&f.sig.output)?;
-            let args = maybe_args.filter_map(Result::ok).collect::<Vec<Argument>>();
-            let f = Function {
-                r#type: "function".to_string(),
-                name: fn_name,
-                simulate: is_readonly,
-                inputs: args,
-                outputs: match rt {
-                    Some(rt) => [rt].to_vec(),
-                    None => [].to_vec(),
-                },
-            };
-            Some(f)
-        }
-        false => None,
+    let func = if is_contract {
+        let maybe_args = f
+            .sig
+            .inputs
+            .iter()
+            .map(|input| get_argument_from_arg(input));
+        let rt = get_return_type(&f.sig.output)?;
+        let args = maybe_args.filter_map(Result::ok).collect::<Vec<Argument>>();
+        Some(Function {
+            r#type: "function".to_string(),
+            name: fn_name,
+            simulate: is_readonly,
+            inputs: args,
+            outputs: match rt {
+                Some(rt) => [rt].to_vec(),
+                None => [].to_vec(),
+            },
+        })
+    } else {
+        None
     };
     Ok(func)
 }

@@ -7,6 +7,7 @@ use std::fmt::Display;
 pub enum ArgumentError {
     UnrecognizedType,
     UnsupportedType(String),
+    InvalidFunction(String)
 }
 
 #[derive(Clone, Serialize, Deserialize, Debug)]

@@ -33,6 +33,7 @@ impl Display for Error {
             IncorrectUsage => write!(f, "Usage: dump-syntax path/to/filename.rs"),
             ArgError(UnrecognizedType) => write!(f, "unrecognized arg type"),
             ArgError(UnsupportedType(x)) => write!(f, "unsupported arg type: {}", x),
+            ArgError(InvalidFunction(x)) => write!(f, "invalid function: {}", x),
             ReadFile(error) => write!(f, "Unable to read file: {}", error),
             InternalError => write!(f, "internal error"),
         }
