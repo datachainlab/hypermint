@@ -86,9 +86,6 @@ https://github.com/bluele/hmemu
 
 Please check this out.
 
-## Author
+## Maintainers
 
-**Jun Kimura**
-
-* <http://github.com/bluele>
-* <junkxdev@gmail.com>
+- [Jun Kimura](https://github.com/bluele)
