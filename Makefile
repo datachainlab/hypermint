@@ -3,6 +3,8 @@ GO_BIN?=go
 BUILD_DIR?=./build
 HMD?=$(BUILD_DIR)/hmd
 HMCLI?=$(BUILD_DIR)/hmcli
+ABIGEN?=$(BUILD_DIR)/abigen
+CLIGEN?=$(BUILD_DIR)/cligen
 HMD_HOME?=${HOME}/.hmd
 HMCLI_HOME?=${HOME}/.hmcli
 
@@ -30,9 +32,17 @@ server:
 cli:
 	$(GO_BUILD_CMD) -o $(HMCLI) ./cmd/hmcli
 
+abigen:
+	$(GO_BUILD_CMD) -o $(ABIGEN) ./cmd/abigen
+
+cligen:
+	$(GO_BUILD_CMD) -o $(CLIGEN) ./cmd/cligen
+
 release-build:
 	$(GO_BUILD_CMD) -o $(HMD)_$(GOOS)_$(GOARCH)   ./cmd/hmd
 	$(GO_BUILD_CMD) -o $(HMCLI)_$(GOOS)_$(GOARCH) ./cmd/hmcli
+	$(GO_BUILD_CMD) -o $(ABIGEN)_$(GOOS)_$(GOARCH) ./cmd/abigen
+	$(GO_BUILD_CMD) -o $(CLIGEN)_$(GOOS)_$(GOARCH) ./cmd/cligen
 
 fmt:
 	cd ./hmc && cargo fmt
@@ -65,6 +75,9 @@ integration-test:
 
 e2e-test:
 	$(MAKE) -C ./tests e2e-test
+
+cligen-test:
+	$(MAKE) -C ./tests cligen-test
 
 build-image:
 	docker build . -t bluele/hypermint:${VERSION}

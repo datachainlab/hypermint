@@ -17,6 +17,8 @@ require (
 	github.com/gogo/protobuf v1.2.1
 	github.com/golang/protobuf v1.3.2
 	github.com/google/uuid v1.0.0 // indirect
+	github.com/iancoleman/strcase v0.0.0-20190422225806-e506e3ef7365
+	github.com/immutability-io/go-ethereum-hdwallet v0.0.0-20190728144135-ecdde4803440
 	github.com/kr/pretty v0.1.0
 	github.com/mattn/go-isatty v0.0.4
 	github.com/mattn/go-shellwords v1.0.5
@@ -26,9 +28,9 @@ require (
 	github.com/perlin-network/life v0.0.0-20181106205055-98065d82a6ee
 	github.com/pkg/errors v0.8.1
 	github.com/rjeczalik/notify v0.9.2 // indirect
-	github.com/spf13/cobra v0.0.1
-	github.com/spf13/pflag v1.0.3
-	github.com/spf13/viper v1.0.0
+	github.com/spf13/cobra v0.0.5
+	github.com/spf13/pflag v1.0.5
+	github.com/spf13/viper v1.4.0
 	github.com/stretchr/testify v1.3.0
 	github.com/tendermint/go-amino v0.14.1
 	github.com/tendermint/iavl v0.12.4

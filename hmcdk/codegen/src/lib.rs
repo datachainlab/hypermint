@@ -5,35 +5,26 @@ use quote::quote;
 use std::ops::Deref;
 use syn::{parse_macro_input, parse_quote, FnArg, Ident, ItemFn, Pat, Stmt, Type};
 
-fn get_assignment_from_name_and_type(
-    name: &Ident,
-    ty: &Type,
-    index: usize,
-) -> Result<Stmt, String> {
-    match ty {
-        Type::Path(type_path) => {
-            let pair = type_path.path.segments.last().ok_or("internal error")?;
-            let ident = &pair.ident;
-            let a = parse_quote! {
-                let #name: #ident = get_arg(#index).unwrap();
-            };
-            Ok(a)
-        }
-        _ => Err("invalid arg type".to_string()),
-    }
-}
-
 fn get_assignment_from_arg(arg: &FnArg, index: usize) -> Result<(&Ident, Stmt), String> {
     match arg {
-        FnArg::Typed(pat_type) => match &pat_type.pat.deref() {
-            Pat::Ident(pat) => {
-                let pat = &pat.ident;
-                match get_assignment_from_name_and_type(pat, pat_type.ty.deref(), index) {
-                    Ok(stmt) => Ok((pat, stmt)),
-                    Err(err) => Err(err),
+        FnArg::Typed(pat_type) => {
+            let pat = pat_type.pat.deref();
+            match pat {
+                Pat::Ident(pat) => {
+                    let pat = &pat.ident;
+                    let ty = pat_type.ty.deref();
+                    match ty {
+                        Type::Path(_type_path) => {
+                            let stmt = parse_quote! {
+                            let #pat: #ty = get_arg(#index).unwrap();
+                        };
+                            Ok((pat, stmt))
+                        }
+                        _ => Err("invalid arg type".to_string()),
+                    }
                 }
+                _ => Err("no parameter name".to_string()),
             }
-            _ => Err("no parameter name".to_string()),
         },
         FnArg::Receiver(_receiver) => Err("receiver not supported".to_string()),
     }

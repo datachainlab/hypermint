@@ -163,6 +163,10 @@ func (ts *NodeTestSuite) RPCClient() rpclient.Client {
 	return rpclient.NewHTTP(c.RPC.ListenAddress, "/websocket")
 }
 
+func (ts *NodeTestSuite) GetCLIHomeDir() string {
+	return ts.hmcliHomeDir
+}
+
 type Env interface {
 	String() string
 }
